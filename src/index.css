@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Andika&display=swap');
+
+body {
+  margin: 0;
+  /* Using Andika: a font specifically designed for literacy */
+  font-family: 'Andika', sans-serif;
+  background-color: #1a1a2e; /* Deep magical blue */
+  color: #e0e0e0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dyslexia-friendly button spacing */
+button {
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+.magic-card {
+  background: linear-gradient(145deg, #16213e, #0f3460);
+  border: 2px solid #4ecca3;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}

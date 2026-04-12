@@ -1,0 +1,17 @@
+{
+  "name": "fantasy-reader",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "lucide-vue-next": "^1.0.0",
+    "vue": "^3.0.4"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.0.4",
+    "vite": "^1.0.0-rc.13"
+  }
+}
