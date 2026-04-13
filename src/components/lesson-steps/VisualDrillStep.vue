@@ -17,6 +17,7 @@
         <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
       </div>
       <div v-if="listening" class="listening-dot">Listening...</div>
+      <button class="skip-btn" @click="skipSpeech">Skip</button>
     </div>
     <div class="instruction success" v-else-if="phase === 'success'">
       Great!
@@ -43,6 +44,12 @@ const currentIndex = ref(0);
 const currentItem = ref(null);
 const phase = ref('model');
 let cancelled = false;
+let resolveSkip = null;
+
+function skipSpeech() {
+  cancelListening();
+  if (resolveSkip) resolveSkip({ matched: true });
+}
 
 async function runItem(item) {
   if (cancelled) return;
@@ -55,7 +62,12 @@ async function runItem(item) {
   if (cancelled) return;
   phase.value = 'prompt';
   await ember.speak('Your turn!');
-  const result = await startListening(item.phonemeAudio, 5000);
+
+  const result = await new Promise((resolve) => {
+    resolveSkip = resolve;
+    startListening(item.phonemeAudio, 6000).then(resolve);
+  });
+  resolveSkip = null;
 
   if (cancelled) return;
   phase.value = 'success';
@@ -85,81 +97,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.visual-drill-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+.visual-drill-step { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; }
+.big-letter { font-size: 6rem; color: #FF8C00; font-weight: bold; line-height: 1; text-shadow: 0 0 20px rgba(255, 140, 0, 0.3); }
+.instruction { font-size: 1rem; color: #aaa; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.instruction.success { color: #64FFDA; font-size: 1.2rem; }
+.mic-icon { font-size: 2rem; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+.volume-meter { width: 200px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+.volume-fill { height: 100%; background: #64FFDA; transition: width 0.05s; }
+.sustain-meter { width: 200px; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
+.sustain-fill { height: 100%; background: #FF8C00; transition: width 0.1s; }
+.listening-dot { color: #64FFDA; font-size: 0.8rem; }
+.skip-btn {
+  background: transparent; border: 1px solid #555; color: #888;
+  padding: 0.3rem 1rem; border-radius: 1rem; font-size: 0.75rem;
+  cursor: pointer; font-family: inherit; margin-top: 0.5rem;
 }
-
-.big-letter {
-  font-size: 6rem;
-  color: #FF8C00;
-  font-weight: bold;
-  line-height: 1;
-  text-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
-}
-
-.instruction {
-  font-size: 1rem;
-  color: #aaa;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.instruction.success {
-  color: #64FFDA;
-  font-size: 1.2rem;
-}
-
-.mic-icon {
-  font-size: 2rem;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-.volume-meter {
-  width: 200px;
-  height: 6px;
-  background: #222;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.volume-fill {
-  height: 100%;
-  background: #64FFDA;
-  transition: width 0.05s;
-}
-
-.sustain-meter {
-  width: 200px;
-  height: 10px;
-  background: #333;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.sustain-fill {
-  height: 100%;
-  background: #FF8C00;
-  transition: width 0.1s;
-}
-
-.listening-dot {
-  color: #64FFDA;
-  font-size: 0.8rem;
-}
-
-.item-progress {
-  color: #666;
-  font-size: 0.75rem;
-}
+.item-progress { color: #666; font-size: 0.75rem; }
 </style>

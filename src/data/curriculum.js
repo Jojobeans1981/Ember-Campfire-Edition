@@ -1,5 +1,5 @@
 export const PHONEME_ORDER = [
-  'm', 's', 'a', 't', 'p', 'n', 'i', 'c',
+  's', 'a', 'm', 't', 'p', 'n', 'i', 'c',
   'b', 'f', 'l', 'o', 'h', 'd', 'g', 'e',
   'r', 'u', 'k', 'w', 'j', 'y', 'x', 'q', 'z', 'v',
 ];
@@ -8,7 +8,7 @@ export const UNITS = [
   {
     unitId: 'unit-01',
     title: 'First Flames',
-    phonemes: ['m', 's'],
+    phonemes: ['s', 'a', 'm'],
     prerequisiteUnit: null,
     campgroundStation: 'fire-pit',
     stationLabel: 'Fire Pit',
@@ -17,7 +17,7 @@ export const UNITS = [
   {
     unitId: 'unit-02',
     title: 'Gathering Kindling',
-    phonemes: ['a', 't'],
+    phonemes: ['t', 'p'],
     prerequisiteUnit: 'unit-01',
     campgroundStation: 'kindling-grove',
     stationLabel: 'Kindling Grove',
@@ -26,7 +26,7 @@ export const UNITS = [
   {
     unitId: 'unit-03',
     title: 'Sparks Fly',
-    phonemes: ['p', 'n'],
+    phonemes: ['n', 'i'],
     prerequisiteUnit: 'unit-02',
     campgroundStation: 'ranger-station',
     stationLabel: 'Ranger Station',
@@ -35,7 +35,7 @@ export const UNITS = [
   {
     unitId: 'unit-04',
     title: 'Steady Glow',
-    phonemes: ['i', 'c'],
+    phonemes: ['c'],
     prerequisiteUnit: 'unit-03',
     campgroundStation: 'treehouse',
     stationLabel: 'Treehouse',

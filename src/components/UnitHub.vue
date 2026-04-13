@@ -10,6 +10,14 @@
       <span class="status-text">{{ statusLabel }}</span>
     </div>
 
+    <!-- Spark tracker -->
+    <div class="spark-tracker">
+      <div class="spark-bar">
+        <div class="spark-fill" :style="{ width: sparkPercent + '%' }"></div>
+      </div>
+      <div class="spark-label">{{ sparksEarned }} / 7 sparks</div>
+    </div>
+
     <div class="hub-actions">
       <!-- Lesson -->
       <button
@@ -81,6 +89,20 @@ const statusLabel = computed(() => {
   };
   return labels[status.value] || '';
 });
+
+const sparksEarned = computed(() => {
+  const p = progress.value;
+  if (!p) return 0;
+  let count = 0;
+  if (p.lessonComplete) count++;
+  if (p.activitiesComplete) {
+    count += Object.values(p.activitiesComplete).filter(Boolean).length;
+  }
+  if (p.storyRead) count++;
+  return count;
+});
+
+const sparkPercent = computed(() => Math.round((sparksEarned.value / 7) * 100));
 
 const activityList = [
   { type: 'speech', label: 'Say It', icon: '🎤' },
@@ -207,5 +229,33 @@ function startStory() {
 .story-btn {
   background: rgba(100, 255, 218, 0.1);
   border-color: rgba(100, 255, 218, 0.2);
+}
+
+.spark-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.spark-bar {
+  width: 100%;
+  height: 10px;
+  background: #222;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.spark-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF8C00, #FFD93D);
+  transition: width 0.4s ease;
+  border-radius: 5px;
+}
+
+.spark-label {
+  font-size: 0.75rem;
+  color: #FF8C00;
 }
 </style>
