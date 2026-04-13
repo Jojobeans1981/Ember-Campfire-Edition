@@ -4,8 +4,13 @@ export const useMicAnalysis = () => {
   const volume = ref(0);
   const isSustaining = ref(false);
 
+  let animationId = null;
+  let audioContext = null;
+
   const startAnalysis = (stream) => {
-    const audioContext = new AudioContext();
+    stopAnalysis(); // Clean up any previous session
+
+    audioContext = new AudioContext();
     const source = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
@@ -20,15 +25,26 @@ export const useMicAnalysis = () => {
       for (let i = 0; i < bufferLength; i++) {
         sum += dataArray[i] * dataArray[i];
       }
-      volume.value = Math.sqrt(sum / bufferLength); // RMS Calculation
-      
-      // Sustain logic (threshold of 50 for example)
+      volume.value = Math.sqrt(sum / bufferLength);
       isSustaining.value = volume.value > 50;
-      
-      requestAnimationFrame(update);
+
+      animationId = requestAnimationFrame(update);
     };
     update();
   };
 
-  return { volume, isSustaining, startAnalysis };
+  const stopAnalysis = () => {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (audioContext) {
+      audioContext.close().catch(() => {});
+      audioContext = null;
+    }
+    volume.value = 0;
+    isSustaining.value = false;
+  };
+
+  return { volume, isSustaining, startAnalysis, stopAnalysis };
 };

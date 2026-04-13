@@ -15,16 +15,26 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 import { useMicAnalysis } from '../../composables/useMicAnalysis';
-const { volume, isSustaining, startAnalysis } = useMicAnalysis();
+const { volume, isSustaining, startAnalysis, stopAnalysis } = useMicAnalysis();
+
+let micStream = null;
 
 onMounted(async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    startAnalysis(stream);
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    startAnalysis(micStream);
   } catch (err) {
     console.error("Mascot couldn't access mic:", err);
+  }
+});
+
+onBeforeUnmount(() => {
+  stopAnalysis();
+  if (micStream) {
+    micStream.getTracks().forEach(track => track.stop());
+    micStream = null;
   }
 });
 </script>
