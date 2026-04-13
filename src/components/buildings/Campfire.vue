@@ -1,122 +1,182 @@
 <template>
-  <div class="campfire-module">
-    <div class="guardian-presence" v-if="store.selectedFriend">
-      <img :src="'/assets/friends/' + store.selectedFriend.file" class="helper-img" />
-      <div class="controls">
-        <button @click="teachSound" class="teacher-btn">í´Š Hear '{{ currentPhoneme }}'</button>
-      </div>
+  <div class="campfire">
+    <img v-if="store.selectedFriend" :src="'/assets/friends/' + store.selectedFriend.file" class="guardian-img" />
+    <h2>Phoneme: {{ currentPhoneme.toUpperCase() }}</h2>
+    <button class="listen-btn" @click="playAndListen">ðŸŽ¤ Hear & Say '{{ currentPhoneme }}'</button>
+    <div class="meter">
+      <div class="meter-fill" :style="{ width: progress + '%' }"></div>
     </div>
-
-    <div class="cloud-focus">
-      <div class="cloud-body" :class="{ 'is-hearing': isHearing }">
-        <span class="letter">{{ currentPhoneme }}</span>
-      </div>
-      <p class="sub-label">Listening for your sound...</p>
-      <div class="meter-container">
-        <div class="meter-fill" :style="{ width: sustainProgress + '%' }"></div>
-      </div>
-    </div>
-
-    <div class="training-switcher">
-       <button @click="setPhoneme('m')" :class="{active: currentPhoneme === 'm'}">Phoneme M</button>
-       <button @click="setPhoneme('s')" :class="{active: currentPhoneme === 's'}">Phoneme S</button>
-    </div>
-
-    <div class="hearth">
-      <div v-if="!campfireLit" class="logs">íºµ</div>
-      <div v-else class="flame">í´¥</div>
+    <p v-if="isListening">Listening...</p>
+    <div v-if="campfireLit" class="success">ðŸ”¥ Great job!</div>
+    <div class="phoneme-picker">
+      <button v-for="p in phonemes" :key="p" :class="{ active: currentPhoneme === p }" @click="setPhoneme(p)">
+        {{ p.toUpperCase() }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import { store } from '../../store';
+import { pushEvent } from '../../store/events';
+import { skillState } from '../../store';
 
+const phonemes = ['m', 's', 't', 'a', 'p', 'n', 'i', 'c'];
 const currentPhoneme = ref('m');
 const campfireLit = ref(false);
-const isHearing = ref(false);
-const sustainProgress = ref(0);
-let recognizer = null;
+const isListening = ref(false);
+const progress = ref(0);
+
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let dataArray = null;
+let animationId = null;
 
 const setPhoneme = (p) => {
   currentPhoneme.value = p;
-  sustainProgress.value = 0;
+  progress.value = 0;
   campfireLit.value = false;
 };
 
-const teachSound = () => {
+const playAndListen = async () => {
+  if (isListening.value) return;
+
+  // Play the phoneme sound
   const audio = new Audio(`/audio/phonemes/${currentPhoneme.value}.mp3`);
   audio.play();
+
+  // Wait a moment, then start listening
+  setTimeout(async () => {
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      microphone = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      microphone.connect(analyser);
+
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+      isListening.value = true;
+      progress.value = 0;
+
+      const startTime = Date.now();
+      const duration = 3000;
+
+      const checkSound = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        if (average > 20) {
+          progress.value = Math.min(100, progress.value + 2);
+        }
+
+        if (progress.value >= 100) {
+          success();
+        } else if (Date.now() - startTime < duration) {
+          animationId = requestAnimationFrame(checkSound);
+        } else {
+          stopListening();
+        }
+      };
+
+      checkSound();
+    } catch (err) {
+      console.error('Microphone error:', err);
+      alert('Could not access microphone. Please allow microphone permissions.');
+    }
+  }, 1000);
 };
 
-onMounted(async () => {
-  await setupTFJS();
-});
-
-onUnmounted(() => {
-  if (recognizer) recognizer.stopListening();
-});
-
-const setupTFJS = async () => {
-  try {
-    recognizer = speechCommands.create("BROWSER_FFT");
-    await recognizer.ensureModelLoaded();
-
-    recognizer.listen(result => {
-      const isM = currentPhoneme.value === 'm' && checkM(result.spectrogram);
-      const isS = currentPhoneme.value === 's' && checkS(result.spectrogram);
-
-      if ((isM || isS) && !campfireLit.value) {
-        isHearing.value = true;
-        sustainProgress.value += 2.5;
-        if (sustainProgress.value >= 100) triggerCelebration();
-      } else {
-        isHearing.value = false;
-        sustainProgress.value = Math.max(0, sustainProgress.value - 1.0);
-      }
-    }, {
-      includeSpectrogram: true,
-      probabilityThreshold: 0.75,
-      overlapFactor: 0.5
-    });
-  } catch (err) {
-    console.error("TFJS failed to start:", err);
-  }
-};
-
-const checkM = (spec) => {
-  // Low-frequency nasal energy
-  return spec.data[0] > 0.45 || spec.data[1] > 0.45;
-};
-
-const checkS = (spec) => {
-  // High-frequency sibilant energy
-  const highStart = spec.data.length - 10;
-  let sum = 0;
-  for(let i = highStart; i < spec.data.length; i++) sum += spec.data[i];
-  return (sum / 10) > 0.35;
-};
-
-const triggerCelebration = () => {
-  if (campfireLit.value) return;
+const success = () => {
+  stopListening();
   campfireLit.value = true;
   store.xp += 50;
-  if (window.confetti) window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+  pushEvent({
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    sessionId: 'session-001',
+    lessonRunId: null,
+    activityRunId: 'campfire',
+    stepId: null,
+    itemId: 'say-' + currentPhoneme.value,
+    conceptSlugs: [currentPhoneme.value],
+    modality: 'speech_single_word',
+    response: { said: currentPhoneme.value },
+    correct: true,
+    confidence: 1,
+    supportLevel: skillState[currentPhoneme.value].currentSupportLevel,
+    responseLatencyMs: null,
+    attemptNumber: 1,
+    wasRetryAfterPrompt: false,
+  });
+};
+
+const stopListening = () => {
+  isListening.value = false;
+  if (animationId) cancelAnimationFrame(animationId);
+  if (microphone) microphone.disconnect();
+  if (audioContext) audioContext.close();
 };
 </script>
 
 <style scoped>
-.campfire-module { display: flex; flex-direction: column; align-items: center; width: 100%; text-align: center; }
-.teacher-btn { margin: 10px; background: rgba(100, 255, 218, 0.1); border: 2px solid #64FFDA; color: #64FFDA; border-radius: 50px; padding: 12px 24px; cursor: pointer; font-weight: bold; }
-.cloud-body { width: 240px; height: 140px; background: #1a1c23; border-radius: 100px; display: flex; align-items: center; justify-content: center; border: 4px solid #333; transition: 0.3s; }
-.is-hearing { border-color: #FF8C00; box-shadow: 0 0 50px rgba(255, 140, 0, 0.4); }
-.letter { font-size: 90px; font-weight: bold; color: #FF8C00; }
-.meter-container { width: 320px; height: 16px; background: #111; border-radius: 20px; margin-top: 25px; border: 1px solid #333; overflow: hidden; }
-.meter-fill { height: 100%; background: #FF8C00; }
-.training-switcher { margin-top: 30px; display: flex; gap: 15px; }
-.training-switcher button { background: #1a1c23; border: 1px solid #333; color: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
-.training-switcher button.active { border-color: #64FFDA; color: #64FFDA; }
-.hearth { font-size: 100px; margin-top: 40px; }
-.sub-label { margin-top: 10px; opacity: 0.6; font-size: 0.9rem; letter-spacing: 0.05em; }
+.campfire {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  max-width: 90vw;
+}
+.guardian-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+.listen-btn {
+  background: rgba(100, 255, 218, 0.1);
+  border: 2px solid #64FFDA;
+  color: #64FFDA;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  cursor: pointer;
+}
+.meter {
+  width: 100%;
+  max-width: 300px;
+  height: 10px;
+  background: #333;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  background: #FF8C00;
+  transition: width 0.1s;
+}
+.phoneme-picker {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+.phoneme-picker button {
+  background: #222;
+  border: none;
+  color: #888;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+.phoneme-picker button.active {
+  background: #64FFDA;
+  color: #05070A;
+}
+.success {
+  font-size: 2rem;
+  margin-top: 0.5rem;
+}
 </style>

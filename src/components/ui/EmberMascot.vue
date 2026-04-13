@@ -15,12 +15,22 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
 import { useMicAnalysis } from '../../composables/useMicAnalysis';
-const { volume, isSustaining } = useMicAnalysis();
+const { volume, isSustaining, startAnalysis } = useMicAnalysis();
+
+onMounted(async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    startAnalysis(stream);
+  } catch (err) {
+    console.error("Mascot couldn't access mic:", err);
+  }
+});
 </script>
 
 <style scoped>
-.ember-wrapper { display: flex; justify-content: center; padding: 20px; height: 150px; }
-.ember-svg { width: 100px; transition: filter 0.1s ease; }
+.ember-wrapper { display: flex; justify-content: center; padding: 5px; height: 80px; }
+.ember-svg { width: 60px; transition: filter 0.1s ease; }
 .ember-core { transition: transform 0.1s ease, fill 0.3s ease; }
 </style>

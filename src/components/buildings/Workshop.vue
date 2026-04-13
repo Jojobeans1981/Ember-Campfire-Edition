@@ -1,108 +1,100 @@
 <template>
-  <div class="workshop-forge">
-    <div class="forge-container">
-      <div 
-        class="rune-slot" 
-        :class="{ 'is-active': isOver, 'is-forged': forged }"
-        @dragover.prevent="isOver = true"
-        @dragleave="isOver = false"
-        @drop="handleDrop"
-      >
-        <span v-if="!forged" class="placeholder-rune">?</span>
-        <span v-else class="active-rune">{{ currentTarget }}</span>
-      </div>
-
-      <div class="inventory">
-        <div 
-          v-for="rune in availableRunes" 
-          :key="rune"
-          class="rune-stone"
-          draggable="true"
-          @dragstart="onDragStart($event, rune)"
-        >
-          {{ rune }}
-        </div>
-      </div>
+  <div class="workshop">
+    <h2>Match the phoneme</h2>
+    <div class="target">
+      <span class="target-letter">{{ currentTarget.toUpperCase() }}</span>
     </div>
+    <div class="choices">
+      <button v-for="rune in availableRunes" :key="rune" class="choice" @click="checkMatch(rune)">
+        {{ rune.toUpperCase() }}
+      </button>
+    </div>
+    <div v-if="forged" class="success">🔥 Correct!</div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { store } from '../../store';
+import { pushEvent } from '../../store/events';
+import { skillState } from '../../store';
 
 const currentTarget = ref('m');
-const availableRunes = ['m', 's', 't', 'a'];
+const availableRunes = ['m', 's', 't', 'a', 'p', 'n', 'i', 'c'];
 const forged = ref(false);
-const isOver = ref(false);
 
-const onDragStart = (event, rune) => {
-  event.dataTransfer.setData('rune', rune);
-};
-
-const handleDrop = (event) => {
-  const droppedRune = event.dataTransfer.getData('rune');
-  isOver.value = false;
-  
-  if (droppedRune === currentTarget.value) {
+const checkMatch = (rune) => {
+  if (rune === currentTarget.value) {
     forged.value = true;
-    store.xp += 25; // Directly updates your store
+    store.xp += 25;
+
+    pushEvent({
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      sessionId: 'session-001',
+      lessonRunId: null,
+      activityRunId: 'workshop',
+      stepId: null,
+      itemId: 'match-' + currentTarget.value,
+      conceptSlugs: [currentTarget.value],
+      modality: 'tap_select',
+      response: { selected: currentTarget.value },
+      correct: true,
+      confidence: 1,
+      supportLevel: skillState[currentTarget.value].currentSupportLevel,
+      responseLatencyMs: null,
+      attemptNumber: 1,
+      wasRetryAfterPrompt: false,
+    });
+
+    setTimeout(() => {
+      forged.value = false;
+      currentTarget.value = availableRunes[Math.floor(Math.random() * availableRunes.length)];
+    }, 1000);
   }
 };
 </script>
 
 <style scoped>
-.workshop-forge {
+.workshop {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-.rune-slot {
-  width: 220px;
-  height: 220px;
-  border: 4px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 60px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-align: center;
+  gap: 0.5rem;
+  max-width: 90vw;
 }
-
-.is-active {
-  border-color: #4facfe;
-  background: rgba(79, 172, 254, 0.05);
-  transform: scale(1.05);
+.target {
+  background: #1a1c23;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
 }
-
-.is-forged {
-  border: 4px solid #00f2fe;
-  box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
+.target-letter {
+  font-size: 3rem;
+  color: #FF8C00;
 }
-
-.inventory {
+.choices {
   display: flex;
-  gap: 25px;
-}
-
-.rune-stone {
-  width: 85px;
-  height: 85px;
-  background: #1e293b;
-  border: 2px solid #334155;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: center;
-  font-size: 2.2rem;
-  color: #f0f4f8;
-  cursor: grab;
-  transition: transform 0.2s;
+  margin-top: 1rem;
 }
-
-.rune-stone:active { transform: scale(0.9); cursor: grabbing; }
-.placeholder-rune { font-size: 3rem; opacity: 0.1; }
-.active-rune { font-size: 5rem; color: #00f2fe; text-shadow: 0 0 15px #00f2fe; }
+.choice {
+  background: #222;
+  border: none;
+  color: #64FFDA;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.choice:hover {
+  background: #333;
+}
+.success {
+  font-size: 2rem;
+  margin-top: 0.5rem;
+}
 </style>

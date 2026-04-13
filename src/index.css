@@ -1,28 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Andika&display=swap');
+/* Global CSS Reset & Variables */
+:root { 
+  --ember-orange: #FF8C00; 
+  --campfire-warmth: #e67e22; 
+  --nature-green: #27ae60;
+  --bg-deep: #0f172a; 
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --border-light: rgba(255, 255, 255, 0.1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  margin: 0;
-  /* Using Andika: a font specifically designed for literacy */
-  font-family: 'Andika', sans-serif;
-  background-color: #1a1a2e; /* Deep magical blue */
-  color: #e0e0e0;
+  font-family: 'Andika', 'OpenDyslexicRegular', system-ui, sans-serif;
+  background-color: var(--bg-deep);
+  color: #f8fafc;
+  overflow: hidden; /* Prevent body scroll, use container scroll */
+  height: 100vh;
+  width: 100vw;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dyslexia-friendly button spacing */
+#app {
+  height: 100%;
+  width: 100%;
+}
+
 button {
-  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: transform 0.2s;
+  font-family: inherit;
+  transition: all 0.2s;
 }
 
 button:active {
   transform: scale(0.95);
-}
-
-.magic-card {
-  background: linear-gradient(145deg, #16213e, #0f3460);
-  border: 2px solid #4ecca3;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
