@@ -1,8 +1,8 @@
 <template>
   <div class="app">
-    <!-- Top bar (if not on selection screen) -->
+    <!-- Top bar -->
     <header v-if="store.currentPage !== 'selection'" class="top-bar">
-      <button class="nav-btn" @click="goToSelection">Back</button>
+      <button class="nav-btn" @click="goBack">Back</button>
       <div class="xp-display">✨ {{ store.xp }} Sparks</div>
     </header>
 
@@ -18,66 +18,90 @@
         </div>
       </div>
 
-      <!-- Campground screen -->
-      <div v-else class="campground">
-        <component :is="buildings[store.activeBuilding]" />
-      </div>
+      <!-- Campground map -->
+      <CampgroundMap v-else-if="store.currentPage === 'campground'" />
+
+      <!-- Unit hub -->
+      <UnitHub v-else-if="store.currentPage === 'unit-hub'" />
+
+      <!-- Lesson player -->
+      <LessonPlayer v-else-if="store.currentPage === 'lesson'" :unitId="store.activeUnitId" @complete="onLessonComplete" />
+
+      <!-- Activity player -->
+      <ActivityPlayer v-else-if="store.currentPage === 'activity'" :unitId="store.activeUnitId" :activityType="store.activeActivity" @complete="onActivityComplete" />
+
+      <!-- Story reader -->
+      <StoryReader v-else-if="store.currentPage === 'story'" :unitId="store.activeUnitId" @complete="onStoryComplete" />
+
+      <!-- Dashboard -->
+      <Dashboard v-else-if="store.currentPage === 'dashboard'" />
     </main>
-
-    <!-- Bottom nav (only on campground) -->
-    <nav v-if="store.currentPage !== 'selection'" class="bottom-nav">
-      <button :class="{ active: store.activeBuilding === 'Campfire' }" @click="store.activeBuilding = 'Campfire'">Campfire</button>
-      <button :class="{ active: store.activeBuilding === 'Workshop' }" @click="store.activeBuilding = 'Workshop'">Workshop</button>
-      <button @click="showLesson = true">Lesson 1</button>
-      <button @click="showDashboard = true">Dashboard</button>
-    </nav>
-
-    <!-- Lesson overlay -->
-    <div v-if="showLesson" class="overlay">
-      <div class="overlay-card">
-        <button class="close-btn" @click="showLesson = false">×</button>
-        <LessonPlayer lessonId="001" />
-      </div>
-    </div>
-
-    <!-- Dashboard overlay -->
-    <div v-if="showDashboard" class="overlay">
-      <div class="overlay-card">
-        <button class="close-btn" @click="showDashboard = false">×</button>
-        <Dashboard />
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted } from 'vue';
 import { store } from './store';
-import Campfire from './components/buildings/Campfire.vue';
-import Workshop from './components/buildings/Workshop.vue';
+import { usePersistence } from './composables/usePersistence.js';
+import { useProgression } from './composables/useProgression.js';
+import CampgroundMap from './components/CampgroundMap.vue';
+import UnitHub from './components/UnitHub.vue';
 import LessonPlayer from './components/LessonPlayer.vue';
+import ActivityPlayer from './components/ActivityPlayer.vue';
+import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
 
-const buildings = { Campfire, Workshop };
+const { save, load } = usePersistence();
+const { completeLesson, completeActivity, completeStory } = useProgression();
 
 const friendList = [
   { name: 'Fox', file: 'fox_1984443.png' },
   { name: 'Lion', file: 'lion_1817275.png' },
   { name: 'Panda', file: 'panda_8493111.png' },
-  { name: 'Guardian', file: 'fox_1984443.png' }
+  { name: 'Guardian', file: 'fox_1984443.png' },
 ];
 
-const selectFriend = (friend) => {
+onMounted(() => {
+  const loaded = load();
+  if (loaded && store.selectedFriend) {
+    store.currentPage = 'campground';
+  }
+});
+
+function selectFriend(friend) {
   store.selectedFriend = friend;
   store.currentPage = 'campground';
-};
+  save();
+}
 
-const goToSelection = () => {
-  store.currentPage = 'selection';
-};
+function goBack() {
+  const page = store.currentPage;
+  if (page === 'lesson' || page === 'activity' || page === 'story') {
+    store.currentPage = 'unit-hub';
+  } else if (page === 'unit-hub' || page === 'dashboard') {
+    store.currentPage = 'campground';
+  } else {
+    store.currentPage = 'selection';
+  }
+}
 
-const showLesson = ref(false);
-const showDashboard = ref(false);
+function onLessonComplete() {
+  completeLesson(store.activeUnitId);
+  save();
+  store.currentPage = 'unit-hub';
+}
+
+function onActivityComplete() {
+  completeActivity(store.activeUnitId, store.activeActivity);
+  save();
+  store.currentPage = 'unit-hub';
+}
+
+function onStoryComplete() {
+  completeStory(store.activeUnitId);
+  save();
+  store.currentPage = 'unit-hub';
+}
 </script>
 
 <style>
@@ -89,7 +113,7 @@ body {
   margin: 0;
   background: #05070A;
   color: #E0E0E0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Andika', 'OpenDyslexicRegular', system-ui, sans-serif;
 }
 
 .app {
@@ -106,7 +130,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid #222;
 }
 
@@ -117,6 +141,7 @@ body {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .xp-display {
@@ -165,77 +190,16 @@ body {
   justify-content: center;
   background: #111;
   cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.char-card:hover {
+  border-color: #FF8C00;
 }
 
 .friend-img {
   width: 70%;
   height: 70%;
   object-fit: contain;
-}
-
-.campground {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bottom-nav {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: #111;
-  border-top: 1px solid #222;
-}
-
-.bottom-nav button {
-  background: transparent;
-  border: none;
-  color: #888;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-.bottom-nav button.active {
-  background: #64FFDA;
-  color: #05070A;
-  font-weight: bold;
-}
-
-/* Overlays */
-.overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.overlay-card {
-  background: #111;
-  border-radius: 1rem;
-  padding: 1rem;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: auto;
-  position: relative;
-}
-
-.close-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: transparent;
-  border: none;
-  color: #888;
-  font-size: 2rem;
-  line-height: 1;
-  cursor: pointer;
 }
 </style>

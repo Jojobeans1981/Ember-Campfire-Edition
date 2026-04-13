@@ -5,21 +5,31 @@ describe('Global Store', () => {
   beforeEach(() => {
     store.xp = 0;
     store.currentPage = 'selection';
-    store.activeBuilding = 'Campfire';
+    store.activeUnitId = null;
+    store.unitProgress = {};
   });
 
   it('should initialize with 0 XP', () => {
     expect(store.xp).toBe(0);
   });
 
-  it('should unlock the library at 200 XP', () => {
-    expect(store.libraryUnlocked).toBe(false);
-    store.xp = 200;
-    expect(store.libraryUnlocked).toBe(true);
+  it('should track unit progress', () => {
+    store.unitProgress['unit-01'] = {
+      lessonComplete: false,
+      activitiesComplete: {},
+      storyRead: false,
+    };
+    expect(store.unitProgress['unit-01'].lessonComplete).toBe(false);
+    store.unitProgress['unit-01'].lessonComplete = true;
+    expect(store.unitProgress['unit-01'].lessonComplete).toBe(true);
   });
 
-  it('should not unlock the library below 200 XP', () => {
-    store.xp = 199;
-    expect(store.libraryUnlocked).toBe(false);
+  it('should support page navigation', () => {
+    expect(store.currentPage).toBe('selection');
+    store.currentPage = 'campground';
+    expect(store.currentPage).toBe('campground');
+    store.activeUnitId = 'unit-01';
+    store.currentPage = 'unit-hub';
+    expect(store.currentPage).toBe('unit-hub');
   });
 });

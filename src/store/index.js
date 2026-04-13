@@ -1,11 +1,10 @@
 import { reactive } from 'vue';
+import { PHONEME_ORDER } from '../data/curriculum.js';
 
 /** @type {Record<string, import('../models').SkillState>} */
 export const skillState = reactive({});
 
-const initialPhonemes = ['m','s','t','a','p','n','i','c'];
-
-initialPhonemes.forEach(p => {
+PHONEME_ORDER.forEach(p => {
   skillState[p] = {
     conceptSlug: p,
     strand: 'foundational',
@@ -21,8 +20,10 @@ initialPhonemes.forEach(p => {
 
 export const store = reactive({
   currentPage: 'selection',
-  activeBuilding: 'Campfire',
+  activeUnitId: null,
+  activeActivity: null,
   selectedFriend: null,
   xp: 0,
   currentLesson: null,
+  unitProgress: {},
 });

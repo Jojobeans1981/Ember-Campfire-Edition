@@ -3,9 +3,8 @@ import { mount } from '@vue/test-utils';
 import Workshop from './Workshop.vue';
 import { store } from '../../store';
 
-// Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }));
 
 describe('Workshop Component', () => {
@@ -13,42 +12,28 @@ describe('Workshop Component', () => {
     store.xp = 0;
   });
 
-  it('should display the correct target phoneme', () => {
+  it('should display the match heading', () => {
     const wrapper = mount(Workshop);
-    expect(wrapper.text()).toContain("Drag the letter 'm' to the slot");
+    expect(wrapper.text()).toContain('Match the phoneme');
   });
 
-  it('should handle incorrect drops with shake animation', async () => {
+  it('should show choice buttons for phonemes', () => {
     const wrapper = mount(Workshop);
-    
-    // Simulate drop event with incorrect data
-    const slot = wrapper.find('.rune-slot');
-    const dropEvent = {
-      dataTransfer: {
-        getData: () => 's'
-      }
-    };
-    
-    await slot.trigger('drop', dropEvent);
-    
-    expect(wrapper.find('.shake-error').exists()).toBe(true);
-    expect(store.xp).toBe(0);
+    const buttons = wrapper.findAll('.choice');
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
-  it('should handle correct drops with success message and XP increase', async () => {
+  it('should award XP on correct match', async () => {
     const wrapper = mount(Workshop);
-    
-    const slot = wrapper.find('.rune-slot');
-    const dropEvent = {
-      dataTransfer: {
-        getData: () => 'm'
-      }
-    };
-    
-    await slot.trigger('drop', dropEvent);
-    
-    expect(wrapper.find('.success').exists()).toBe(true);
-    expect(wrapper.text()).toContain("Well done!");
+    // Find the button matching the current target
+    const targetText = wrapper.find('.target-letter').text().toLowerCase();
+    const correctBtn = wrapper.findAll('.choice').find(
+      (btn) => btn.text().toLowerCase() === targetText
+    );
+    expect(correctBtn).toBeTruthy();
+
+    await correctBtn.trigger('click');
     expect(store.xp).toBe(25);
+    expect(wrapper.text()).toContain('Correct');
   });
 });

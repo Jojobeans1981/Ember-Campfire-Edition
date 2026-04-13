@@ -1,56 +1,123 @@
 <template>
   <div class="lesson-player">
-    <h2>{{ lesson.title }}</h2>
-    <div v-for="(step, idx) in lesson.steps" :key="step.stepId">
-      <div v-if="idx === currentStep">
-        <h3>Step {{ idx + 1 }}: {{ step.type }}</h3>
-        <div v-if="step.type === 'visual_drill'">
-          <div class="visual-drill">
-            <div class="letter">{{ step.items[0].grapheme }}</div>
-          </div>
-        </div>
-        <div v-else-if="step.type === 'word_work'">
-          <div class="word-work">
-            <p>Word: {{ step.items[0].word }}</p>
-          </div>
-        </div>
-        <button @click="nextStep">Next</button>
+    <div class="lesson-header">
+      <h2>{{ lesson.phonemes.map(p => p.toUpperCase()).join(' & ') }}</h2>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
+      <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ lesson.steps.length }}</div>
     </div>
-    <button v-if="currentStep >= lesson.steps.length" @click="finishLesson">Finish</button>
+
+    <div class="lesson-content">
+      <EmberMascot :speaking="ember.isSpeaking.value" :text="ember.currentText.value" />
+
+      <component
+        :is="currentStepComponent"
+        v-if="currentStep"
+        :step="currentStep"
+        :unitId="unitId"
+        @step-complete="onStepComplete"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { LESSONS } from '../data/lessons';
-import { skillState, store } from '../store';
+import { ref, computed, defineProps, defineEmits } from 'vue';
+import { getLessonForUnit } from '../data/lessons.js';
+import { useEmber } from '../composables/useEmber.js';
+import EmberMascot from './ui/EmberMascot.vue';
+import IntroStep from './lesson-steps/IntroStep.vue';
+import VisualDrillStep from './lesson-steps/VisualDrillStep.vue';
+import AuditoryDrillStep from './lesson-steps/AuditoryDrillStep.vue';
+import BlendingStep from './lesson-steps/BlendingStep.vue';
+import WordReadingStep from './lesson-steps/WordReadingStep.vue';
+import ReviewStep from './lesson-steps/ReviewStep.vue';
 
-const props = defineProps(['lessonId']);
-const lesson = LESSONS[props.lessonId];
-const currentStep = ref(0);
+const props = defineProps({ unitId: { type: String, required: true } });
+const emit = defineEmits(['complete']);
 
-function nextStep() {
-  currentStep.value++;
-}
+const ember = useEmber();
+const lesson = getLessonForUnit(props.unitId);
+const currentStepIndex = ref(0);
 
-function finishLesson() {
-  const phoneme = lesson.phoneme;
-  skillState[phoneme].taught = true;
-  skillState[phoneme].recognitionStatus = 'introduced';
-  alert('Lesson complete! ' + phoneme + ' is now taught.');
-  store.currentLesson = null;
+const stepComponents = {
+  intro: IntroStep,
+  visual_drill: VisualDrillStep,
+  auditory_drill: AuditoryDrillStep,
+  blending: BlendingStep,
+  word_reading: WordReadingStep,
+  review: ReviewStep,
+};
+
+const currentStep = computed(() => lesson?.steps[currentStepIndex.value] || null);
+const currentStepComponent = computed(() => {
+  if (!currentStep.value) return null;
+  return stepComponents[currentStep.value.type] || null;
+});
+
+const progressPercent = computed(() => {
+  if (!lesson) return 0;
+  return Math.round((currentStepIndex.value / lesson.steps.length) * 100);
+});
+
+function onStepComplete() {
+  ember.stopSpeaking();
+  if (currentStepIndex.value < lesson.steps.length - 1) {
+    currentStepIndex.value++;
+  } else {
+    emit('complete');
+  }
 }
 </script>
 
 <style scoped>
 .lesson-player {
-  padding: 20px;
-  background: #111;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
 }
-.letter {
-  font-size: 90px;
+
+.lesson-header {
+  width: 100%;
+  text-align: center;
+}
+
+.lesson-header h2 {
   color: #FF8C00;
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #FF8C00;
+  transition: width 0.3s ease;
+}
+
+.step-label {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.lesson-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
 }
 </style>
