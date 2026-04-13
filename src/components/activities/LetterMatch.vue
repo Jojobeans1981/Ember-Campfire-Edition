@@ -33,6 +33,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { UNITS } from '../../data/curriculum.js';
 import { useProgression } from '../../composables/useProgression.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { celebrateCorrect } from '../../composables/useCelebration.js';
 
 const props = defineProps({ unitId: String, activityType: String });
 const emit = defineEmits(['complete']);
@@ -91,6 +92,7 @@ function pick(choice) {
   if (choice === targetPhoneme.value) {
     correct.value++;
     phase.value = 'correct';
+    celebrateCorrect();
   } else {
     phase.value = 'wrong';
   }

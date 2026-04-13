@@ -45,6 +45,7 @@ import { UNITS } from '../../data/curriculum.js';
 import { useProgression } from '../../composables/useProgression.js';
 import { getDecodableWords } from '../../data/wordLists.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { celebrateCorrect } from '../../composables/useCelebration.js';
 
 const props = defineProps({ unitId: String, activityType: String });
 const emit = defineEmits(['complete']);
@@ -106,6 +107,7 @@ function pickLetter(bankIdx) {
     showResult.value = true;
     if (allCorrect.value) {
       correct.value++;
+      celebrateCorrect();
       ember.speak('Great spelling!');
       setTimeout(() => {
         if (cancelled) return;

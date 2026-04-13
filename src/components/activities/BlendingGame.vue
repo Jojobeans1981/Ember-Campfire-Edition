@@ -31,6 +31,7 @@ import { UNITS } from '../../data/curriculum.js';
 import { useProgression } from '../../composables/useProgression.js';
 import { getDecodableWords } from '../../data/wordLists.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { celebrateCorrect } from '../../composables/useCelebration.js';
 
 const props = defineProps({ unitId: String, activityType: String });
 const emit = defineEmits(['complete']);
@@ -82,6 +83,7 @@ async function runRound() {
   phase.value = 'reveal';
   await ember.speak(word.word);
   correct.value++;
+  celebrateCorrect();
 
   await new Promise(r => setTimeout(r, 800));
 

@@ -6,10 +6,7 @@
   >
     <div class="station-icon">
       <div v-if="status === 'locked'" class="lock-icon">🔒</div>
-      <div v-else-if="status === 'kindling'" class="fire-state kindling">🪵</div>
-      <div v-else-if="status === 'sparks'" class="fire-state sparks">✨</div>
-      <div v-else-if="status === 'fire'" class="fire-state fire">🔥</div>
-      <div v-else class="fire-state stories">🏕️</div>
+      <CampfireIcon v-else :sparks="sparksEarned" :stage="status" />
     </div>
     <div class="station-label">{{ unit.stationLabel }}</div>
     <!-- Spark progress dots -->
@@ -28,6 +25,7 @@
 <script setup>
 import { computed, defineProps, defineEmits } from 'vue';
 import { store } from '../store';
+import CampfireIcon from './ui/CampfireIcon.vue';
 
 const props = defineProps({
   unit: { type: Object, required: true },
