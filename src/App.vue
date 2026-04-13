@@ -44,6 +44,8 @@ import { onMounted } from 'vue';
 import { store } from './store';
 import { usePersistence } from './composables/usePersistence.js';
 import { useProgression } from './composables/useProgression.js';
+import { stopAllAudio } from './composables/useEmber.js';
+import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
 import CampgroundMap from './components/CampgroundMap.vue';
 import UnitHub from './components/UnitHub.vue';
 import LessonPlayer from './components/LessonPlayer.vue';
@@ -53,6 +55,12 @@ import Dashboard from './components/Dashboard.vue';
 
 const { save, load } = usePersistence();
 const { completeLesson, completeActivity, completeStory } = useProgression();
+const { cancelListening } = useSpeechRecognition();
+
+function killAudio() {
+  stopAllAudio();
+  cancelListening();
+}
 
 const friendList = [
   { name: 'Fox', file: 'fox_1984443.png' },
@@ -75,6 +83,7 @@ function selectFriend(friend) {
 }
 
 function goBack() {
+  killAudio();
   const page = store.currentPage;
   if (page === 'lesson' || page === 'activity' || page === 'story') {
     store.currentPage = 'unit-hub';
@@ -86,18 +95,21 @@ function goBack() {
 }
 
 function onLessonComplete() {
+  killAudio();
   completeLesson(store.activeUnitId);
   save();
   store.currentPage = 'unit-hub';
 }
 
 function onActivityComplete() {
+  killAudio();
   completeActivity(store.activeUnitId, store.activeActivity);
   save();
   store.currentPage = 'unit-hub';
 }
 
 function onStoryComplete() {
+  killAudio();
   completeStory(store.activeUnitId);
   save();
   store.currentPage = 'unit-hub';

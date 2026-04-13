@@ -27,7 +27,7 @@ const props = defineProps({ step: Object, unitId: String });
 const emit = defineEmits(['step-complete']);
 
 const ember = useEmber();
-const { startListening, isListening: listening, volume: micVolume, sustainProgress: micProgress, requestMicPermission } = useSpeechRecognition();
+const { startListening, isListening: listening, volume: micVolume, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const currentNarrationText = ref('');
 const waitingForSpeech = ref(false);
@@ -76,6 +76,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   cancelled = true;
   ember.stopSpeaking();
+  cancelListening();
 });
 </script>
 

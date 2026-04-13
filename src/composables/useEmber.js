@@ -3,6 +3,9 @@ import { ref } from 'vue';
 const isSpeaking = ref(false);
 const currentText = ref('');
 
+// Track all active audio elements so we can stop them on navigation
+let activeAudio = null;
+
 export function useEmber() {
   function speak(text, options = {}) {
     return new Promise((resolve) => {
@@ -10,7 +13,6 @@ export function useEmber() {
         resolve();
         return;
       }
-      // Cancel any in-progress speech
       window.speechSynthesis.cancel();
 
       currentText.value = text;
@@ -38,10 +40,28 @@ export function useEmber() {
 
   function playPhoneme(phoneme) {
     return new Promise((resolve) => {
+      // Stop any currently playing audio
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+        activeAudio = null;
+      }
+
       const audio = new Audio(`/audio/phonemes/${phoneme}.mp3`);
-      audio.onended = resolve;
-      audio.onerror = () => resolve();
-      audio.play().catch(() => resolve());
+      activeAudio = audio;
+
+      audio.onended = () => {
+        activeAudio = null;
+        resolve();
+      };
+      audio.onerror = () => {
+        activeAudio = null;
+        resolve();
+      };
+      audio.play().catch(() => {
+        activeAudio = null;
+        resolve();
+      });
     });
   }
 
@@ -74,9 +94,31 @@ export function useEmber() {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    if (activeAudio) {
+      activeAudio.pause();
+      activeAudio.currentTime = 0;
+      activeAudio = null;
+    }
     isSpeaking.value = false;
     currentText.value = '';
   }
 
   return { isSpeaking, currentText, speak, playPhoneme, teachPhoneme, runNarration, stopSpeaking };
+}
+
+/**
+ * Global kill switch — stops ALL audio (TTS + phoneme playback + mic).
+ * Call this on every page navigation to prevent audio bleeding between pages.
+ */
+export function stopAllAudio() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+    activeAudio = null;
+  }
+  isSpeaking.value = false;
+  currentText.value = '';
 }

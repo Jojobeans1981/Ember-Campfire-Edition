@@ -45,7 +45,7 @@ const emit = defineEmits(['complete']);
 
 const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
-const { startListening, volume: micVolume, sustainProgress: micProgress, requestMicPermission } = useSpeechRecognition();
+const { startListening, volume: micVolume, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const unit = UNITS.find(u => u.unitId === props.unitId);
 const allPhonemes = getPhonemesForUnit(props.unitId);
@@ -102,6 +102,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   cancelled = true;
   ember.stopSpeaking();
+  cancelListening();
 });
 </script>
 
