@@ -1,4 +1,7 @@
 import { ref } from 'vue';
+import { ensureModel, createRecognizer } from '../services/voskService.js';
+import { getGrammarForPhoneme, isPhonemeMatch } from '../data/phonemeGrammars.js';
+import { usePhonemeLogic } from './usePhonemeLogic.js';
 
 // Shared mic stream — request once, reuse everywhere
 let sharedStream = null;
@@ -18,37 +21,111 @@ export async function requestMicPermission() {
   return ensureMicAccess();
 }
 
+/**
+ * Set up the volume analysis loop (shared between phoneme and word listening).
+ * Returns { analyser, cleanup, sustainedFrames getter }.
+ */
+function setupVolumeAnalysis(stream, audioContext, volume, sustainProgress, voiceThreshold, sustainTarget, decayRate, onSustained) {
+  const micSource = audioContext.createMediaStreamSource(stream);
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  micSource.connect(analyser);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  let sustainedFrames = 0;
+  let animationId = null;
+  let stopped = false;
+
+  const loop = () => {
+    if (stopped) return;
+
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / bufferLength);
+    volume.value = Math.min(100, Math.round(rms));
+
+    if (rms > voiceThreshold) {
+      sustainedFrames++;
+    } else {
+      sustainedFrames = Math.max(0, sustainedFrames - decayRate);
+    }
+
+    sustainProgress.value = Math.min(100, Math.round((sustainedFrames / sustainTarget) * 100));
+
+    if (sustainedFrames >= sustainTarget && onSustained) {
+      onSustained();
+    }
+
+    animationId = requestAnimationFrame(loop);
+  };
+
+  loop();
+
+  return {
+    micSource,
+    getSustainedFrames: () => sustainedFrames,
+    stop() {
+      stopped = true;
+      if (animationId) cancelAnimationFrame(animationId);
+      micSource.disconnect();
+    },
+  };
+}
+
+/**
+ * Connect the mic stream to a Vosk recognizer via ScriptProcessorNode.
+ * Returns a cleanup function.
+ */
+function pipeAudioToVosk(audioContext, stream, recognizer) {
+  const source = audioContext.createMediaStreamSource(stream);
+  // ScriptProcessorNode is deprecated but works everywhere and avoids
+  // needing a separate AudioWorklet file. Pragmatic choice for now.
+  const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+  processor.onaudioprocess = (e) => {
+    const inputData = e.inputBuffer.getChannelData(0);
+    // Copy the buffer — Vosk processes asynchronously
+    recognizer.acceptWaveformFloat(new Float32Array(inputData), audioContext.sampleRate);
+  };
+
+  source.connect(processor);
+  processor.connect(audioContext.destination);
+
+  return () => {
+    processor.onaudioprocess = null;
+    source.disconnect();
+    processor.disconnect();
+  };
+}
+
 export function useSpeechRecognition() {
   const isListening = ref(false);
   const matched = ref(false);
   const transcript = ref('');
-  const volume = ref(0);           // 0-100 live mic volume for UI
-  const sustainProgress = ref(0);  // 0-100 progress toward sustained sound goal
+  const volume = ref(0);
+  const sustainProgress = ref(0);
 
   let activeCleanup = null;
+  const { getPhonemeParams } = usePhonemeLogic();
 
   /**
-   * Listen for a PHONEME.
+   * Listen for a PHONEME using Vosk + volume analysis.
    *
-   * Phonemes are single sounds that the Web Speech API cannot reliably
-   * distinguish (e.g. /m/ vs /s/ vs /t/). Instead, we verify the child
-   * is making a deliberate, sustained vocal effort:
-   *
-   * - Mic must detect sound above the volume threshold
-   * - Sound must be sustained for ~2 seconds (120 frames at 60fps)
-   * - Progress bar fills as they hold the sound
-   * - Brief noises, coughs, or background sounds won't fill the bar
-   *   because frames below threshold don't count and the bar decays
-   *
-   * This approach is used by most children's reading apps for phoneme
-   * practice — it verifies effort without false-positive recognition.
+   * Vosk is grammar-constrained to words matching the target phoneme.
+   * Volume analysis runs in parallel for the UI meters and as a fallback.
+   * For plosive phonemes the sustain threshold is lowered since they're brief.
    */
   function startListening(targetPhoneme, duration = 6000) {
     return new Promise(async (resolve) => {
       let resolved = false;
       let audioContext = null;
-      let animationId = null;
-      let micSource = null;
+      let volumeHandle = null;
+      let voskCleanup = null;
+      let recognizer = null;
 
       isListening.value = true;
       matched.value = false;
@@ -57,11 +134,13 @@ export function useSpeechRecognition() {
       sustainProgress.value = 0;
 
       const cleanup = () => {
-        if (animationId) cancelAnimationFrame(animationId);
-        if (micSource) micSource.disconnect();
+        if (volumeHandle) volumeHandle.stop();
+        if (voskCleanup) voskCleanup();
+        if (recognizer) { try { recognizer.remove(); } catch (_) {} }
         if (audioContext) audioContext.close().catch(() => {});
-        animationId = null;
-        micSource = null;
+        volumeHandle = null;
+        voskCleanup = null;
+        recognizer = null;
         audioContext = null;
         activeCleanup = null;
       };
@@ -79,91 +158,101 @@ export function useSpeechRecognition() {
       activeCleanup = () => finish(false);
 
       const stream = await ensureMicAccess();
-      if (!stream) {
-        finish(false);
-        return;
-      }
+      if (!stream) { finish(false); return; }
+
+      // Determine sustain thresholds based on phoneme type
+      const params = getPhonemeParams(targetPhoneme);
+      const isPlosive = params.type === 'plosive';
+      const VOICE_THRESHOLD = 35;
+      const SUSTAIN_TARGET = isPlosive ? 30 : 120;
+      const DECAY_RATE = 2;
+      let voskMatched = false;
 
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        micSource = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        micSource.connect(analyser);
 
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+        // Start volume analysis (UI meters + fallback)
+        volumeHandle = setupVolumeAnalysis(
+          stream, audioContext, volume, sustainProgress,
+          VOICE_THRESHOLD, SUSTAIN_TARGET, DECAY_RATE,
+          () => {
+            // Sustained volume reached — pass if Vosk also matched,
+            // or pass anyway as fallback for unclear speech
+            if (voskMatched || !voskReady) {
+              finish(true);
+            }
+          },
+        );
 
-        // Thresholds tuned for child speech:
-        // - VOICE_THRESHOLD: must be actual voice, not ambient noise
-        // - SUSTAIN_TARGET: ~2 seconds of sustained sound at 60fps
-        // - DECAY_RATE: progress decays when child stops making sound,
-        //   preventing brief noises from accumulating to a pass
-        const VOICE_THRESHOLD = 35;
-        const SUSTAIN_TARGET = 120;
-        const DECAY_RATE = 2;
-        let sustainedFrames = 0;
+        // Start Vosk recognition
+        let voskReady = false;
+        try {
+          const model = await ensureModel();
+          if (resolved) return; // cancelled during model load
 
-        const analyzeVolume = () => {
-          if (resolved) return;
+          const grammar = getGrammarForPhoneme(targetPhoneme);
+          recognizer = createRecognizer(model, audioContext.sampleRate, grammar);
+          voskReady = true;
 
-          analyser.getByteFrequencyData(dataArray);
-          let sum = 0;
-          for (let i = 0; i < bufferLength; i++) {
-            sum += dataArray[i] * dataArray[i];
-          }
-          const rms = Math.sqrt(sum / bufferLength);
-          volume.value = Math.min(100, Math.round(rms));
+          recognizer.on('result', (message) => {
+            if (resolved) return;
+            const text = message.result?.text || '';
+            if (text && text !== '[unk]') {
+              transcript.value = text;
+              if (isPhonemeMatch(targetPhoneme, text)) {
+                voskMatched = true;
+                // For plosives, Vosk match alone is sufficient
+                if (isPlosive) {
+                  finish(true);
+                }
+                // For sustain phonemes, wait for volume to also confirm
+              }
+            }
+          });
 
-          if (rms > VOICE_THRESHOLD) {
-            // Sound detected — accumulate progress
-            sustainedFrames++;
-          } else {
-            // Silence — decay progress so brief noises don't accumulate
-            sustainedFrames = Math.max(0, sustainedFrames - DECAY_RATE);
-          }
+          recognizer.on('partialresult', (message) => {
+            if (resolved) return;
+            const partial = message.result?.partial || '';
+            if (partial && partial !== '[unk]') {
+              transcript.value = partial;
+              if (isPhonemeMatch(targetPhoneme, partial)) {
+                voskMatched = true;
+                if (isPlosive) {
+                  finish(true);
+                }
+              }
+            }
+          });
 
-          sustainProgress.value = Math.min(100, Math.round((sustainedFrames / SUSTAIN_TARGET) * 100));
-
-          if (sustainedFrames >= SUSTAIN_TARGET) {
-            finish(true);
-            return;
-          }
-
-          animationId = requestAnimationFrame(analyzeVolume);
-        };
-
-        analyzeVolume();
+          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer);
+        } catch (err) {
+          console.warn('Vosk setup failed, using volume-only fallback:', err);
+          voskReady = false;
+        }
       } catch (err) {
         console.error('Audio analysis setup failed:', err);
         finish(false);
         return;
       }
 
-      // Timeout — if they didn't sustain long enough, fail
-      setTimeout(() => finish(false), duration);
+      setTimeout(() => finish(voskMatched), duration);
     });
   }
 
   /**
-   * Listen for a WORD.
+   * Listen for a WORD using Vosk + volume analysis.
    *
-   * Words CAN be recognized by the Web Speech API, so we use a strict
-   * matching approach:
-   * - Speech recognition must return a transcript that closely matches
-   *   the target word (exact match or very close)
-   * - Volume detection runs for visual feedback
-   * - Falls back to sustained volume if Speech API unavailable
+   * Vosk is grammar-constrained to the target word(s).
+   * Volume analysis runs for UI feedback.
    */
   function startWordListening(targetWord, duration = 6000) {
     return new Promise(async (resolve) => {
       let resolved = false;
       let wordMatch = false;
-      let speechRecognitionAvailable = false;
-      let recognition = null;
       let audioContext = null;
-      let animationId = null;
-      let micSource = null;
+      let volumeHandle = null;
+      let voskCleanup = null;
+      let recognizer = null;
 
       isListening.value = true;
       matched.value = false;
@@ -172,16 +261,14 @@ export function useSpeechRecognition() {
       sustainProgress.value = 0;
 
       const cleanup = () => {
-        if (animationId) cancelAnimationFrame(animationId);
-        if (micSource) micSource.disconnect();
+        if (volumeHandle) volumeHandle.stop();
+        if (voskCleanup) voskCleanup();
+        if (recognizer) { try { recognizer.remove(); } catch (_) {} }
         if (audioContext) audioContext.close().catch(() => {});
-        if (recognition) {
-          try { recognition.abort(); } catch (_) {}
-        }
-        animationId = null;
-        micSource = null;
+        volumeHandle = null;
+        voskCleanup = null;
+        recognizer = null;
         audioContext = null;
-        recognition = null;
         activeCleanup = null;
       };
 
@@ -198,138 +285,93 @@ export function useSpeechRecognition() {
       activeCleanup = () => finish(false);
 
       const stream = await ensureMicAccess();
-      if (!stream) {
+      if (!stream) { finish(false); return; }
+
+      const VOICE_THRESHOLD = 35;
+      const SUSTAIN_TARGET = 80;
+      const DECAY_RATE = 2;
+      let voskReady = false;
+
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Volume analysis for UI + fallback
+        volumeHandle = setupVolumeAnalysis(
+          stream, audioContext, volume, sustainProgress,
+          VOICE_THRESHOLD, SUSTAIN_TARGET, DECAY_RATE,
+          () => {
+            // Volume-based fallback only when Vosk isn't available
+            if (!voskReady) finish(true);
+          },
+        );
+
+        // Build grammar from target word(s)
+        const target = targetWord.toLowerCase().trim();
+        const grammarWords = [...new Set([
+          target,
+          ...target.split(/\s+/), // individual words for sentences
+        ])];
+
+        try {
+          const model = await ensureModel();
+          if (resolved) return;
+
+          recognizer = createRecognizer(model, audioContext.sampleRate, grammarWords);
+          voskReady = true;
+
+          const checkMatch = (text) => {
+            if (!text || text === '[unk]') return;
+            transcript.value = text;
+
+            const spokenWords = text.toLowerCase().split(/\s+/);
+            for (const spoken of spokenWords) {
+              const clean = spoken.replace(/[^a-z]/g, '');
+              if (clean === target) {
+                wordMatch = true;
+                break;
+              }
+            }
+
+            // Also check full transcript match
+            const cleanFull = text.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+            if (cleanFull === target) {
+              wordMatch = true;
+            }
+
+            if (wordMatch) finish(true);
+          };
+
+          recognizer.on('result', (message) => {
+            if (resolved) return;
+            checkMatch(message.result?.text);
+          });
+
+          recognizer.on('partialresult', (message) => {
+            if (resolved) return;
+            checkMatch(message.result?.partial);
+          });
+
+          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer);
+        } catch (err) {
+          console.warn('Vosk setup failed, using volume-only fallback:', err);
+          voskReady = false;
+        }
+      } catch (err) {
+        console.error('Audio analysis setup failed:', err);
         finish(false);
         return;
       }
 
-      // --- Volume analysis for visual feedback + fallback ---
-      let sustainedFrames = 0;
-      const VOICE_THRESHOLD = 35;
-      const SUSTAIN_TARGET = 80;
-      const DECAY_RATE = 2;
-
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        micSource = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        micSource.connect(analyser);
-
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        const analyzeVolume = () => {
-          if (resolved) return;
-
-          analyser.getByteFrequencyData(dataArray);
-          let sum = 0;
-          for (let i = 0; i < bufferLength; i++) {
-            sum += dataArray[i] * dataArray[i];
-          }
-          const rms = Math.sqrt(sum / bufferLength);
-          volume.value = Math.min(100, Math.round(rms));
-
-          if (rms > VOICE_THRESHOLD) {
-            sustainedFrames++;
-          } else {
-            sustainedFrames = Math.max(0, sustainedFrames - DECAY_RATE);
-          }
-
-          sustainProgress.value = Math.min(100, Math.round((sustainedFrames / SUSTAIN_TARGET) * 100));
-
-          // Only use volume-based pass when speech recognition is NOT available
-          if (!speechRecognitionAvailable && sustainedFrames >= SUSTAIN_TARGET) {
-            finish(true);
-            return;
-          }
-
-          animationId = requestAnimationFrame(analyzeVolume);
-        };
-
-        analyzeVolume();
-      } catch (err) {
-        console.error('Audio analysis setup failed:', err);
-      }
-
-      // --- Speech Recognition for word matching ---
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        try {
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          recognition = new SpeechRecognition();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = 'en-US';
-          recognition.maxAlternatives = 5;
-          speechRecognitionAvailable = true;
-
-          recognition.onresult = (event) => {
-            const target = targetWord.toLowerCase().trim();
-            for (let i = 0; i < event.results.length; i++) {
-              for (let j = 0; j < event.results[i].length; j++) {
-                const text = event.results[i][j].transcript.toLowerCase().trim();
-                transcript.value = text;
-
-                // Strict word matching:
-                // Split transcript into words and check if any word matches target
-                const spokenWords = text.split(/\s+/);
-                for (const spoken of spokenWords) {
-                  // Clean punctuation
-                  const clean = spoken.replace(/[^a-z]/g, '');
-                  if (clean === target) {
-                    wordMatch = true;
-                    break;
-                  }
-                }
-
-                // Also accept if the entire short transcript IS the target
-                const cleanFull = text.replace(/[^a-z\s]/g, '').trim();
-                if (cleanFull === target) {
-                  wordMatch = true;
-                }
-              }
-              if (wordMatch) break;
-            }
-            if (wordMatch) {
-              finish(true);
-            }
-          };
-
-          recognition.onerror = (e) => {
-            if (e.error === 'not-allowed') {
-              console.error('Mic permission denied for speech recognition');
-            }
-          };
-
-          recognition.onend = () => {
-            if (!resolved && recognition) {
-              try { recognition.start(); } catch (_) {}
-            }
-          };
-
-          recognition.start();
-        } catch (err) {
-          console.warn('Speech recognition failed to start:', err);
-          speechRecognitionAvailable = false;
-        }
-      }
-
-      // Timeout
       setTimeout(() => {
-        if (speechRecognitionAvailable) {
-          // With speech recognition: only pass on actual word match
+        if (voskReady) {
           finish(wordMatch);
         } else {
-          // Without speech recognition: pass if sustained sound detected
-          finish(sustainedFrames >= SUSTAIN_TARGET);
+          finish(volumeHandle?.getSustainedFrames() >= SUSTAIN_TARGET);
         }
       }, duration);
     });
   }
 
-  /**
-   * Force-cancel any active listening session.
-   */
   function cancelListening() {
     if (activeCleanup) {
       activeCleanup();

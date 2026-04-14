@@ -26,5 +26,10 @@ export default defineConfig({
       'lucide-vue-next'
     ],
     exclude: ['@tensorflow-models/speech-commands']
-  }
+  },
+  // Note: COOP/COEP headers may be needed for SharedArrayBuffer (Vosk WASM).
+  // vosk-browser 0.0.8 has a non-SAB fallback, so we skip them for now
+  // to avoid breaking Vite HMR and cross-origin resources.
+  // If Vosk errors about SharedArrayBuffer, re-enable:
+  // server: { headers: { 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Embedder-Policy': 'require-corp' } }
 });
