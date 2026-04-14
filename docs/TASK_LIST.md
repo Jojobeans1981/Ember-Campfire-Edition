@@ -6,8 +6,8 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 1 — UFLI data layer foundations [MVP1]
 
-- [ ] Create `src/data/ufli/` directory
-- [ ] Write `src/data/ufli/ufliCurriculum.js` exporting `UFLI_LESSONS_META` (the manifest array) and `getLessonMeta(id)`
+- [x] Create `src/data/ufli/` directory
+- [x] Write `src/data/ufli/ufliCurriculum.js` exporting `UFLI_LESSONS_META` (the manifest array) and `getLessonMeta(id)`
 - [ ] Write `src/data/ufli/ufliLessons.test.js` red tests: loader returns lesson, `getCumulativeWordList('003')` includes lessons 1+2+3, `lessonIdFromNumber(45) === '045'`, `lessonIdFromNumber('35a') === '035a'`, `ALL_UFLI_LESSON_IDS` length matches manifest
 - [ ] Write `src/data/ufli/ufliLessons.js` implementing `getUfliLesson`, `getUfliLessonSync`, `ALL_UFLI_LESSON_IDS`, `getCumulativeWordList`, `lessonIdFromNumber`
 - [ ] Run `npm test src/data/ufli/ufliLessons.test.js`; expected: tests fail with "lesson file not found"
