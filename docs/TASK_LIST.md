@@ -34,18 +34,18 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 4 — New lesson step components [MVP4]
 
-- [ ] Write `src/components/lesson-steps/PhonemicAwarenessStep.test.js` smoke test (mounts, emits `step-complete`)
-- [ ] Write `PhonemicAwarenessStep.vue` (refactored from old `IntroStep.vue`) — structured blend + segment from `step1` data
-- [ ] Write `NewConceptStep.test.js` smoke test
-- [ ] Write `NewConceptStep.vue` rendering grapheme card, articulation, I do/we do/you do for read+spell
-- [ ] Write `IrregularWordsStep.test.js` smoke test
-- [ ] Write `IrregularWordsStep.vue` rendering each word with regular/irregular grapheme highlighting
-- [ ] Write `ConnectedTextStep.test.js` smoke test
-- [ ] Write `ConnectedTextStep.vue` rendering decodable sentences one at a time with mic
-- [ ] Upgrade `BlendingStep.vue` to accept `step4.wordChain` and `step4.tiles`
-- [ ] Rename `WordReadingStep.vue` → `WordWorkStep.vue`; expand to handle word chains, optional sort, optional meaning from `step6`
-- [ ] Run all step tests; expected: green
-- [ ] Commit
+- [x] Write `src/components/lesson-steps/PhonemicAwarenessStep.test.js` smoke test (mounts, emits `step-complete`)
+- [x] Write `PhonemicAwarenessStep.vue` (refactored from old `IntroStep.vue`) — structured blend + segment from `step1` data
+- [x] Write `NewConceptStep.test.js` smoke test
+- [x] Write `NewConceptStep.vue` rendering grapheme card, articulation, I do/we do/you do for read+spell
+- [x] Write `IrregularWordsStep.test.js` smoke test
+- [x] Write `IrregularWordsStep.vue` rendering each word with regular/irregular grapheme highlighting
+- [x] Write `ConnectedTextStep.test.js` smoke test
+- [x] Write `ConnectedTextStep.vue` rendering decodable sentences one at a time with mic
+- [x] Upgrade `BlendingStep.vue` to accept `step4.wordChain` and `step4.tiles`
+- [x] Rename `WordReadingStep.vue` → `WordWorkStep.vue`; expand to handle word chains, optional sort, optional meaning from `step6`
+- [x] Run all step tests; expected: green
+- [x] Commit
 
 ### Task Group 5 — UfliLessonHub [MVP5]
 
