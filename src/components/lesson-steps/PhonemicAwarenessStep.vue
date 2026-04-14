@@ -32,10 +32,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useEmber } from '../../composables/useEmber.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
+
+const ember = useEmber();
+let cancelled = false;
 
 const blendItems = computed(() => props.step?.blend ?? []);
 const segmentItems = computed(() => props.step?.segment ?? []);
@@ -50,12 +54,41 @@ const currentBlend = computed(() => blendItems.value[cursor.value]);
 const currentSegment = computed(() => segmentItems.value[cursor.value - blendItems.value.length]);
 const isLast = computed(() => cursor.value >= totalItems.value - 1);
 
-function revealBlend() {
-  showWord.value = true;
+async function playBlendPhonemes(item) {
+  if (!item) return;
+  await ember.speak('Listen to the sounds.');
+  for (const p of item.phonemes ?? []) {
+    if (cancelled) return;
+    await ember.playPhoneme(p);
+  }
 }
 
-function tapSegment(i) {
+async function playSegmentWord(item) {
+  if (!item) return;
+  await ember.speak(`The word is ${item.word}.`);
+}
+
+async function revealBlend() {
+  showWord.value = true;
+  if (currentBlend.value) {
+    await ember.speak(currentBlend.value.word);
+  }
+}
+
+async function tapSegment(i) {
   tappedSegments.value[i] = true;
+  const item = currentSegment.value;
+  if (item) {
+    await ember.playPhoneme(item.phonemes?.[i]);
+  }
+}
+
+async function playCurrent() {
+  if (phase.value === 'blend') {
+    await playBlendPhonemes(currentBlend.value);
+  } else {
+    await playSegmentWord(currentSegment.value);
+  }
 }
 
 function next() {
@@ -67,6 +100,23 @@ function next() {
   showWord.value = false;
   tappedSegments.value = [];
 }
+
+watch(cursor, async () => {
+  await playCurrent();
+});
+
+onMounted(async () => {
+  if (totalItems.value === 0) {
+    emit('step-complete');
+    return;
+  }
+  await playCurrent();
+});
+
+onBeforeUnmount(() => {
+  cancelled = true;
+  ember.stopSpeaking();
+});
 </script>
 
 <style scoped>

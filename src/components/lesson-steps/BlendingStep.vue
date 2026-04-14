@@ -11,17 +11,19 @@
       <div v-if="hasTiles" class="tile-pools">
         <div v-if="tiles.initial?.length" class="tile-row">
           <span class="tile-label">start</span>
-          <button v-for="t in tiles.initial" :key="`i-${t}`" class="tile">{{ t }}</button>
+          <button v-for="t in tiles.initial" :key="`i-${t}`" class="tile" @click="playTile(t)">{{ t }}</button>
         </div>
         <div v-if="tiles.medial?.length" class="tile-row">
           <span class="tile-label">middle</span>
-          <button v-for="t in tiles.medial" :key="`m-${t}`" class="tile vowel">{{ t }}</button>
+          <button v-for="t in tiles.medial" :key="`m-${t}`" class="tile vowel" @click="playTile(t)">{{ t }}</button>
         </div>
         <div v-if="tiles.final?.length" class="tile-row">
           <span class="tile-label">end</span>
-          <button v-for="t in tiles.final" :key="`f-${t}`" class="tile">{{ t }}</button>
+          <button v-for="t in tiles.final" :key="`f-${t}`" class="tile" @click="playTile(t)">{{ t }}</button>
         </div>
       </div>
+
+      <button class="audio-btn" @click="speakCurrentWord">🔊 Hear the word</button>
 
       <div class="controls">
         <div class="progress">{{ chainIndex + 1 }} / {{ wordChain.length }}</div>
@@ -83,12 +85,27 @@ const chainIndex = ref(0);
 const currentChainWord = computed(() => wordChain.value[chainIndex.value] ?? '');
 const isLastChain = computed(() => chainIndex.value >= wordChain.value.length - 1);
 
-function nextChainWord() {
+async function nextChainWord() {
   if (wordChain.value.length === 0 || isLastChain.value) {
     emit('step-complete');
     return;
   }
   chainIndex.value++;
+  await speakCurrentWord();
+}
+
+async function speakCurrentWord() {
+  const w = currentChainWord.value;
+  if (!w) return;
+  // Sound out: each letter, then the whole word
+  for (const ch of w.toLowerCase()) {
+    if (/[a-z]/.test(ch)) await ember.playPhoneme(ch);
+  }
+  await ember.speak(w);
+}
+
+async function playTile(letter) {
+  await ember.playPhoneme(letter);
 }
 
 // --- legacy mode below ---
@@ -137,7 +154,10 @@ async function runItem(item) {
 }
 
 onMounted(async () => {
-  if (ufliMode.value) return; // UFLI mode is fully reactive; no async loop
+  if (ufliMode.value) {
+    if (wordChain.value.length > 0) await speakCurrentWord();
+    return;
+  }
   if (!Array.isArray(props.step?.items)) return;
   for (let i = 0; i < props.step.items.length; i++) {
     if (cancelled) return;

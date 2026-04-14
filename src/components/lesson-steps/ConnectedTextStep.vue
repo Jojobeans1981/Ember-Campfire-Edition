@@ -9,6 +9,7 @@
     <div v-else class="empty">No sentences for this lesson.</div>
 
     <div class="controls">
+      <button v-if="currentSentence" class="audio-btn" @click="speakCurrent">🔊 Read to me</button>
       <div class="progress" v-if="sentences.length > 0">{{ index + 1 }} / {{ sentences.length }}</div>
       <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
     </div>
@@ -16,15 +17,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import { useEmber } from '../../composables/useEmber.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
+
+const ember = useEmber();
+let cancelled = false;
 
 const sentences = computed(() => props.step?.readSentences ?? []);
 const index = ref(0);
 const currentSentence = computed(() => sentences.value[index.value]);
 const isLast = computed(() => index.value >= sentences.value.length - 1);
+
+async function speakCurrent() {
+  const s = currentSentence.value;
+  if (s) await ember.speak(s);
+}
+
+watch(index, () => {
+  speakCurrent();
+});
+
+onBeforeUnmount(() => {
+  cancelled = true;
+  ember.stopSpeaking();
+});
 
 function next() {
   if (sentences.value.length === 0 || isLast.value) {

@@ -32,10 +32,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useEmber } from '../../composables/useEmber.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
+
+const ember = useEmber();
+let cancelled = false;
 
 const allWords = computed(() => [
   ...(props.step?.review ?? []),
@@ -45,6 +49,25 @@ const allWords = computed(() => [
 const index = ref(0);
 const currentWord = computed(() => allWords.value[index.value]);
 const isLast = computed(() => index.value >= allWords.value.length - 1);
+
+async function speakCurrent() {
+  const w = currentWord.value;
+  if (!w) return;
+  await ember.speak(w.word);
+}
+
+watch(index, async () => {
+  await speakCurrent();
+});
+
+onMounted(async () => {
+  await speakCurrent();
+});
+
+onBeforeUnmount(() => {
+  cancelled = true;
+  ember.stopSpeaking();
+});
 
 function next() {
   if (allWords.value.length === 0 || isLast.value) {

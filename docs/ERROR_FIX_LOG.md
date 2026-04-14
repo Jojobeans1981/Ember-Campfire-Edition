@@ -18,7 +18,18 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
-*No errors logged yet.*
+### 2026-04-13 — [AUDIO] Phoneme audio silent in UFLI step components
+
+**Error:** `Uncaught (in promise) TypeError: can't access property Symbol.iterator, item.distractors is undefined` in `AuditoryDrillStep.vue:73`. Plus broader silence: no phoneme audio playing in any of the new UFLI step components.
+**Context:** First end-to-end run of a UFLI lesson after task 8. User reported "I don't hear any sounds for the phonemes" while inside the lesson player.
+**Root Cause:** Two bugs:
+1. The legacy `VisualDrillStep` and `AuditoryDrillStep` components were reused but their input-shape expectations didn't match the UFLI step2/step3 schema. Visual drill expected `item.phonemeAudio` (a bare letter); UFLI provides `item.phonemes: ['/ă/']` (IPA notation). Auditory drill expected `item.distractors` (pre-computed); UFLI provides only `{phoneme, graphemes}` and expects distractors to be derived at runtime.
+2. The new step components (`PhonemicAwarenessStep`, `NewConceptStep`, `IrregularWordsStep`, `ConnectedTextStep`, `WordWorkStep`, and `BlendingStep` UFLI mode) were built test-first for emit logic and never wired to the audio engine at all. They rendered text and a Next button but called nothing on `useEmber`.
+**Fix:**
+- Added `phonemeToAudioKey()` in `useEmber.js` that maps UFLI notation (`/ă/`, `/sh/`, etc.) to the audio-file key (`a`, `sh`). Strips slashes, maps short-vowel diacritics, normalizes combining marks. `playPhoneme()` now calls this normalizer before constructing the audio URL.
+- Rewrote `VisualDrillStep` and `AuditoryDrillStep` to consume the UFLI shapes. Auditory drill now derives its distractor pool from all `graphemes` across the step's items.
+- Added `useEmber` calls to all new step components: PhonemicAwareness plays each blend phoneme then speaks the word; NewConcept plays the grapheme's sound after each script line and speaks each read/spell word on tap; BlendingStep UFLI mode sounds out the current word on advance and plays each tile on tap; IrregularWords speaks each tricky word; ConnectedText speaks each sentence with a "Read to me" button.
+**Prevention:** Component smoke tests verified `step-complete` emit but did not assert audio side effects (and can't easily, since happy-dom can't run Web Audio). Future check: when reusing a legacy component against a new data shape, write a "shape adapter" test that asserts the component reads the expected fields, even if the audio side effect is mocked.
 
 ## Common Issues to Watch For
 

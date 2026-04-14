@@ -41,10 +41,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useEmber } from '../../composables/useEmber.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
+
+const ember = useEmber();
+let cancelled = false;
 
 const phase = ref('intro');
 const scriptIndex = ref(0);
@@ -56,12 +60,35 @@ const grapheme = computed(() => {
   return placements[0]?.grapheme ?? '';
 });
 const phoneme = computed(() => {
-  // The lesson's phoneme is on the lesson root, not in step5; fallback empty.
   return '';
 });
 
 const currentScriptLine = computed(() => script.value[scriptIndex.value]);
 const scriptDone = computed(() => scriptIndex.value >= script.value.length - 1);
+
+async function speakCurrentLine() {
+  const line = currentScriptLine.value;
+  if (!line) return;
+  await ember.speak(line.text);
+  if (cancelled) return;
+  // After speaking each script line, play the grapheme's sound to anchor it
+  if (grapheme.value) {
+    await ember.playPhoneme(grapheme.value);
+  }
+}
+
+watch(scriptIndex, async () => {
+  if (phase.value === 'intro') await speakCurrentLine();
+});
+
+onMounted(async () => {
+  await speakCurrentLine();
+});
+
+onBeforeUnmount(() => {
+  cancelled = true;
+  ember.stopSpeaking();
+});
 
 const readWords = computed(() => {
   const r = props.step?.readWords ?? {};
@@ -92,12 +119,16 @@ function advanceScript() {
   scriptIndex.value++;
 }
 
-function markRead(i) {
+async function markRead(i) {
   readDone.value[i] = true;
+  const word = readWords.value[i];
+  if (word) await ember.speak(word);
 }
 
-function markSpell(i) {
+async function markSpell(i) {
   spellDone.value[i] = true;
+  const word = spellWords.value[i];
+  if (word) await ember.speak(word);
 }
 
 function finish() {
