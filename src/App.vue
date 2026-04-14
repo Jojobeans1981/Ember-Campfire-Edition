@@ -33,7 +33,7 @@
         <CampgroundMap v-else-if="store.currentPage === 'campground'" key="campground" />
 
         <!-- Unit hub -->
-        <UnitHub v-else-if="store.currentPage === 'unit-hub'" key="unit-hub" />
+        <UfliLessonHub v-else-if="store.currentPage === 'unit-hub'" key="unit-hub" />
 
         <!-- Lesson player -->
         <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeUnitId" @complete="onLessonComplete" />
@@ -73,7 +73,7 @@ import { stopAllAudio } from './composables/useEmber.js';
 import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
 import { celebrateComplete, celebrateFireLit, celebrateStory, celebrateUnitComplete } from './composables/useCelebration.js';
 import CampgroundMap from './components/CampgroundMap.vue';
-import UnitHub from './components/UnitHub.vue';
+import UfliLessonHub from './components/UfliLessonHub.vue';
 import LessonPlayer from './components/LessonPlayer.vue';
 import ActivityPlayer from './components/ActivityPlayer.vue';
 import StoryReader from './components/StoryReader.vue';

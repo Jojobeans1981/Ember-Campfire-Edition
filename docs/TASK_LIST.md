@@ -49,10 +49,10 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 5 — UfliLessonHub [MVP5]
 
-- [ ] Write `src/components/UfliLessonHub.vue` mirroring `UnitHub.vue`'s spark mechanic but reading from `ufliProgress`, header showing lesson #/grapheme/phoneme, 7 sparks (1+5+1)
-- [ ] Update `src/App.vue` to mount `UfliLessonHub` instead of `UnitHub` for the `unit-hub` page
-- [ ] Manual smoke: boot dev server, navigate from map to a lesson hub, verify it renders correctly
-- [ ] Commit
+- [x] Write `src/components/UfliLessonHub.vue` mirroring `UnitHub.vue`'s spark mechanic but reading from `ufliProgress`, header showing lesson #/grapheme/phoneme, 7 sparks (1+5+1)
+- [x] Update `src/App.vue` to mount `UfliLessonHub` instead of `UnitHub` for the `unit-hub` page
+- [x] Manual smoke: boot dev server, navigate from map to a lesson hub, verify it renders correctly _(deferred to Group 10 end-to-end verification)_
+- [x] Commit
 
 ### Task Group 6 — Campground map rewrite [MVP6]
 
