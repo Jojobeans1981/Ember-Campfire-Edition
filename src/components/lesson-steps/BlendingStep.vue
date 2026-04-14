@@ -2,7 +2,7 @@
   <div class="blending-step">
     <!-- UFLI mode: word chain + tile pools -->
     <div v-if="ufliMode" class="ufli-mode">
-      <div class="prompt-text">Build each word with the tiles!</div>
+      <div class="prompt-text">Tap the sound tiles, then read the word.</div>
 
       <div class="chain-display">
         <div class="current-word">{{ currentChainWord }}</div>

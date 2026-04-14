@@ -18,6 +18,7 @@
           :is="currentStepComponent"
           v-if="currentStepData"
           :step="currentStepData"
+          :lesson-id="props.unitId"
           :key="currentStepKey"
           @step-complete="onStepComplete"
         />
@@ -73,13 +74,26 @@ onMounted(async () => {
  * Single-letter "wordChain" entries in step 4/6 are not worth showing,
  * step 1 needs at least one blend item, etc.
  */
-function isStepWorthShowing(key, data) {
+function hasAtLeastNLetters(lessonData, minimum) {
+  const letters = new Set();
+  for (const word of lessonData?.wordList ?? []) {
+    for (const ch of String(word).toLowerCase()) {
+      if (/[a-z]/.test(ch)) letters.add(ch);
+    }
+  }
+  return letters.size >= minimum;
+}
+
+function isStepWorthShowing(key, data, lessonData) {
   if (!data) return false;
   switch (key) {
     case 'step1': {
+      if (!hasAtLeastNLetters(lessonData, 2)) return false;
       const blend = data.blend ?? [];
       const segment = data.segment ?? [];
-      return blend.length > 0 || segment.length > 0;
+      const hasRealBlend = blend.some((item) => (item?.phonemes?.length ?? 0) >= 2);
+      const hasRealSegment = segment.some((item) => String(item?.word ?? '').replace(/[^a-z]/gi, '').length >= 2);
+      return hasRealBlend || hasRealSegment;
     }
     case 'step2':
     case 'step3': {
@@ -100,11 +114,13 @@ function isStepWorthShowing(key, data) {
       return chain.some((w) => typeof w === 'string' && w.length >= 2);
     }
     case 'step7': {
+      if (!hasAtLeastNLetters(lessonData, 3)) return false;
       const review = data.review ?? [];
       const teach = data.teach ?? [];
       return review.length > 0 || teach.length > 0;
     }
     case 'step8': {
+      if (!hasAtLeastNLetters(lessonData, 3)) return false;
       const read = data.readSentences ?? [];
       const spell = data.spellSentences ?? [];
       // Skip step 8 if both lists are empty OR every entry is a single letter
@@ -119,7 +135,7 @@ function isStepWorthShowing(key, data) {
 const activeSteps = computed(() => {
   const l = lesson.value;
   if (!l) return [];
-  return STEP_KEYS.filter((k) => isStepWorthShowing(k, l[k]));
+  return STEP_KEYS.filter((k) => isStepWorthShowing(k, l[k], l));
 });
 
 const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] ?? null);
@@ -138,6 +154,9 @@ function stripIpa(text) {
 const headerTitle = computed(() => {
   const l = lesson.value;
   if (!l) return '';
+  if (l.grapheme && /^[a-z]$/i.test(l.grapheme)) {
+    return `Letter ${l.grapheme.toUpperCase()}`;
+  }
   if (l.grapheme) return l.grapheme.toLowerCase();
   return stripIpa(l.title) || `Lesson ${l.lessonNumber}`;
 });

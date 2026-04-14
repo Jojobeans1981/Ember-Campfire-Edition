@@ -26,6 +26,22 @@
     <div class="meter">
       <div class="meter-fill" :style="{ width: (correct / targetCount * 100) + '%' }"></div>
     </div>
+
+    <div class="debug-card">
+      <div class="debug-title">Recognition Debug</div>
+      <div class="debug-line"><strong>Target:</strong> {{ debugState.target || currentPhoneme }}</div>
+      <div class="debug-line"><strong>Transcript:</strong> {{ debugState.transcript || 'none' }}</div>
+      <div class="debug-line"><strong>Recognizer:</strong> {{ debugState.recognizer }}</div>
+      <div class="debug-line"><strong>Matched By:</strong> {{ debugState.matchedBy }}</div>
+      <div class="debug-line"><strong>Vosk Error:</strong> {{ debugState.voskError || 'none' }}</div>
+      <div class="debug-line"><strong>Speech Detected:</strong> {{ debugState.speechDetected ? 'yes' : 'no' }}</div>
+      <div class="debug-line"><strong>Sustain Frames:</strong> {{ debugState.sustainFrames }}</div>
+      <div class="debug-line"><strong>Avg Centroid:</strong> {{ debugState.avgCentroid }}</div>
+      <div class="debug-line"><strong>High Energy:</strong> {{ debugState.avgHighEnergyRatio }}</div>
+      <div class="debug-line"><strong>Low Energy:</strong> {{ debugState.avgLowEnergyRatio }}</div>
+      <div class="debug-line"><strong>Zero Cross:</strong> {{ debugState.avgZeroCrossingRate }}</div>
+      <div class="debug-line"><strong>Result:</strong> {{ debugState.result }}</div>
+    </div>
   </div>
 </template>
 
@@ -40,7 +56,13 @@ const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
 const ember = useEmber();
-const { startListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
+const {
+  startListening,
+  sustainProgress: micProgress,
+  requestMicPermission,
+  cancelListening,
+  debugState,
+} = useSpeechRecognition();
 
 const allPhonemes = ref([]);
 const focusPhonemes = ref([]);
@@ -81,7 +103,7 @@ async function playAndListen() {
 
   const result = await new Promise((resolve) => {
     resolveSkip = resolve;
-    startListening(currentPhoneme.value, 10000).then(resolve);
+    startListening(currentPhoneme.value, 9000).then(resolve);
   });
   resolveSkip = null;
 
@@ -157,4 +179,16 @@ h3 { color: #FF8C00; margin: 0; }
 .progress-info { color: #888; font-size: 0.85rem; }
 .meter { width: 100%; max-width: 250px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
 .meter-fill { height: 100%; background: #FF8C00; transition: width 0.3s; }
+.debug-card {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+.debug-title { color: #64FFDA; font-weight: 700; margin-bottom: 0.45rem; }
+.debug-line { margin-top: 0.2rem; word-break: break-word; }
 </style>

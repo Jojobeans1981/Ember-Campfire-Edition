@@ -2,13 +2,129 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="/branding/ember-favicon.svg" />
+  <link rel="alternate icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic.css">
-  <title>Vite App</title>
+  <title>Ember Campground</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ember-glow: #ff8c00;
+      --ember-gold: #ffd166;
+      --forest-night: #08111f;
+      --forest-mist: #15324a;
+      --surface: rgba(9, 18, 31, 0.9);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(255, 140, 0, 0.22), transparent 30%),
+        linear-gradient(180deg, var(--forest-mist) 0%, var(--forest-night) 62%);
+    }
+
+    #boot-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+
+    #boot-splash.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .boot-card {
+      width: min(92vw, 420px);
+      padding: 32px 28px;
+      border-radius: 28px;
+      border: 1px solid rgba(255, 209, 102, 0.18);
+      background: linear-gradient(180deg, rgba(18, 34, 53, 0.96), var(--surface));
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      text-align: center;
+      color: #f8fafc;
+    }
+
+    .boot-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 112px;
+      height: 112px;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 140, 0, 0.14));
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    .boot-logo {
+      width: 84px;
+      height: auto;
+      animation: bootFloat 1.8s ease-in-out infinite alternate;
+    }
+
+    .boot-title {
+      margin: 18px 0 8px;
+      font-size: clamp(1.75rem, 5vw, 2.3rem);
+      line-height: 1.1;
+    }
+
+    .boot-copy {
+      margin: 0;
+      color: rgba(248, 250, 252, 0.75);
+      font-size: 0.98rem;
+    }
+
+    .boot-loader {
+      width: 100%;
+      height: 10px;
+      margin-top: 22px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .boot-loader::after {
+      content: "";
+      display: block;
+      width: 45%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--ember-glow), var(--ember-gold));
+      animation: bootLoad 1.15s ease-in-out infinite;
+    }
+
+    @keyframes bootFloat {
+      from { transform: translateY(-4px) scale(1); }
+      to { transform: translateY(4px) scale(1.04); }
+    }
+
+    @keyframes bootLoad {
+      0% { transform: translateX(-115%); }
+      100% { transform: translateX(280%); }
+    }
+  </style>
 </head>
 <body>
-  <div id="app">Preparing Your Journey...</div>
+  <div id="boot-splash" aria-hidden="true">
+    <div class="boot-card">
+      <div class="boot-logo-wrap" aria-hidden="true">
+        <img class="boot-logo" src="/branding/ember-logo.svg" alt="Ember logo" />
+      </div>
+      <h1 class="boot-title">Ember Campground</h1>
+      <p class="boot-copy">Warming up the campfire and getting your learning trail ready.</p>
+      <div class="boot-loader"></div>
+    </div>
+  </div>
+  <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

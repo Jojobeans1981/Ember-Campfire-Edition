@@ -3,7 +3,7 @@
     <h3 class="step-title">Listen and Blend</h3>
 
     <div v-if="phase === 'blend' && currentBlend" class="task">
-      <div class="prompt">I say the sounds, you say the word.</div>
+      <div class="prompt">Listen to the sounds, then tap to see the word.</div>
       <button class="reveal-btn" @click="revealBlend">Show word</button>
       <div v-if="showWord" class="word">{{ currentBlend.word }}</div>
     </div>

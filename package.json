@@ -1,10 +1,11 @@
 {
-  "name": "fantasy-reader",
+  "name": "ember-campfire-edition",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "setup:vosk-model": "node scripts/download-vosk-model.mjs"
   },
   "dependencies": {
     "@tensorflow-models/speech-commands": "^0.5.4",

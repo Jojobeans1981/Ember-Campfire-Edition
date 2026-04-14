@@ -1,6 +1,6 @@
 <template>
   <div class="visual-drill-step">
-    <h3 class="step-title">Visual Drill</h3>
+    <h3 class="step-title">Say the Sound</h3>
 
     <div v-if="currentItem" class="big-letter">
       {{ currentItem.grapheme }}
@@ -32,6 +32,22 @@
     </div>
 
     <div class="item-progress">{{ index + 1 }} / {{ items.length }}</div>
+
+    <div class="debug-card">
+      <div class="debug-title">Recognition Debug</div>
+      <div class="debug-line"><strong>Target:</strong> {{ debugState.target || currentItem?.grapheme }}</div>
+      <div class="debug-line"><strong>Transcript:</strong> {{ debugState.transcript || 'none' }}</div>
+      <div class="debug-line"><strong>Recognizer:</strong> {{ debugState.recognizer }}</div>
+      <div class="debug-line"><strong>Matched By:</strong> {{ debugState.matchedBy }}</div>
+      <div class="debug-line"><strong>Vosk Error:</strong> {{ debugState.voskError || 'none' }}</div>
+      <div class="debug-line"><strong>Speech Detected:</strong> {{ debugState.speechDetected ? 'yes' : 'no' }}</div>
+      <div class="debug-line"><strong>Sustain Frames:</strong> {{ debugState.sustainFrames }}</div>
+      <div class="debug-line"><strong>Avg Centroid:</strong> {{ debugState.avgCentroid }}</div>
+      <div class="debug-line"><strong>High Energy:</strong> {{ debugState.avgHighEnergyRatio }}</div>
+      <div class="debug-line"><strong>Low Energy:</strong> {{ debugState.avgLowEnergyRatio }}</div>
+      <div class="debug-line"><strong>Zero Cross:</strong> {{ debugState.avgZeroCrossingRate }}</div>
+      <div class="debug-line"><strong>Result:</strong> {{ debugState.result }}</div>
+    </div>
   </div>
 </template>
 
@@ -49,6 +65,7 @@ const {
   cancelListening,
   requestMicPermission,
   sustainProgress: micProgress,
+  debugState,
 } = useSpeechRecognition();
 
 const items = computed(() => props.step?.items ?? []);
@@ -63,7 +80,7 @@ let cancelled = false;
 const instruction = computed(() => {
   const i = currentItem.value;
   if (!i) return '';
-  return `The letter is ${i.grapheme}. Listen, then say the sound.`;
+  return `This is ${i.grapheme}. Listen, then tap My turn.`;
 });
 
 async function playCurrent() {
@@ -86,7 +103,7 @@ async function startMic() {
   busy.value = true;
   micPhase.value = 'listening';
   const target = item.phonemes?.[0] ?? item.grapheme;
-  const result = await startListening(target, 8000);
+  const result = await startListening(target, 7000);
   if (cancelled) return;
   if (result?.matched) {
     micPhase.value = 'matched';
@@ -151,4 +168,17 @@ onBeforeUnmount(() => {
 }
 .audio-btn:disabled, .next-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .item-progress { color: #666; font-size: 0.75rem; }
+.debug-card {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  text-align: left;
+}
+.debug-title { color: #64FFDA; font-weight: 700; margin-bottom: 0.45rem; }
+.debug-line { margin-top: 0.2rem; word-break: break-word; }
 </style>
