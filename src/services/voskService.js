@@ -8,16 +8,19 @@
  *   const rec = createRecognizer(model, 16000, '["sat", "mat", "[unk]"]');
  */
 
-import Vosk from 'vosk-browser';
+import * as Vosk from 'vosk-browser';
 import { ref } from 'vue';
 
-const MODEL_PATH = '/models/vosk-model-small-en-us-0.15';
+const LOCAL_MODEL_PATH = '/models/vosk-model-small-en-us-0.15.tar.gz';
+const CDN_MODEL_PATH = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz';
+const MODEL_CANDIDATES = [LOCAL_MODEL_PATH, CDN_MODEL_PATH];
 
 let model = null;
 let modelLoadPromise = null;
 
 /** Reactive flag consumers can watch for loading state. */
 export const modelLoading = ref(false);
+export const modelUnavailable = ref(false);
 
 /**
  * Load the Vosk model (lazy, cached). Safe to call multiple times —
@@ -28,18 +31,27 @@ export async function ensureModel() {
 
   if (!modelLoadPromise) {
     modelLoading.value = true;
-    modelLoadPromise = Vosk.createModel(MODEL_PATH)
-      .then((m) => {
-        model = m;
-        m.setLogLevel(-1); // suppress Vosk debug noise
-        modelLoading.value = false;
-        return m;
-      })
-      .catch((err) => {
-        modelLoadPromise = null;
-        modelLoading.value = false;
-        throw err;
-      });
+    modelLoadPromise = (async () => {
+      let lastError = null;
+      for (const path of MODEL_CANDIDATES) {
+        try {
+          const loadedModel = await Vosk.createModel(path);
+          loadedModel.setLogLevel(-1); // suppress Vosk debug noise
+          model = loadedModel;
+          modelLoading.value = false;
+          modelUnavailable.value = false;
+          return loadedModel;
+        } catch (err) {
+          lastError = err;
+          console.warn(`Vosk model load failed at: ${path}`, err);
+        }
+      }
+
+      modelLoadPromise = null;
+      modelLoading.value = false;
+      modelUnavailable.value = true;
+      throw lastError || new Error('Unable to load any Vosk model path');
+    })();
   }
 
   return modelLoadPromise;

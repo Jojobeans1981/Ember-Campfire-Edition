@@ -1,0 +1,38 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGlow" x1="160" y1="24" x2="160" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE7A3"/>
+      <stop offset="0.45" stop-color="#FFB347"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <linearGradient id="outerFlame" x1="160" y1="38" x2="160" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF1C7"/>
+      <stop offset="0.35" stop-color="#FFD166"/>
+      <stop offset="0.7" stop-color="#FF8A3D"/>
+      <stop offset="1" stop-color="#E4572E"/>
+    </linearGradient>
+    <linearGradient id="innerFlame" x1="160" y1="86" x2="160" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF9E8"/>
+      <stop offset="0.45" stop-color="#FFE17A"/>
+      <stop offset="1" stop-color="#FFB020"/>
+    </linearGradient>
+    <filter id="softShadow" x="30" y="12" width="260" height="228" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#5B2504" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="160" cy="129" rx="100" ry="92" fill="url(#bgGlow)" opacity="0.18"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M160 36C148 62 117 82 101 115C86 146 95 190 126 211C145 224 175 227 198 214C222 200 237 172 233 141C229 109 207 88 194 65C184 48 180 30 181 18C176 24 169 29 160 36Z" fill="url(#outerFlame)"/>
+    <path d="M162 82C154 99 135 112 126 133C116 155 122 181 142 195C155 204 175 205 190 195C206 185 215 166 212 146C209 126 194 113 185 97C178 86 175 72 176 62C172 67 167 73 162 82Z" fill="url(#innerFlame)"/>
+    <path d="M160 121C150 133 143 145 143 160C143 179 156 191 174 191C191 191 204 178 204 161C204 146 194 135 186 124C180 116 177 106 178 98C174 102 168 110 160 121Z" fill="#FFF9F1"/>
+    <path d="M111 182C103 178 93 183 90 191C86 200 92 209 101 212C111 215 121 210 125 202C129 193 122 185 111 182Z" fill="#5B341C" opacity="0.16"/>
+  </g>
+
+  <g transform="translate(60 230)">
+    <rect x="0" y="0" width="200" height="56" rx="22" fill="#132638"/>
+    <rect x="4" y="4" width="192" height="48" rx="18" fill="#18354B"/>
+    <text x="100" y="38" text-anchor="middle" font-size="34" font-weight="900" letter-spacing="7" fill="#FFF1CF" font-family="Avenir Next, Trebuchet MS, Verdana, sans-serif">EMBER</text>
+  </g>
+</svg>

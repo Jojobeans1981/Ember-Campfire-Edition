@@ -5,6 +5,78 @@ const currentText = ref('');
 
 // Track all active audio elements so we can stop them on navigation
 let activeAudio = null;
+let preferredVoice = null;
+let voiceBootstrapDone = false;
+
+const VOICE_NAME_PREFERENCES = [
+  'aria',
+  'jenny',
+  'samantha',
+  'allison',
+  'ava',
+  'google us english',
+  'google uk english female',
+  'zira',
+  'sara',
+  'libby',
+];
+
+function scoreVoice(voice) {
+  const name = String(voice?.name || '').toLowerCase();
+  const lang = String(voice?.lang || '').toLowerCase();
+  let score = 0;
+
+  if (voice?.localService) score += 40;
+  if (lang === 'en-us') score += 25;
+  else if (lang.startsWith('en-')) score += 15;
+  else if (lang.startsWith('en')) score += 10;
+
+  for (let i = 0; i < VOICE_NAME_PREFERENCES.length; i++) {
+    if (name.includes(VOICE_NAME_PREFERENCES[i])) {
+      score += 120 - i;
+      break;
+    }
+  }
+
+  if (name.includes('natural')) score += 8;
+  if (name.includes('neural')) score += 8;
+  if (name.includes('female')) score += 4;
+
+  return score;
+}
+
+function pickPreferredVoice(voiceName) {
+  if (!window.speechSynthesis?.getVoices) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  if (voiceName) {
+    const requested = String(voiceName).toLowerCase();
+    const exact = voices.find((v) => String(v.name).toLowerCase() === requested);
+    if (exact) return exact;
+    const partial = voices.find((v) => String(v.name).toLowerCase().includes(requested));
+    if (partial) return partial;
+  }
+
+  const englishVoices = voices.filter((v) => String(v.lang || '').toLowerCase().startsWith('en'));
+  const pool = englishVoices.length ? englishVoices : voices;
+  return pool.reduce((best, voice) => {
+    if (!best) return voice;
+    return scoreVoice(voice) > scoreVoice(best) ? voice : best;
+  }, null);
+}
+
+function bootstrapPreferredVoice() {
+  if (!window.speechSynthesis || voiceBootstrapDone) return;
+  voiceBootstrapDone = true;
+
+  const updatePreferredVoice = () => {
+    preferredVoice = pickPreferredVoice();
+  };
+
+  updatePreferredVoice();
+  window.speechSynthesis.addEventListener?.('voiceschanged', updatePreferredVoice);
+}
 
 /**
  * Map a phoneme (in any common notation) to the audio file key under
@@ -32,6 +104,8 @@ export function phonemeToAudioKey(phoneme) {
 }
 
 export function useEmber() {
+  bootstrapPreferredVoice();
+
   function speak(text, options = {}) {
     return new Promise((resolve) => {
       if (!window.speechSynthesis) {
@@ -52,8 +126,11 @@ export function useEmber() {
       isSpeaking.value = true;
 
       const utterance = new SpeechSynthesisUtterance(cleaned);
-      utterance.rate = options.rate || 0.85;
-      utterance.pitch = options.pitch || 1.1;
+      preferredVoice = pickPreferredVoice(options.voiceName) || preferredVoice || pickPreferredVoice();
+      if (preferredVoice) utterance.voice = preferredVoice;
+      utterance.rate = options.rate ?? 0.92;
+      utterance.pitch = options.pitch ?? 1.0;
+      utterance.volume = options.volume ?? 1.0;
       utterance.lang = 'en-US';
 
       utterance.onend = () => {

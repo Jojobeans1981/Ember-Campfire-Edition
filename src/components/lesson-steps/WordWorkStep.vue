@@ -4,7 +4,7 @@
 
     <!-- Phase 1: word chain -->
     <div v-if="phase === 'chain'" class="chain-section">
-      <div class="prompt">Read each word</div>
+      <div class="prompt">Tap each word when you read it.</div>
       <div class="word-pool">
         <button
           v-for="(w, i) in wordChain"

@@ -1,10 +1,10 @@
 <template>
   <div class="connected-text-step">
-    <h3 class="step-title">Read the Sentences</h3>
+    <h3 class="step-title">Read the Story</h3>
 
     <div v-if="currentSentence" class="sentence-card">
       <div class="sentence">{{ currentSentence }}</div>
-      <div class="instruction">Read it out loud.</div>
+      <div class="instruction">Tap Read to me, then tap My turn.</div>
     </div>
     <div v-else class="empty">No sentences for this lesson.</div>
 
@@ -65,10 +65,19 @@ async function startMic() {
   const s = currentSentence.value;
   if (!s) return;
   micPhase.value = 'listening';
-  // Sentence-level recognition is unreliable; match the first decodable
-  // word as a proxy for "the kid actually read this aloud."
-  const firstWord = s.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/)[0] || s;
-  const result = await startWordListening(firstWord, 8000);
+  // Sentence-level recognition is unreliable; match a real content word
+  // instead of tiny opener words like "I" when possible.
+  const words = s
+    .replace(/[^a-zA-Z\s]/g, '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const targetWord =
+    words.find((word) => word.length >= 3) ||
+    words.find((word) => word.length >= 2) ||
+    words[0] ||
+    s;
+  const result = await startWordListening(targetWord, 8000);
   if (cancelled) return;
   if (result?.matched) {
     micPhase.value = 'matched';

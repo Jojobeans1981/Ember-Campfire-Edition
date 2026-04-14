@@ -27,6 +27,12 @@ body {
 #app {
   height: 100%;
   width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#app.is-mounted {
+  opacity: 1;
 }
 
 button {

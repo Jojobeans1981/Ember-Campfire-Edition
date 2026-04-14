@@ -40,7 +40,7 @@
 
     <div class="activities-grid">
       <button
-        v-for="act in activityList"
+        v-for="act in visibleActivities"
         :key="act.type"
         class="activity-card"
         :class="{ done: progress.activitiesComplete[act.type], locked: !progress.lessonComplete }"
@@ -53,6 +53,7 @@
     </div>
 
     <button
+      v-if="showConnectedText"
       class="story-card"
       :class="{ done: progress.connectedTextRead, locked: !connectedTextUnlocked }"
       :disabled="!connectedTextUnlocked"
@@ -74,9 +75,10 @@
 </template>
 
 <script setup>
-import { computed, watchEffect } from 'vue';
+import { computed, ref, watchEffect, onMounted, watch } from 'vue';
 import { store } from '../store';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
+import { getUfliLesson } from '../data/ufli/ufliLessons.js';
 import { useUfliProgression } from '../composables/useUfliProgression.js';
 
 const {
@@ -86,6 +88,18 @@ const {
 } = useUfliProgression();
 
 const meta = computed(() => getLessonMeta(store.activeLessonId));
+const lessonData = ref(null);
+
+async function loadLessonData() {
+  if (!store.activeLessonId) {
+    lessonData.value = null;
+    return;
+  }
+  lessonData.value = await getUfliLesson(store.activeLessonId);
+}
+
+onMounted(loadLessonData);
+watch(() => store.activeLessonId, loadLessonData);
 
 function stripIpa(text) {
   if (!text) return '';
@@ -169,6 +183,27 @@ const activityList = [
   { type: 'build', label: 'Build', icon: '🏗️' },
   { type: 'sentence', label: 'Read', icon: '📝' },
 ];
+
+const learnedLetterCount = computed(() => {
+  const letters = new Set();
+  for (const word of lessonData.value?.wordList ?? []) {
+    for (const ch of String(word).toLowerCase()) {
+      if (/[a-z]/.test(ch)) letters.add(ch);
+    }
+  }
+  return letters.size;
+});
+
+const visibleActivities = computed(() => {
+  const count = learnedLetterCount.value;
+  return activityList.filter((activity) => {
+    if (activity.type === 'sentence') return count >= 3;
+    if (activity.type === 'blend' || activity.type === 'build') return count >= 2;
+    return true;
+  });
+});
+
+const showConnectedText = computed(() => learnedLetterCount.value >= 3);
 
 function startLesson() {
   store.currentPage = 'lesson';

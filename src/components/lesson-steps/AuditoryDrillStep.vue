@@ -1,9 +1,9 @@
 <template>
   <div class="auditory-drill-step">
-    <h3 class="step-title">Auditory Drill</h3>
+    <h3 class="step-title">Pick the Letter</h3>
 
-    <div class="prompt-text" v-if="phase === 'listen'">Listen…</div>
-    <div class="prompt-text" v-else-if="phase === 'pick'">Which letter makes that sound?</div>
+    <div class="prompt-text" v-if="phase === 'listen'">Listen to the sound.</div>
+    <div class="prompt-text" v-else-if="phase === 'pick'">Tap the letter that matches.</div>
     <div class="prompt-text success" v-else-if="phase === 'correct'">Correct!</div>
     <div class="prompt-text wrong" v-else-if="phase === 'wrong'">It was {{ targetGrapheme }}</div>
 
@@ -33,8 +33,12 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
 
-const props = defineProps({ step: { type: Object, required: true } });
+const props = defineProps({
+  step: { type: Object, required: true },
+  lessonId: { type: String, default: '' },
+});
 const emit = defineEmits(['step-complete']);
 
 const ember = useEmber();
@@ -46,6 +50,7 @@ const isLast = computed(() => index.value >= items.value.length - 1);
 const phase = ref('listen');
 const choices = ref([]);
 const busy = ref(false);
+const knownLetters = ref([]);
 let cancelled = false;
 
 const targetGrapheme = computed(() => currentItem.value?.graphemes?.[0]);
@@ -70,11 +75,25 @@ function shuffle(arr) {
 function buildChoices() {
   const target = targetGrapheme.value;
   if (!target) return [];
-  const distractors = allGraphemes.value
+
+  const candidatePool = [
+    ...allGraphemes.value,
+    ...knownLetters.value,
+    'm',
+    's',
+    't',
+    'a',
+  ]
+    .map((grapheme) => String(grapheme).trim().toLowerCase())
+    .filter((grapheme) => /^[a-z]$/.test(grapheme));
+
+  const uniquePool = Array.from(new Set(candidatePool));
+  const distractors = uniquePool
     .filter((g) => g !== target)
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
-  return shuffle([target, ...distractors]);
+    .slice(0, Math.min(3, uniquePool.length));
+
+  return shuffle([target, ...distractors].slice(0, 4));
 }
 
 async function playCurrent() {
@@ -126,6 +145,9 @@ onMounted(async () => {
   if (items.value.length === 0) {
     emit('step-complete');
     return;
+  }
+  if (props.lessonId) {
+    knownLetters.value = await getCumulativeLetters(props.lessonId);
   }
   await playCurrent();
 });

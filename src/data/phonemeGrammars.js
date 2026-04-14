@@ -42,6 +42,22 @@ export const PHONEME_GRAMMARS = {
 };
 
 /**
+ * Extra transcript variants from browser speech recognition. These are looser
+ * than the Vosk grammar words and are mainly used to make the earliest
+ * single-sound lessons work without the local Vosk model present.
+ */
+export const PHONEME_TRANSCRIPT_VARIANTS = {
+  a: ['a', 'ah', 'aa', 'aah', 'at', 'am', 'an', 'ash'],
+  m: ['m', 'mm', 'mmm', 'em', 'um', 'muh', 'mom', 'me'],
+  s: ['s', 'ss', 'sss', 'es', 'ess', 'suh', 'see', 'say'],
+  t: ['t', 'tt', 'tee', 'te', 'tuh', 'to', 'ten', 'tap'],
+  p: ['p', 'pp', 'pee', 'pe', 'puh', 'pop', 'pat'],
+  n: ['n', 'nn', 'en', 'nuh', 'no', 'net'],
+  i: ['i', 'ih', 'ee', 'it', 'in', 'is'],
+  c: ['c', 'k', 'kuh', 'cuh', 'cat', 'cap', 'can'],
+};
+
+/**
  * Normalize a phoneme key to its bare-letter form. Accepts UFLI-style
  * notations like "/ă/", "/sh/" or bare letters and returns the lookup key
  * used in PHONEME_GRAMMARS.
@@ -75,8 +91,20 @@ export function getGrammarForPhoneme(phoneme) {
  */
 export function isPhonemeMatch(phoneme, voskText) {
   const key = normalizePhonemeKey(phoneme);
-  if (!voskText || !PHONEME_GRAMMARS[key]) return false;
-  const words = voskText.toLowerCase().trim().split(/\s+/);
-  const accepted = PHONEME_GRAMMARS[key];
-  return words.some((w) => accepted.includes(w));
+  if (!voskText || !key) return false;
+
+  const accepted = [
+    ...(PHONEME_GRAMMARS[key] || []),
+    ...(PHONEME_TRANSCRIPT_VARIANTS[key] || []),
+  ];
+  if (accepted.length === 0) return false;
+
+  const words = voskText
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  return words.some((word) => accepted.includes(word));
 }

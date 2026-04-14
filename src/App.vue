@@ -16,7 +16,7 @@
         <!-- Selection screen -->
         <div v-if="store.currentPage === 'selection'" key="selection" class="selection">
           <div class="logo-area">
-            <div class="logo-fire">🔥</div>
+            <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
             <h1 class="app-title">Ember Campground</h1>
             <p class="app-subtitle">Learn to Read, One Spark at a Time</p>
           </div>
@@ -323,8 +323,11 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.logo-fire {
-  font-size: 3rem;
+.hero-logo {
+  width: clamp(144px, 34vw, 220px);
+  height: auto;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 14px 28px rgba(16, 24, 40, 0.45));
   animation: logoFlicker 2s ease-in-out infinite alternate;
 }
 

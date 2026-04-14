@@ -16,8 +16,8 @@
         >{{ part.grapheme }}</span>
       </div>
       <div class="legend">
-        <span class="dot regular"></span> regular
-        <span class="dot irregular"></span> tricky
+        <span class="dot regular"></span> sound parts
+        <span class="dot irregular"></span> tricky parts
       </div>
     </div>
 
