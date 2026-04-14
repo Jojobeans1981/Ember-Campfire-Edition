@@ -21,9 +21,11 @@ PHONEME_ORDER.forEach(p => {
 export const store = reactive({
   currentPage: 'selection',
   activeUnitId: null,
+  activeLessonId: null,
   activeActivity: null,
   selectedFriend: null,
   xp: 0,
   currentLesson: null,
   unitProgress: {},
+  ufliProgress: {},
 });

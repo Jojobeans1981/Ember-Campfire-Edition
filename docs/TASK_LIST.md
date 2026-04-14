@@ -17,12 +17,12 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 2 — UFLI progression composable [MVP2]
 
-- [ ] Write `src/composables/useUfliProgression.test.js` red tests: lesson 1 unlocked by default, lesson 2 locked until 1 complete, `completeUfliLesson` awards +100 XP, activities locked until lesson complete, connected text locked until 5 activities done, `getCumulativeLearnedLessonIds` returns correct set
-- [ ] Run tests; expected: fail (composable missing)
-- [ ] Write `src/composables/useUfliProgression.js` implementing `getUfliLessonStatus`, `isUfliLessonUnlocked`, `completeUfliLesson`, `completeUfliActivity`, `completeUfliConnectedText`, `getCumulativeLearnedLessonIds`
-- [ ] Add `ufliProgress: {}` to `store` in `src/store/index.js`
-- [ ] Run tests again; expected: green
-- [ ] Commit
+- [x] Write `src/composables/useUfliProgression.test.js` red tests: lesson 1 unlocked by default, lesson 2 locked until 1 complete, `completeUfliLesson` awards +100 XP, activities locked until lesson complete, connected text locked until 5 activities done, `getCumulativeLearnedLessonIds` returns correct set
+- [x] Run tests; expected: fail (composable missing)
+- [x] Write `src/composables/useUfliProgression.js` implementing `getUfliLessonStatus`, `isUfliLessonUnlocked`, `completeUfliLesson`, `completeUfliActivity`, `completeUfliConnectedText`, `getCumulativeLearnedLessonIds`
+- [x] Add `ufliProgress: {}` to `store` in `src/store/index.js`
+- [x] Run tests again; expected: green
+- [x] Commit
 
 ### Task Group 3 — Persistence update [MVP3]
 
