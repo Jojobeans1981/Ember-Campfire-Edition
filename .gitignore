@@ -4,5 +4,6 @@ dist
 dist-ssr
 *.local
 .env
-public/models/.claude/scheduled_tasks.lock
+public/models/
+.claude/scheduled_tasks.lock
 .claude/settings.json
