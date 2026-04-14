@@ -6,9 +6,6 @@
     <div v-if="waitingForSpeech" class="speech-prompt">
       <div class="mic-icon">🎤</div>
       <p>Say the sound!</p>
-      <div class="volume-meter">
-        <div class="volume-fill" :style="{ width: micVolume + '%' }"></div>
-      </div>
       <div class="sustain-meter">
         <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
       </div>
@@ -28,7 +25,7 @@ const props = defineProps({ step: Object, unitId: String });
 const emit = defineEmits(['step-complete']);
 
 const ember = useEmber();
-const { startListening, isListening: listening, volume: micVolume, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
+const { startListening, isListening: listening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const currentNarrationText = ref('');
 const waitingForSpeech = ref(false);
@@ -65,7 +62,7 @@ onMounted(async () => {
 
       const result = await new Promise((resolve) => {
         resolveSkip = resolve;
-        startListening(item.phoneme, 6000).then(resolve);
+        startListening(item.phoneme, 10000).then(resolve);
       });
       resolveSkip = null;
 
@@ -105,8 +102,6 @@ onBeforeUnmount(() => {
 .speech-prompt { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .mic-icon { font-size: 2.5rem; animation: pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-.volume-meter { width: 200px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-.volume-fill { height: 100%; background: #64FFDA; transition: width 0.05s; }
 .sustain-meter { width: 200px; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
 .sustain-fill { height: 100%; background: #FF8C00; transition: width 0.1s; }
 .listening-indicator { color: #64FFDA; font-size: 0.85rem; }

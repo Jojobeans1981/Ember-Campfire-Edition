@@ -13,9 +13,6 @@
     <div v-if="phase === 'listening'" class="listening-area">
       <div class="mic-icon-large">🎤</div>
       <div class="status listening">Listening...</div>
-      <div class="volume-meter">
-        <div class="volume-fill" :style="{ width: micVolume + '%' }"></div>
-      </div>
       <div class="sustain-meter">
         <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
       </div>
@@ -44,7 +41,7 @@ const emit = defineEmits(['complete']);
 
 const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
-const { startListening, volume: micVolume, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
+const { startListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const unit = UNITS.find(u => u.unitId === props.unitId);
 const allPhonemes = getPhonemesForUnit(props.unitId);
@@ -80,7 +77,7 @@ async function playAndListen() {
 
   const result = await new Promise((resolve) => {
     resolveSkip = resolve;
-    startListening(currentPhoneme.value, 6000).then(resolve);
+    startListening(currentPhoneme.value, 10000).then(resolve);
   });
   resolveSkip = null;
 
@@ -128,8 +125,6 @@ h3 { color: #FF8C00; margin: 0; }
 .listening-area { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .mic-icon-large { font-size: 3rem; animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-.volume-meter { width: 220px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-.volume-fill { height: 100%; background: #64FFDA; transition: width 0.05s; }
 .sustain-meter { width: 220px; height: 12px; background: #333; border-radius: 6px; overflow: hidden; }
 .sustain-fill { height: 100%; background: #FF8C00; transition: width 0.1s; }
 .skip-btn {

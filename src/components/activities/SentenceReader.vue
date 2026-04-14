@@ -19,9 +19,6 @@
     <div v-if="phase === 'listen'" class="mic-area">
       <div class="mic-icon">🎤</div>
       <div>Now read it aloud!</div>
-      <div class="volume-meter">
-        <div class="volume-fill" :style="{ width: micVolume + '%' }"></div>
-      </div>
       <div class="sustain-meter">
         <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
       </div>
@@ -53,7 +50,7 @@ const emit = defineEmits(['complete']);
 
 const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
-const { startWordListening, volume: micVolume, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
+const { startWordListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const allPhonemes = getPhonemesForUnit(props.unitId);
 const words = getDecodableWords(allPhonemes);
@@ -103,7 +100,7 @@ async function readToMe() {
 
 async function attemptRead() {
   phase.value = 'listen';
-  const result = await startWordListening(currentSentence.value, 6000);
+  const result = await startWordListening(currentSentence.value, 10000);
 
   if (cancelled) return;
   phase.value = 'success';
@@ -172,20 +169,6 @@ h3 { color: #FF8C00; margin: 0; }
 }
 
 .mic-icon { font-size: 2.5rem; }
-
-.volume-meter {
-  width: 200px;
-  height: 6px;
-  background: #222;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.volume-fill {
-  height: 100%;
-  background: #64FFDA;
-  transition: width 0.05s;
-}
 
 .sustain-meter {
   width: 200px;
