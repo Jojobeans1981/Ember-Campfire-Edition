@@ -94,10 +94,10 @@
     ]
   },
   "step8": {
-    "readSentences": ["I sit.", "Sam is at his pit."],
-    "spellSentences": ["I sit.", "It is fit."]
+    "readSentences": ["I sit.", "sam is at his pit."],
+    "spellSentences": ["I sit.", "it is fit."]
   },
-  "wordList": ["it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "Sam", "fap", "fas", "fam", "am", "as", "at", "sap"],
+  "wordList": ["it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "sam", "fap", "fas", "fam", "am", "as", "at", "sap"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "his", "it", "the", "to", "of", "a"],
     "fry": ["I", "is", "his", "it", "the", "to", "of", "a"]

@@ -103,10 +103,10 @@
     ]
   },
   "step8": {
-    "readSentences": ["The man has a fan and a pin.", "Sam sat in the tan map."],
-    "spellSentences": ["The man sat.", "I sit in the tan pit."]
+    "readSentences": ["the man has a fan and a pin.", "sam sat in the tan map."],
+    "spellSentences": ["the man sat.", "I sit in the tan pit."]
   },
-  "wordList": ["man", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "nap", "Sam", "am", "as", "at"],
+  "wordList": ["man", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "nap", "sam", "am", "as", "at"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "his", "it", "in", "the", "to", "of", "and", "a"],
     "fry": ["I", "is", "his", "it", "in", "the", "to", "of", "and", "a"]

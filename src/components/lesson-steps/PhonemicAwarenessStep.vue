@@ -4,24 +4,28 @@
 
     <div v-if="phase === 'blend' && currentBlend" class="task">
       <div class="prompt">I say the sounds, you say the word.</div>
-      <div class="phonemes">
-        <span v-for="(p, i) in currentBlend.phonemes" :key="i" class="phoneme">{{ p }}</span>
+      <div class="sound-dots">
+        <span
+          v-for="(_, i) in currentBlend.phonemes"
+          :key="i"
+          class="sound-dot"
+        ></span>
       </div>
       <button class="reveal-btn" @click="revealBlend">Show word</button>
       <div v-if="showWord" class="word">{{ currentBlend.word }}</div>
     </div>
 
     <div v-if="phase === 'segment' && currentSegment" class="task">
-      <div class="prompt">I say the word, you tap the sounds.</div>
+      <div class="prompt">I say the word, you tap each sound.</div>
       <div class="word big">{{ currentSegment.word }}</div>
-      <div class="phonemes">
+      <div class="sound-dots">
         <button
-          v-for="(p, i) in currentSegment.phonemes"
+          v-for="(_, i) in currentSegment.phonemes"
           :key="i"
-          class="phoneme tappable"
+          class="sound-dot tappable"
           :class="{ tapped: tappedSegments[i] }"
           @click="tapSegment(i)"
-        >{{ p }}</button>
+        ></button>
       </div>
     </div>
 
@@ -125,20 +129,18 @@ onBeforeUnmount(() => {
 .step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
 .task { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
 .prompt { color: #aaa; font-size: 0.95rem; }
-.phonemes { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
-.phoneme {
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
+.sound-dots { display: flex; gap: 0.6rem; justify-content: center; align-items: center; }
+.sound-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   background: rgba(255, 140, 0, 0.15);
-  border: 1px solid rgba(255, 140, 0, 0.4);
-  color: #FF8C00;
-  border-radius: 0.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  font-family: inherit;
+  border: 2px solid rgba(255, 140, 0, 0.5);
+  padding: 0;
 }
-.phoneme.tappable { cursor: pointer; }
-.phoneme.tapped { background: rgba(100, 255, 218, 0.2); border-color: #64FFDA; color: #64FFDA; }
+button.sound-dot { cursor: pointer; font-family: inherit; }
+.sound-dot.tappable:hover { background: rgba(255, 140, 0, 0.3); }
+.sound-dot.tapped { background: rgba(100, 255, 218, 0.3); border-color: #64FFDA; }
 .word { font-size: 2rem; color: #64FFDA; font-weight: bold; }
 .word.big { font-size: 2.5rem; }
 .reveal-btn, .next-btn, .audio-btn {

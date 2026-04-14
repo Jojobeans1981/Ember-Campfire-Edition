@@ -12,7 +12,7 @@
     "segment": [
       { "word": "pat", "phonemes": ["/p/", "/ă/", "/t/"] },
       { "word": "tap", "phonemes": ["/t/", "/ă/", "/p/"] },
-      { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] }
+      { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] }
     ]
   },
   "step2": {
@@ -34,7 +34,7 @@
     ]
   },
   "step4": {
-    "wordChain": ["at", "pat", "pap", "tap", "tat", "tam", "Sam", "sap", "map", "mat"],
+    "wordChain": ["at", "pat", "pap", "tap", "tat", "tam", "sam", "sap", "map", "mat"],
     "tiles": {
       "initial": ["s", "m", "t", "p"],
       "medial": ["a"],
@@ -66,7 +66,7 @@
     }
   },
   "step6": {
-    "wordChain": ["at", "pat", "tap", "tam", "Sam", "sam", "sap", "map", "mat"]
+    "wordChain": ["at", "pat", "tap", "tam", "sam", "sam", "sap", "map", "mat"]
   },
   "step7": {
     "review": [
@@ -89,8 +89,8 @@
     ]
   },
   "step8": {
-    "readSentences": ["Pat sat on the mat.", "Sam has a map."],
-    "spellSentences": ["Pat sat.", "Sam has a map."]
+    "readSentences": ["pat sat on the mat.", "sam has a map."],
+    "spellSentences": ["pat sat.", "sam has a map."]
   },
   "wordList": ["pat", "tap", "map", "sap", "pap", "tam"],
   "highFrequencyWords": {

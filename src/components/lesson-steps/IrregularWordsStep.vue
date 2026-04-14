@@ -15,9 +15,6 @@
           :class="{ irregular: !part.regular }"
         >{{ part.grapheme }}</span>
       </div>
-      <div class="phoneme-row">
-        <span v-for="(part, i) in currentWord.breakdown" :key="i" class="phoneme">{{ part.phoneme }}</span>
-      </div>
       <div class="legend">
         <span class="dot regular"></span> regular
         <span class="dot irregular"></span> tricky

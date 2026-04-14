@@ -36,7 +36,7 @@
     ]
   },
   "step4": {
-    "wordChain": ["at", "fat", "fap", "fan", "fas", "fam", "Sam", "sap", "tap", "pat"],
+    "wordChain": ["at", "fat", "fap", "fan", "fas", "fam", "sam", "sap", "tap", "pat"],
     "tiles": {
       "initial": ["s", "m", "t", "p", "f"],
       "medial": ["a"],
@@ -68,7 +68,7 @@
     }
   },
   "step6": {
-    "wordChain": ["at", "fat", "fap", "fas", "Sam", "sap", "tap", "map", "mat", "pat"]
+    "wordChain": ["at", "fat", "fap", "fas", "sam", "sap", "tap", "map", "mat", "pat"]
   },
   "step7": {
     "review": [
@@ -91,10 +91,10 @@
     ]
   },
   "step8": {
-    "readSentences": ["The fat cat sat.", "Sam has a fan."],
-    "spellSentences": ["A fat cat.", "Sam sat."]
+    "readSentences": ["the fat cat sat.", "sam has a fan."],
+    "spellSentences": ["a fat cat.", "sam sat."]
   },
-  "wordList": ["fat", "fap", "fam", "fas", "pat", "tap", "map", "sap", "Sam", "mat", "at", "am", "as"],
+  "wordList": ["fat", "fap", "fam", "fas", "pat", "tap", "map", "sap", "sam", "mat", "at", "am", "as"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "the", "to", "of", "a"],
     "fry": ["I", "is", "the", "to", "of", "a"]

@@ -97,10 +97,10 @@
     ]
   },
   "step8": {
-    "readSentences": ["Sam has a pin and a fan.", "I nap in the tan tin."],
-    "spellSentences": ["Sam has a pin.", "I nap."]
+    "readSentences": ["sam has a pin and a fan.", "I nap in the tan tin."],
+    "spellSentences": ["sam has a pin.", "I nap."]
   },
-  "wordList": ["nap", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "Sam", "am", "as", "at", "sap", "fap", "fas", "fam"],
+  "wordList": ["nap", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "sam", "am", "as", "at", "sap", "fap", "fas", "fam"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "his", "it", "the", "to", "of", "and", "a"],
     "fry": ["I", "is", "his", "it", "the", "to", "of", "and", "a"]

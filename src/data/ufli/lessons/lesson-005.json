@@ -11,7 +11,7 @@
     ],
     "segment": [
       { "word": "at", "phonemes": ["/ă/", "/t/"] },
-      { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] },
+      { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] },
       { "word": "mat", "phonemes": ["/m/", "/ă/", "/t/"] }
     ]
   },
@@ -32,7 +32,7 @@
     ]
   },
   "step4": {
-    "wordChain": ["at", "sat", "mat", "Sam", "am"],
+    "wordChain": ["at", "sat", "mat", "sam", "am"],
     "tiles": {
       "initial": ["s", "m", "t"],
       "medial": ["a"],
@@ -50,22 +50,22 @@
     "graphemePlacements": [
       { "grapheme": "a", "position": "medial", "examples": ["mat", "sat"] },
       { "grapheme": "m", "position": "initial", "examples": ["mat"] },
-      { "grapheme": "s", "position": "initial", "examples": ["sat", "Sam"] },
+      { "grapheme": "s", "position": "initial", "examples": ["sat", "sam"] },
       { "grapheme": "t", "position": "final", "examples": ["at", "sat", "mat"] }
     ],
     "readWords": {
-      "iDo": ["at", "Sam"],
+      "iDo": ["at", "sam"],
       "weDo": ["mat", "sat"],
       "youDo": ["at", "am", "as"]
     },
     "spellWords": {
       "iDo": ["at"],
-      "weDo": ["mat", "Sam"],
+      "weDo": ["mat", "sam"],
       "youDo": ["sat", "am"]
     }
   },
   "step6": {
-    "wordChain": ["at", "sat", "mat", "Sam", "am", "as"]
+    "wordChain": ["at", "sat", "mat", "sam", "am", "as"]
   },
   "step7": {
     "review": [
@@ -86,10 +86,10 @@
     "teach": []
   },
   "step8": {
-    "readSentences": ["Sam sat at the mat.", "I am Sam."],
-    "spellSentences": ["Sam sat.", "I am at the mat."]
+    "readSentences": ["sam sat at the mat.", "I am sam."],
+    "spellSentences": ["sam sat.", "I am at the mat."]
   },
-  "wordList": ["at", "mat", "sat", "Sam", "am", "as"],
+  "wordList": ["at", "mat", "sat", "sam", "am", "as"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "the", "a"],
     "fry": ["I", "is", "the", "a"]

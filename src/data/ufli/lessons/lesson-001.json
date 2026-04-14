@@ -60,8 +60,8 @@
     "teach": []
   },
   "step8": {
-    "readSentences": ["A."],
-    "spellSentences": ["A."]
+    "readSentences": ["a."],
+    "spellSentences": ["a."]
   },
   "wordList": ["a"],
   "highFrequencyWords": {

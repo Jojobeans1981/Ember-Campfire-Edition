@@ -32,7 +32,7 @@
     ]
   },
   "step4": {
-    "wordChain": ["at", "mat", "sat", "Sam", "am"],
+    "wordChain": ["at", "mat", "sat", "sam", "am"],
     "tiles": {
       "initial": ["s", "m", "t"],
       "medial": ["a"],
@@ -55,7 +55,7 @@
     "readWords": {
       "iDo": ["at", "mat"],
       "weDo": ["sat", "mat"],
-      "youDo": ["at", "Sam"]
+      "youDo": ["at", "sam"]
     },
     "spellWords": {
       "iDo": ["at"],
@@ -64,7 +64,7 @@
     }
   },
   "step6": {
-    "wordChain": ["at", "mat", "sat", "Sam"]
+    "wordChain": ["at", "mat", "sat", "sam"]
   },
   "step7": {
     "review": [
@@ -87,10 +87,10 @@
     ]
   },
   "step8": {
-    "readSentences": ["Sam sat.", "I sat at the mat."],
-    "spellSentences": ["Sam sat at a mat."]
+    "readSentences": ["sam sat.", "I sat at the mat."],
+    "spellSentences": ["sam sat at a mat."]
   },
-  "wordList": ["at", "mat", "sat", "Sam", "am", "as"],
+  "wordList": ["at", "mat", "sat", "sam", "am", "as"],
   "highFrequencyWords": {
     "dolch": ["I", "am", "is", "the", "a"],
     "fry": ["I", "is", "the", "a"]

@@ -5,8 +5,8 @@
     <div v-if="phase === 'intro'" class="intro-section">
       <div v-if="grapheme" class="grapheme-card">{{ grapheme }}</div>
       <div v-if="phoneme" class="phoneme-label">{{ phoneme }}</div>
-      <div v-if="currentScriptLine" class="script-line">{{ currentScriptLine.text }}</div>
-      <div v-if="articulation" class="articulation">{{ articulation }}</div>
+      <div v-if="currentScriptLine" class="script-line">{{ stripIpa(currentScriptLine.text) }}</div>
+      <div v-if="articulation" class="articulation">{{ stripIpa(articulation) }}</div>
       <div class="btn-row">
         <button class="audio-btn" @click="speakCurrentLine">🔊 Hear again</button>
         <button class="next-btn" @click="advanceScript">{{ scriptDone ? "Let's practice" : 'Next' }}</button>
@@ -68,6 +68,12 @@ const phoneme = computed(() => {
 
 const currentScriptLine = computed(() => script.value[scriptIndex.value]);
 const scriptDone = computed(() => scriptIndex.value >= script.value.length - 1);
+
+function stripIpa(text) {
+  if (!text) return '';
+  // Remove /…/ phoneme notations and tidy whitespace/punctuation that's left behind
+  return text.replace(/\/[^/]*\//g, '').replace(/\s{2,}/g, ' ').replace(/\s+([,.!?])/g, '$1').trim();
+}
 
 async function speakCurrentLine() {
   const line = currentScriptLine.value;
