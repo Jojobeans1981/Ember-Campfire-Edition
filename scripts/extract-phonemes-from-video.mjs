@@ -79,6 +79,19 @@ function getPadding(phoneme) {
   return PADDING.default;
 }
 
+// ─── Per-phoneme isolated-clip overrides ─────────────────────
+// Applied ONLY to the isolated phoneme-only clip, not the context clip.
+// Used when Whisper's token boundaries don't match the actual phoneme sound.
+//   startDelta: shift start (negative = earlier)
+//   endDelta:   shift end   (negative = earlier; positive extends into "as")
+const PHONEME_OVERRIDES = {
+  ar:     { startDelta: -0.15 },                    // beginning was cut off
+  aw:     { endDelta:   +0.20 },                    // tail was cut off
+  long_i: { endDelta:   -0.25 },                    // too long, hit "as in"
+  ng:     { startDelta: -0.10, endDelta: +0.05 },   // needed more on both ends
+  oi:     { endDelta:   -0.20 },                    // too long, hit "as"
+};
+
 // ─── Per-phoneme context clip overrides ──────────────────────
 // Whisper's word boundaries aren't always accurate for example phrases.
 // These deltas (in seconds) are applied AFTER normal computation to tune
@@ -317,9 +330,20 @@ async function main() {
       phStart = Math.max(prevFloor, phStart - extendBy);
     }
 
+    // Apply per-phoneme isolated-clip overrides to LOCAL copies so the
+    // context clip below still uses the unmodified phStart / phEnd.
+    let isoStart = phStart;
+    let isoEnd   = phEnd;
+    const phOverride = PHONEME_OVERRIDES[phoneme];
+    if (phOverride) {
+      if (phOverride.startDelta) isoStart = Math.max(0, isoStart + phOverride.startDelta);
+      if (phOverride.endDelta)   isoEnd   = isoEnd + phOverride.endDelta;
+      if (isoEnd <= isoStart) isoEnd = isoStart + 0.1;
+    }
+
     extractClip(
       path.join(OUTPUT_DIR, `${phoneme}.mp3`),
-      phStart, phEnd,
+      isoStart, isoEnd,
       `${phoneme}.mp3`
     );
 
