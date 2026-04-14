@@ -31,22 +31,21 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { UNITS } from '../../data/curriculum.js';
-import { useProgression } from '../../composables/useProgression.js';
+import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import { getLessonMeta } from '../../data/ufli/ufliCurriculum.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 
-const props = defineProps({ unitId: String, activityType: String });
+const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
-const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
 const { startListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
-const unit = UNITS.find(u => u.unitId === props.unitId);
-const allPhonemes = getPhonemesForUnit(props.unitId);
+const allPhonemes = ref([]);
+const focusPhonemes = ref([]);
 
-const currentPhoneme = ref(unit.phonemes[0]);
+const currentPhoneme = ref('');
 const phase = ref('ready');
 const correct = ref(0);
 const targetCount = 5;
@@ -59,11 +58,16 @@ function skipSpeech() {
 }
 
 function pickPhoneme() {
-  if (Math.random() < 0.2 && allPhonemes.length > unit.phonemes.length) {
-    const reviewPhonemes = allPhonemes.filter(p => !unit.phonemes.includes(p));
+  const focus = focusPhonemes.value;
+  const all = allPhonemes.value;
+  // 20% chance to surface a non-focus phoneme as review when other letters are available
+  if (Math.random() < 0.2 && all.length > focus.length) {
+    const reviewPhonemes = all.filter((p) => !focus.includes(p));
     currentPhoneme.value = reviewPhonemes[Math.floor(Math.random() * reviewPhonemes.length)];
-  } else {
-    currentPhoneme.value = unit.phonemes[Math.floor(Math.random() * unit.phonemes.length)];
+  } else if (focus.length > 0) {
+    currentPhoneme.value = focus[Math.floor(Math.random() * focus.length)];
+  } else if (all.length > 0) {
+    currentPhoneme.value = all[Math.floor(Math.random() * all.length)];
   }
 }
 
@@ -103,6 +107,20 @@ async function playAndListen() {
 
 onMounted(async () => {
   await requestMicPermission();
+  allPhonemes.value = await getCumulativeLetters(props.lessonId);
+  // Focus phoneme(s) for this lesson — pulled from the manifest grapheme field
+  const meta = getLessonMeta(props.lessonId);
+  if (meta && meta.grapheme) {
+    focusPhonemes.value = meta.grapheme
+      .toLowerCase()
+      .split(',')
+      .map((g) => g.trim())
+      .filter((g) => /^[a-z]$/.test(g));
+  }
+  if (allPhonemes.value.length === 0) {
+    emit('complete');
+    return;
+  }
   pickPhoneme();
 });
 

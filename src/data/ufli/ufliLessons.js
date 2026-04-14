@@ -68,6 +68,36 @@ export function getUfliLessonSync(lessonId) {
 }
 
 /**
+ * Returns decodable word objects (`{word, phonemes}`) for use in games.
+ * Splits each cumulative word into its letters as a phoneme proxy.
+ * Sufficient for early single-letter lessons; digraph-aware splitting
+ * is a Phase 2 concern (see TASK_LIST.md).
+ */
+export async function getCumulativeDecodableWords(lessonId) {
+  const words = await getCumulativeWordList(lessonId);
+  return words.map((word) => ({
+    word,
+    phonemes: word.toLowerCase().split(''),
+  }));
+}
+
+/**
+ * Returns the unique letter set decodable up to and including `lessonId`.
+ * Drawn from the cumulative word list, not the manifest grapheme field,
+ * so it stays accurate as new lesson JSON is authored.
+ */
+export async function getCumulativeLetters(lessonId) {
+  const words = await getCumulativeWordList(lessonId);
+  const letters = new Set();
+  for (const w of words) {
+    for (const ch of w.toLowerCase()) {
+      if (/[a-z]/.test(ch)) letters.add(ch);
+    }
+  }
+  return Array.from(letters);
+}
+
+/**
  * Returns all wordList entries from lesson 1 through `lessonId`,
  * deduplicated, preserving curriculum order.
  *

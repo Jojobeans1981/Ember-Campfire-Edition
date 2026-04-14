@@ -40,20 +40,17 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useProgression } from '../../composables/useProgression.js';
-import { getDecodableWords } from '../../data/wordLists.js';
+import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 
-const props = defineProps({ unitId: String, activityType: String });
+const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
-const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
 const { startWordListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
-const allPhonemes = getPhonemesForUnit(props.unitId);
-const words = getDecodableWords(allPhonemes);
+const words = ref([]);
 
 const currentSentence = ref('');
 const currentWords = ref([]);
@@ -64,15 +61,16 @@ const targetCount = 3;
 let cancelled = false;
 
 function buildSentence() {
-  if (words.length < 2) {
-    currentSentence.value = words[0]?.word || 'a';
+  const pool = words.value;
+  if (pool.length < 2) {
+    currentSentence.value = pool[0]?.word || 'a';
     currentWords.value = [currentSentence.value];
     return;
   }
   const count = 2 + Math.floor(Math.random() * 3);
   const picked = [];
-  for (let i = 0; i < count && i < words.length; i++) {
-    picked.push(words[Math.floor(Math.random() * words.length)].word);
+  for (let i = 0; i < count && i < pool.length; i++) {
+    picked.push(pool[Math.floor(Math.random() * pool.length)].word);
   }
   currentWords.value = picked;
   currentSentence.value = picked.join(' ');
@@ -117,6 +115,7 @@ async function attemptRead() {
 
 onMounted(async () => {
   await requestMicPermission();
+  words.value = await getCumulativeDecodableWords(props.lessonId);
   buildSentence();
 });
 

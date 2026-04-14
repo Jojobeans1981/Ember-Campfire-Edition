@@ -39,7 +39,7 @@
         <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeLessonId" @complete="onLessonComplete" />
 
         <!-- Activity player -->
-        <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :unitId="store.activeLessonId" :activityType="store.activeActivity" @complete="onActivityComplete" />
+        <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :lessonId="store.activeLessonId" :activityType="store.activeActivity" @complete="onActivityComplete" />
 
         <!-- Story reader -->
         <StoryReader v-else-if="store.currentPage === 'story'" key="story" :unitId="store.activeLessonId" @complete="onStoryComplete" />

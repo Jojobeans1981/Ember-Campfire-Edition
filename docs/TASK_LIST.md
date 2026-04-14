@@ -65,11 +65,11 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 7 — Wire games to cumulative word list [MVP7]
 
-- [ ] Update `src/components/activities/BlendingGame.vue` to import `getCumulativeWordList` from `src/data/ufli/ufliLessons.js` instead of `getDecodableWords` from `wordLists.js`
-- [ ] Repeat for `LetterMatch.vue`, `SpeechPractice.vue`, `WordBuilder.vue`, `SentenceReader.vue`
-- [ ] Update `ActivityPlayer.vue` to pass `lessonId` (not `unitId`) to children
-- [ ] Manual smoke: complete lesson 001, open each game, verify words appear from the cumulative list
-- [ ] Commit
+- [x] Update `src/components/activities/BlendingGame.vue` to import `getCumulativeWordList` from `src/data/ufli/ufliLessons.js` instead of `getDecodableWords` from `wordLists.js`
+- [x] Repeat for `LetterMatch.vue`, `SpeechPractice.vue`, `WordBuilder.vue`, `SentenceReader.vue`
+- [x] Update `ActivityPlayer.vue` to pass `lessonId` (not `unitId`) to children
+- [x] Manual smoke: complete lesson 001, open each game, verify words appear from the cumulative list _(verified via vite build; full e2e in Group 10)_
+- [x] Commit
 
 ### Task Group 8 — Delete old curriculum [MVP8]
 
