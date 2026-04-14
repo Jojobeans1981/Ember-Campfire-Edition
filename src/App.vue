@@ -36,13 +36,13 @@
         <UfliLessonHub v-else-if="store.currentPage === 'unit-hub'" key="unit-hub" />
 
         <!-- Lesson player -->
-        <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeUnitId" @complete="onLessonComplete" />
+        <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeLessonId" @complete="onLessonComplete" />
 
         <!-- Activity player -->
-        <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :unitId="store.activeUnitId" :activityType="store.activeActivity" @complete="onActivityComplete" />
+        <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :unitId="store.activeLessonId" :activityType="store.activeActivity" @complete="onActivityComplete" />
 
         <!-- Story reader -->
-        <StoryReader v-else-if="store.currentPage === 'story'" key="story" :unitId="store.activeUnitId" @complete="onStoryComplete" />
+        <StoryReader v-else-if="store.currentPage === 'story'" key="story" :unitId="store.activeLessonId" @complete="onStoryComplete" />
 
         <!-- Dashboard -->
         <Dashboard v-else-if="store.currentPage === 'dashboard'" key="dashboard" />
@@ -68,7 +68,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { store } from './store';
 import { usePersistence } from './composables/usePersistence.js';
-import { useProgression } from './composables/useProgression.js';
+import { useUfliProgression } from './composables/useUfliProgression.js';
 import { stopAllAudio } from './composables/useEmber.js';
 import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
 import { celebrateComplete, celebrateFireLit, celebrateStory, celebrateUnitComplete } from './composables/useCelebration.js';
@@ -80,8 +80,20 @@ import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
 
 const { save, load } = usePersistence();
-const { completeLesson, completeActivity, completeStory, getUnitStatus, isStoryUnlocked } = useProgression();
+const {
+  completeUfliLesson,
+  completeUfliActivity,
+  completeUfliConnectedText,
+  getUfliLessonStatus,
+  ACTIVITY_TYPES,
+} = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
+
+function isConnectedTextUnlocked(lessonId) {
+  const p = store.ufliProgress[lessonId];
+  if (!p || !p.lessonComplete) return false;
+  return ACTIVITY_TYPES.every((t) => p.activitiesComplete[t]);
+}
 
 const xpPop = ref(false);
 const showCelebration = ref(false);
@@ -149,7 +161,7 @@ function goBack() {
 
 async function onLessonComplete() {
   killAudio();
-  completeLesson(store.activeUnitId);
+  completeUfliLesson(store.activeLessonId);
   save();
   celebrateComplete();
   await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
@@ -158,14 +170,13 @@ async function onLessonComplete() {
 
 async function onActivityComplete() {
   killAudio();
-  const wasStoryLocked = !isStoryUnlocked(store.activeUnitId);
-  completeActivity(store.activeUnitId, store.activeActivity);
+  const wasLocked = !isConnectedTextUnlocked(store.activeLessonId);
+  completeUfliActivity(store.activeLessonId, store.activeActivity);
   save();
 
-  const nowStoryUnlocked = isStoryUnlocked(store.activeUnitId);
+  const nowUnlocked = isConnectedTextUnlocked(store.activeLessonId);
 
-  if (wasStoryLocked && nowStoryUnlocked) {
-    // All activities done — fire is lit!
+  if (wasLocked && nowUnlocked) {
     celebrateFireLit();
     await showCelebrationScreen('🔥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
   } else {
@@ -178,13 +189,13 @@ async function onActivityComplete() {
 
 async function onStoryComplete() {
   killAudio();
-  const prevStatus = getUnitStatus(store.activeUnitId);
-  completeStory(store.activeUnitId);
+  const prevStatus = getUfliLessonStatus(store.activeLessonId);
+  completeUfliConnectedText(store.activeLessonId);
   save();
 
-  if (prevStatus !== 'stories') {
+  if (prevStatus !== 'complete') {
     celebrateUnitComplete();
-    await showCelebrationScreen('🏕️', 'Campfire Complete!', 'You mastered this campfire! A new adventure awaits!', 75);
+    await showCelebrationScreen('🏕️', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
   } else {
     celebrateStory();
     await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);

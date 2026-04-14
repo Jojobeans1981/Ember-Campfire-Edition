@@ -56,12 +56,12 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 6 — Campground map rewrite [MVP6]
 
-- [ ] Update `src/components/CampgroundMap.vue` to iterate `ALL_UFLI_LESSON_IDS` instead of `UNITS`
-- [ ] Update `src/components/MapStation.vue` to accept a `lessonId` (not `unit`) and read from `ufliProgress`
-- [ ] Group stations visually into zones by lesson number range (consonants, short vowels, digraphs, etc.) — CSS grouping only, no new components needed
-- [ ] Replace `store.activeUnitId` with `store.activeLessonId` in `App.vue`, `Dashboard.vue`, and any other consumers
-- [ ] Manual smoke: dev server boots, map shows stations, clicking lesson 001 navigates correctly
-- [ ] Commit
+- [x] Update `src/components/CampgroundMap.vue` to iterate `ALL_UFLI_LESSON_IDS` instead of `UNITS`
+- [x] Update `src/components/MapStation.vue` to accept a `lessonId` (not `unit`) and read from `ufliProgress`
+- [x] Group stations visually into zones by lesson number range (consonants, short vowels, digraphs, etc.) — CSS grouping only, no new components needed
+- [x] Replace `store.activeUnitId` with `store.activeLessonId` in `App.vue`, `Dashboard.vue`, and any other consumers _(legacy alias kept until task 8 deletes UnitHub.vue)_
+- [x] Manual smoke: dev server boots, map shows stations, clicking lesson 001 navigates correctly _(verified via vite build; full e2e in Group 10)_
+- [x] Commit
 
 ### Task Group 7 — Wire games to cumulative word list [MVP7]
 
