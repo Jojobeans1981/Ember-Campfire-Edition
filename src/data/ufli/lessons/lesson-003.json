@@ -10,6 +10,7 @@
     ],
     "segment": [
       { "word": "as", "phonemes": ["/ă/", "/s/"] },
+      { "word": "am", "phonemes": ["/ă/", "/m/"] },
       { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] }
     ]
   },
@@ -28,7 +29,7 @@
     ]
   },
   "step4": {
-    "wordChain": ["am", "Sam", "sam", "as"],
+    "wordChain": ["am", "as", "Sam"],
     "tiles": {
       "initial": ["s", "m"],
       "medial": ["a"],
@@ -36,31 +37,32 @@
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce the letter S. Teeth close, tongue near the roof of the mouth, air pushes through. Voice off — it hisses like a snake.",
+    "instructionalNotes": "Introduce the letter S. Teeth close, tongue near the roof of the mouth, air pushes through. Voice off — it hisses like a snake. With S we can now read three words: am, as, Sam.",
     "introductionScript": [
       { "line": "1", "text": "This is the letter S." },
       { "line": "2", "text": "S says /s/, like a snake hissing." },
       { "line": "3", "text": "Teeth together, push the air. /sss/." },
-      { "line": "4", "text": "Your turn. Say /s/." }
+      { "line": "4", "text": "Your turn. Say /s/." },
+      { "line": "5", "text": "Now we have three letters. We can read three words: am, as, Sam." }
     ],
     "articulatoryGesture": "Teeth nearly closed. Tongue tip near the roof of the mouth. Air streams out. Voice off.",
     "graphemePlacements": [
-      { "grapheme": "s", "position": "initial", "examples": ["Sam", "sat", "sit"] },
-      { "grapheme": "s", "position": "final", "examples": ["as", "is", "his"] }
+      { "grapheme": "s", "position": "initial", "examples": ["Sam"] },
+      { "grapheme": "s", "position": "final", "examples": ["as"] }
     ],
     "readWords": {
-      "iDo": ["am", "Sam"],
-      "weDo": ["as", "Sam"],
-      "youDo": ["am", "as"]
+      "iDo": ["am"],
+      "weDo": ["as"],
+      "youDo": ["Sam"]
     },
     "spellWords": {
       "iDo": ["am"],
-      "weDo": ["Sam"],
-      "youDo": ["as"]
+      "weDo": ["as"],
+      "youDo": ["Sam"]
     }
   },
   "step6": {
-    "wordChain": ["am", "Sam", "as"]
+    "wordChain": ["am", "as", "Sam"]
   },
   "step7": {
     "review": [
@@ -85,9 +87,9 @@
     "readSentences": ["I am Sam.", "Sam is."],
     "spellSentences": ["I am Sam."]
   },
-  "wordList": ["am", "Sam", "as"],
+  "wordList": ["am", "as", "Sam"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "a"],
-    "fry": ["I", "is", "a"]
+    "dolch": ["I", "a", "am", "is"],
+    "fry": ["I", "a", "is"]
   }
 }
