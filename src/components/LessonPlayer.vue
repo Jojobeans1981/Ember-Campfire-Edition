@@ -1,69 +1,91 @@
 <template>
   <div class="lesson-player">
-    <div class="lesson-header">
-      <h2>{{ lesson.phonemes.map(p => p.toUpperCase()).join(' & ') }}</h2>
-      <div class="progress-bar">
-        <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+    <div v-if="!lesson" class="loading">Loading lesson…</div>
+
+    <template v-else>
+      <div class="lesson-header">
+        <h2>{{ headerTitle }}</h2>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+        </div>
+        <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ STEP_KEYS.length }}</div>
       </div>
-      <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ lesson.steps.length }}</div>
-    </div>
 
-    <div class="lesson-content">
-      <EmberMascot :speaking="ember.isSpeaking.value" :text="ember.currentText.value" />
+      <div class="lesson-content">
+        <EmberMascot :speaking="ember.isSpeaking.value" :text="ember.currentText.value" />
 
-      <component
-        :is="currentStepComponent"
-        v-if="currentStep"
-        :step="currentStep"
-        :unitId="unitId"
-        @step-complete="onStepComplete"
-      />
-    </div>
+        <component
+          :is="currentStepComponent"
+          v-if="currentStepData"
+          :step="currentStepData"
+          :key="currentStepIndex"
+          @step-complete="onStepComplete"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, defineProps, defineEmits } from 'vue';
-import { getLessonForUnit } from '../data/lessons.js';
+import { ref, computed, onMounted, defineProps, defineEmits } from 'vue';
+import { getUfliLesson } from '../data/ufli/ufliLessons.js';
 import { useEmber } from '../composables/useEmber.js';
 import EmberMascot from './ui/EmberMascot.vue';
-import IntroStep from './lesson-steps/IntroStep.vue';
+import PhonemicAwarenessStep from './lesson-steps/PhonemicAwarenessStep.vue';
 import VisualDrillStep from './lesson-steps/VisualDrillStep.vue';
 import AuditoryDrillStep from './lesson-steps/AuditoryDrillStep.vue';
 import BlendingStep from './lesson-steps/BlendingStep.vue';
-import WordReadingStep from './lesson-steps/WordReadingStep.vue';
-import ReviewStep from './lesson-steps/ReviewStep.vue';
+import NewConceptStep from './lesson-steps/NewConceptStep.vue';
+import WordWorkStep from './lesson-steps/WordWorkStep.vue';
+import IrregularWordsStep from './lesson-steps/IrregularWordsStep.vue';
+import ConnectedTextStep from './lesson-steps/ConnectedTextStep.vue';
 
 const props = defineProps({ unitId: { type: String, required: true } });
 const emit = defineEmits(['complete']);
 
 const ember = useEmber();
-const lesson = getLessonForUnit(props.unitId);
-const currentStepIndex = ref(0);
 
-const stepComponents = {
-  intro: IntroStep,
-  visual_drill: VisualDrillStep,
-  auditory_drill: AuditoryDrillStep,
-  blending: BlendingStep,
-  word_reading: WordReadingStep,
-  review: ReviewStep,
+const STEP_KEYS = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'step8'];
+
+const stepComponentByKey = {
+  step1: PhonemicAwarenessStep,
+  step2: VisualDrillStep,
+  step3: AuditoryDrillStep,
+  step4: BlendingStep,
+  step5: NewConceptStep,
+  step6: WordWorkStep,
+  step7: IrregularWordsStep,
+  step8: ConnectedTextStep,
 };
 
-const currentStep = computed(() => lesson?.steps[currentStepIndex.value] || null);
-const currentStepComponent = computed(() => {
-  if (!currentStep.value) return null;
-  return stepComponents[currentStep.value.type] || null;
+const lesson = ref(null);
+const currentStepIndex = ref(0);
+
+onMounted(async () => {
+  lesson.value = await getUfliLesson(props.unitId);
+  if (!lesson.value) {
+    emit('complete');
+  }
 });
 
-const progressPercent = computed(() => {
-  if (!lesson) return 0;
-  return Math.round((currentStepIndex.value / lesson.steps.length) * 100);
+const currentStepKey = computed(() => STEP_KEYS[currentStepIndex.value]);
+const currentStepData = computed(() => lesson.value?.[currentStepKey.value] ?? null);
+const currentStepComponent = computed(() => stepComponentByKey[currentStepKey.value]);
+
+const headerTitle = computed(() => {
+  const l = lesson.value;
+  if (!l) return '';
+  if (l.grapheme) return `${l.grapheme.toUpperCase()} ${l.phoneme || ''}`.trim();
+  return l.title || `Lesson ${l.lessonNumber}`;
 });
+
+const progressPercent = computed(() =>
+  Math.round((currentStepIndex.value / STEP_KEYS.length) * 100)
+);
 
 function onStepComplete() {
   ember.stopSpeaking();
-  if (currentStepIndex.value < lesson.steps.length - 1) {
+  if (currentStepIndex.value < STEP_KEYS.length - 1) {
     currentStepIndex.value++;
   } else {
     emit('complete');
@@ -81,6 +103,8 @@ function onStepComplete() {
   max-width: 500px;
   padding: 1rem;
 }
+
+.loading { color: #888; padding: 2rem; }
 
 .lesson-header {
   width: 100%;

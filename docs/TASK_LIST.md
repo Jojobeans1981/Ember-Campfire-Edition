@@ -73,15 +73,15 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 8 — Delete old curriculum [MVP8]
 
-- [ ] Delete `src/data/curriculum.js`
-- [ ] Delete `src/data/lessons.js`
-- [ ] Delete `src/data/wordLists.js`
-- [ ] Delete `src/components/UnitHub.vue`
-- [ ] Delete `src/components/lesson-steps/ReviewStep.vue`
-- [ ] Delete `src/components/lesson-steps/IntroStep.vue`
-- [ ] Update `src/store/index.js` to remove `unitProgress`, `activeUnitId`, and `PHONEME_ORDER` import
-- [ ] `grep -r "unitProgress\|UNITS\|curriculum.js\|wordLists.js" src/` and fix any stragglers
-- [ ] Commit
+- [x] Delete `src/data/curriculum.js`
+- [x] Delete `src/data/lessons.js`
+- [x] Delete `src/data/wordLists.js`
+- [x] Delete `src/components/UnitHub.vue`
+- [x] Delete `src/components/lesson-steps/ReviewStep.vue`
+- [x] Delete `src/components/lesson-steps/IntroStep.vue`
+- [x] Update `src/store/index.js` to remove `unitProgress`, `activeUnitId`, and `PHONEME_ORDER` import
+- [x] `grep -r "unitProgress\|UNITS\|curriculum.js\|wordLists.js" src/` and fix any stragglers _(also deleted `useProgression.js`, `stories.js`; rewrote `LessonPlayer.vue` and `StoryReader.vue` for UFLI; lazy-init skillState in legacy `Workshop.vue`)_
+- [x] Commit
 
 ### Task Group 9 — Full test suite green [MVP9]
 
