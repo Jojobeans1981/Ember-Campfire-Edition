@@ -85,11 +85,11 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 9 — Full test suite green [MVP9]
 
-- [ ] Run `npm test`
-- [ ] If any test fails, fix root cause (do not skip tests)
-- [ ] Verify existing tests still pass: `store/index.test.js`, `usePhonemeLogic.test.js`, `Workshop.test.js`
-- [ ] Verify new tests pass: `ufliLessons.test.js`, `useUfliProgression.test.js`, all step smoke tests
-- [ ] Commit any fixes
+- [x] Run `npm test`
+- [x] If any test fails, fix root cause (do not skip tests)
+- [x] Verify existing tests still pass: `store/index.test.js`, `usePhonemeLogic.test.js`, `Workshop.test.js`
+- [x] Verify new tests pass: `ufliLessons.test.js`, `useUfliProgression.test.js`, all step smoke tests
+- [x] Commit any fixes _(no fixes needed; suite was already green from task 8)_
 
 ### Task Group 10 — End-to-end manual verification [MVP10]
 
