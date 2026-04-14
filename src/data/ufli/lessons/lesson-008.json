@@ -1,0 +1,105 @@
+{
+  "lessonNumber": 8,
+  "title": "i /ĭ/",
+  "grapheme": "i",
+  "phoneme": "/ĭ/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/ĭ/", "/t/"], "word": "it" },
+      { "phonemes": ["/s/", "/ĭ/", "/t/"], "word": "sit" },
+      { "phonemes": ["/p/", "/ĭ/", "/t/"], "word": "pit" }
+    ],
+    "segment": [
+      { "word": "it", "phonemes": ["/ĭ/", "/t/"] },
+      { "word": "sit", "phonemes": ["/s/", "/ĭ/", "/t/"] },
+      { "word": "fit", "phonemes": ["/f/", "/ĭ/", "/t/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "i", "phonemes": ["/ĭ/"] },
+      { "grapheme": "f", "phonemes": ["/f/"] },
+      { "grapheme": "p", "phonemes": ["/p/"] },
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/ĭ/", "graphemes": ["i"] },
+      { "phoneme": "/f/", "graphemes": ["f"] },
+      { "phoneme": "/p/", "graphemes": ["p"] },
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["it", "sit", "sip", "tip", "tap", "tat", "fat", "fit", "pit", "pat"],
+    "tiles": {
+      "initial": ["s", "m", "t", "p", "f"],
+      "medial": ["a", "i"],
+      "final": ["t", "s", "m", "p", "f"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce short I. Mouth slightly open, lips relaxed, tongue mid-high in front. Like the bell sound — /ĭ/ /ĭ/ /ĭ/.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter I." },
+      { "line": "2", "text": "I says /ĭ/, like in itch." },
+      { "line": "3", "text": "Lips slightly apart, voice on. /ĭ/ /ĭ/ /ĭ/." },
+      { "line": "4", "text": "Your turn. Say /ĭ/." }
+    ],
+    "articulatoryGesture": "Mouth slightly open, lips relaxed, tongue forward and high. Voice on. Short, crisp.",
+    "graphemePlacements": [
+      { "grapheme": "i", "position": "initial", "examples": ["it", "is", "if"] },
+      { "grapheme": "i", "position": "medial", "examples": ["sit", "pit", "fit"] }
+    ],
+    "readWords": {
+      "iDo": ["it", "sit"],
+      "weDo": ["fit", "pit"],
+      "youDo": ["it", "sip", "tip"]
+    },
+    "spellWords": {
+      "iDo": ["it"],
+      "weDo": ["sit"],
+      "youDo": ["pit", "fit"]
+    }
+  },
+  "step6": {
+    "wordChain": ["it", "sit", "sip", "tip", "tap", "fat", "fit", "pit", "pat", "mat"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "of",
+        "breakdown": [
+          { "grapheme": "o", "phoneme": "/ŭ/", "regular": false },
+          { "grapheme": "f", "phoneme": "/v/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "his",
+        "breakdown": [
+          { "grapheme": "h", "phoneme": "/h/", "regular": true },
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["I sit.", "Sam is at his pit."],
+    "spellSentences": ["I sit.", "It is fit."]
+  },
+  "wordList": ["it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "Sam", "fap", "fas", "fam", "am", "as", "at", "sap"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "his", "it", "the", "to", "of", "a"],
+    "fry": ["I", "is", "his", "it", "the", "to", "of", "a"]
+  }
+}

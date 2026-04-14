@@ -1,0 +1,102 @@
+{
+  "lessonNumber": 7,
+  "title": "f /f/",
+  "grapheme": "f",
+  "phoneme": "/f/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/f/", "/ă/", "/t/"], "word": "fat" },
+      { "phonemes": ["/f/", "/ă/", "/m/"], "word": "fam" },
+      { "phonemes": ["/s/", "/ă/", "/p/"], "word": "sap" }
+    ],
+    "segment": [
+      { "word": "fat", "phonemes": ["/f/", "/ă/", "/t/"] },
+      { "word": "map", "phonemes": ["/m/", "/ă/", "/p/"] },
+      { "word": "pat", "phonemes": ["/p/", "/ă/", "/t/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "f", "phonemes": ["/f/"] },
+      { "grapheme": "p", "phonemes": ["/p/"] },
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/f/", "graphemes": ["f"] },
+      { "phoneme": "/p/", "graphemes": ["p"] },
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["at", "fat", "fap", "fan", "fas", "fam", "Sam", "sap", "tap", "pat"],
+    "tiles": {
+      "initial": ["s", "m", "t", "p", "f"],
+      "medial": ["a"],
+      "final": ["t", "s", "m", "p", "f"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter F. Top teeth touch the bottom lip. Air pushes through. Voice off — like a kitten hissing.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter F." },
+      { "line": "2", "text": "F says /f/, like in fan." },
+      { "line": "3", "text": "Top teeth on bottom lip. Push the air. /fff/." },
+      { "line": "4", "text": "Your turn. Say /f/." }
+    ],
+    "articulatoryGesture": "Top teeth touch the bottom lip. Voice off. Air streams out in a continuous /fff/.",
+    "graphemePlacements": [
+      { "grapheme": "f", "position": "initial", "examples": ["fat", "fan", "fit"] },
+      { "grapheme": "f", "position": "final", "examples": ["if", "of"] }
+    ],
+    "readWords": {
+      "iDo": ["fat", "fam"],
+      "weDo": ["fat", "sap"],
+      "youDo": ["fat", "map", "tap"]
+    },
+    "spellWords": {
+      "iDo": ["fat"],
+      "weDo": ["fam"],
+      "youDo": ["map", "tap"]
+    }
+  },
+  "step6": {
+    "wordChain": ["at", "fat", "fap", "fas", "Sam", "sap", "tap", "map", "mat", "pat"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "to",
+        "breakdown": [
+          { "grapheme": "t", "phoneme": "/t/", "regular": true },
+          { "grapheme": "o", "phoneme": "/oo/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "of",
+        "breakdown": [
+          { "grapheme": "o", "phoneme": "/ŭ/", "regular": false },
+          { "grapheme": "f", "phoneme": "/v/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["The fat cat sat.", "Sam has a fan."],
+    "spellSentences": ["A fat cat.", "Sam sat."]
+  },
+  "wordList": ["fat", "fap", "fam", "fas", "pat", "tap", "map", "sap", "Sam", "mat", "at", "am", "as"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "the", "to", "of", "a"],
+    "fry": ["I", "is", "the", "to", "of", "a"]
+  }
+}

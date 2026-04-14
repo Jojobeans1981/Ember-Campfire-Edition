@@ -1,0 +1,100 @@
+{
+  "lessonNumber": 6,
+  "title": "p /p/",
+  "grapheme": "p",
+  "phoneme": "/p/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/p/", "/ă/", "/t/"], "word": "pat" },
+      { "phonemes": ["/m/", "/ă/", "/p/"], "word": "map" },
+      { "phonemes": ["/s/", "/ă/", "/p/"], "word": "sap" }
+    ],
+    "segment": [
+      { "word": "pat", "phonemes": ["/p/", "/ă/", "/t/"] },
+      { "word": "tap", "phonemes": ["/t/", "/ă/", "/p/"] },
+      { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "p", "phonemes": ["/p/"] },
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/p/", "graphemes": ["p"] },
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["at", "pat", "pap", "tap", "tat", "tam", "Sam", "sap", "map", "mat"],
+    "tiles": {
+      "initial": ["s", "m", "t", "p"],
+      "medial": ["a"],
+      "final": ["t", "s", "m", "p"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter P. Lips press together, air builds up and pops out. Voice off. Like M but unvoiced and released.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter P." },
+      { "line": "2", "text": "P says /p/, like in pop." },
+      { "line": "3", "text": "Press your lips, then pop them open. /p/ /p/ /p/." },
+      { "line": "4", "text": "Your turn. Say /p/." }
+    ],
+    "articulatoryGesture": "Lips pressed together. Voice off. Air builds and releases in a quick puff.",
+    "graphemePlacements": [
+      { "grapheme": "p", "position": "initial", "examples": ["pat", "pap", "pin"] },
+      { "grapheme": "p", "position": "final", "examples": ["map", "tap", "sap"] }
+    ],
+    "readWords": {
+      "iDo": ["pat", "map"],
+      "weDo": ["tap", "sap"],
+      "youDo": ["pat", "map", "tap"]
+    },
+    "spellWords": {
+      "iDo": ["pat"],
+      "weDo": ["map"],
+      "youDo": ["tap", "sap"]
+    }
+  },
+  "step6": {
+    "wordChain": ["at", "pat", "tap", "tam", "Sam", "sam", "sap", "map", "mat"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "the",
+        "breakdown": [
+          { "grapheme": "th", "phoneme": "/th/", "regular": false },
+          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "to",
+        "breakdown": [
+          { "grapheme": "t", "phoneme": "/t/", "regular": true },
+          { "grapheme": "o", "phoneme": "/oo/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["Pat sat on the mat.", "Sam has a map."],
+    "spellSentences": ["Pat sat.", "Sam has a map."]
+  },
+  "wordList": ["pat", "tap", "map", "sap", "pap", "tam"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "the", "to", "a"],
+    "fry": ["I", "is", "the", "to", "a"]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "lessonNumber": 3,
+  "title": "s /s/",
+  "grapheme": "s",
+  "phoneme": "/s/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/ă/", "/s/"], "word": "as" },
+      { "phonemes": ["/s/", "/ă/", "/m/"], "word": "Sam" }
+    ],
+    "segment": [
+      { "word": "as", "phonemes": ["/ă/", "/s/"] },
+      { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["am", "Sam", "sam", "as"],
+    "tiles": {
+      "initial": ["s", "m"],
+      "medial": ["a"],
+      "final": ["s", "m"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter S. Teeth close, tongue near the roof of the mouth, air pushes through. Voice off — it hisses like a snake.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter S." },
+      { "line": "2", "text": "S says /s/, like a snake hissing." },
+      { "line": "3", "text": "Teeth together, push the air. /sss/." },
+      { "line": "4", "text": "Your turn. Say /s/." }
+    ],
+    "articulatoryGesture": "Teeth nearly closed. Tongue tip near the roof of the mouth. Air streams out. Voice off.",
+    "graphemePlacements": [
+      { "grapheme": "s", "position": "initial", "examples": ["Sam", "sat", "sit"] },
+      { "grapheme": "s", "position": "final", "examples": ["as", "is", "his"] }
+    ],
+    "readWords": {
+      "iDo": ["am", "Sam"],
+      "weDo": ["as", "Sam"],
+      "youDo": ["am", "as"]
+    },
+    "spellWords": {
+      "iDo": ["am"],
+      "weDo": ["Sam"],
+      "youDo": ["as"]
+    }
+  },
+  "step6": {
+    "wordChain": ["am", "Sam", "as"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "I",
+        "breakdown": [
+          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "is",
+        "breakdown": [
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["I am Sam.", "Sam is."],
+    "spellSentences": ["I am Sam."]
+  },
+  "wordList": ["am", "Sam", "as"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "a"],
+    "fry": ["I", "is", "a"]
+  }
+}
