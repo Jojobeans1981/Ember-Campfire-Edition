@@ -94,14 +94,14 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 ### Task Group 10 — End-to-end manual verification [MVP10]
 
 - [x] `npm run dev` _(boots cleanly on port 5174, Vite ready in 222ms, no errors)_
-- [ ] Open browser, select a Guardian _(human verification required)_
-- [ ] Verify map shows lesson 001 unlocked _(human verification required)_
-- [ ] Click lesson 001 → hub renders with grapheme/phoneme _(human verification required)_
-- [ ] Click Lesson → 8 steps play in order _(human verification required)_
-- [ ] After lesson completes, return to hub; verify activities unlocked _(human verification required)_
-- [ ] Play one game; verify words come from cumulative list _(human verification required)_
-- [ ] Reload page; verify progress persisted via localStorage _(human verification required)_
-- [x] Commit (or document any fixes) _(no automated fixes needed; build, lint via Vite, and 62/62 tests all green)_
+- [x] Open browser, select a Guardian _(user-verified 2026-04-14)_
+- [x] Verify map shows lesson 001 unlocked _(user-verified)_
+- [x] Click lesson 001 → hub renders with grapheme/phoneme _(user-verified after IPA strip + lowercase fixes)_
+- [x] Click Lesson → 8 steps play in order _(user-verified; lesson 1 runs as 4 active steps after isStepWorthShowing filter)_
+- [x] After lesson completes, return to hub; verify activities unlocked _(user-verified)_
+- [x] Play one game; verify words come from cumulative list _(user-verified — screenshot showed lesson 2 step 4 with am word chain working)_
+- [x] Reload page; verify progress persisted via localStorage _(user-verified — XP and progress persisted)_
+- [x] Commit (or document any fixes) _(many UI fixes shipped during smoke testing: lowercase, IPA strip, mic gating, single-letter step skipping, sound-dot removal, prompt rewrites)_
 
 ## Phase 2: Polish
 
