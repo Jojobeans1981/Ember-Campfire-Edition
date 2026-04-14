@@ -1,60 +1,73 @@
 <template>
   <div class="unit-hub">
-    <h2 class="unit-title">{{ unit.title }}</h2>
-    <div class="unit-phonemes">
-      <span v-for="p in unit.phonemes" :key="p" class="phoneme-badge">{{ p.toUpperCase() }}</span>
+    <!-- Header -->
+    <div class="hub-header">
+      <h2 class="unit-title">{{ unit.title }}</h2>
+      <div class="unit-phonemes">
+        <span v-for="p in unit.phonemes" :key="p" class="phoneme-badge">{{ p.toUpperCase() }}</span>
+      </div>
+      <div class="hub-status">
+        <span class="status-icon">{{ statusIcon }}</span>
+        <span class="status-text">{{ statusLabel }}</span>
+      </div>
     </div>
 
-    <div class="hub-status">
-      <span class="status-icon">{{ statusIcon }}</span>
-      <span class="status-text">{{ statusLabel }}</span>
-    </div>
-
-    <!-- Spark tracker -->
+    <!-- Spark progress -->
     <div class="spark-tracker">
       <div class="spark-bar">
         <div class="spark-fill" :style="{ width: sparkPercent + '%' }"></div>
       </div>
-      <div class="spark-label">{{ sparksEarned }} / 7 sparks</div>
-    </div>
-
-    <div class="hub-actions">
-      <!-- Lesson -->
-      <button
-        class="hub-btn lesson-btn"
-        :class="{ done: progress.lessonComplete }"
-        @click="startLesson"
-      >
-        <span class="btn-icon">{{ progress.lessonComplete ? '✅' : '📖' }}</span>
-        <span>Lesson</span>
-      </button>
-
-      <!-- Activities -->
-      <div class="activities-row">
-        <button
-          v-for="act in activityList"
-          :key="act.type"
-          class="hub-btn activity-btn"
-          :class="{ done: progress.activitiesComplete[act.type], locked: !progress.lessonComplete }"
-          :disabled="!progress.lessonComplete"
-          @click="startActivity(act.type)"
-        >
-          <span class="btn-icon">{{ act.icon }}</span>
-          <span>{{ act.label }}</span>
-        </button>
+      <div class="spark-dots">
+        <span
+          v-for="i in 7"
+          :key="i"
+          class="spark-dot"
+          :class="{ earned: i <= sparksEarned }"
+        ></span>
       </div>
+    </div>
 
-      <!-- Story -->
+    <!-- Main action: Lesson -->
+    <button
+      class="lesson-card"
+      :class="{ done: progress.lessonComplete }"
+      @click="startLesson"
+    >
+      <span class="card-icon">{{ progress.lessonComplete ? '✅' : '📖' }}</span>
+      <div class="card-text">
+        <span class="card-title">Lesson</span>
+        <span class="card-subtitle">{{ progress.lessonComplete ? 'Complete' : 'Learn the sounds' }}</span>
+      </div>
+    </button>
+
+    <!-- Activities grid -->
+    <div class="activities-grid">
       <button
-        class="hub-btn story-btn"
-        :class="{ done: progress.storyRead, locked: !storyUnlocked }"
-        :disabled="!storyUnlocked"
-        @click="startStory"
+        v-for="act in activityList"
+        :key="act.type"
+        class="activity-card"
+        :class="{ done: progress.activitiesComplete[act.type], locked: !progress.lessonComplete }"
+        :disabled="!progress.lessonComplete"
+        @click="startActivity(act.type)"
       >
-        <span class="btn-icon">{{ progress.storyRead ? '🏕️' : '📕' }}</span>
-        <span>Campfire Story</span>
+        <span class="card-icon">{{ progress.activitiesComplete[act.type] ? '✅' : act.icon }}</span>
+        <span class="card-label">{{ act.label }}</span>
       </button>
     </div>
+
+    <!-- Story -->
+    <button
+      class="story-card"
+      :class="{ done: progress.storyRead, locked: !storyUnlocked }"
+      :disabled="!storyUnlocked"
+      @click="startStory"
+    >
+      <span class="card-icon">{{ progress.storyRead ? '🏕️' : '📕' }}</span>
+      <div class="card-text">
+        <span class="card-title">Story</span>
+        <span class="card-subtitle">{{ progress.storyRead ? 'Read again' : storyUnlocked ? 'Ready to read!' : 'Complete activities to unlock' }}</span>
+      </div>
+    </button>
   </div>
 </template>
 
@@ -131,119 +144,65 @@ function startStory() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  max-width: 400px;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  max-width: 380px;
   width: 100%;
 }
 
+/* Header */
+.hub-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .unit-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #FF8C00;
   margin: 0;
+  font-weight: 700;
 }
 
 .unit-phonemes {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .phoneme-badge {
-  background: rgba(255, 140, 0, 0.2);
+  background: rgba(255, 140, 0, 0.15);
   color: #FF8C00;
-  padding: 0.3rem 0.8rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 1rem;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
 .hub-status {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  color: #aaa;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #999;
 }
 
-.status-icon {
-  font-size: 1.5rem;
-}
+.status-icon { font-size: 1.2rem; }
 
-.hub-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.hub-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 41, 59, 0.7);
-  color: #E0E0E0;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: border-color 0.2s, opacity 0.2s;
-}
-
-.hub-btn:hover:not(:disabled) {
-  border-color: #FF8C00;
-}
-
-.hub-btn.done {
-  border-color: rgba(100, 255, 218, 0.4);
-  opacity: 0.8;
-}
-
-.hub-btn.locked {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  font-size: 1.3rem;
-}
-
-.activities-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.activity-btn {
-  flex-direction: column;
-  text-align: center;
-  font-size: 0.75rem;
-  padding: 0.5rem;
-}
-
-.lesson-btn {
-  background: rgba(255, 140, 0, 0.15);
-  border-color: rgba(255, 140, 0, 0.3);
-}
-
-.story-btn {
-  background: rgba(100, 255, 218, 0.1);
-  border-color: rgba(100, 255, 218, 0.2);
-}
-
+/* Spark tracker */
 .spark-tracker {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 
 .spark-bar {
   width: 100%;
-  height: 10px;
-  background: #222;
-  border-radius: 5px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -251,11 +210,140 @@ function startStory() {
   height: 100%;
   background: linear-gradient(90deg, #FF8C00, #FFD93D);
   transition: width 0.4s ease;
-  border-radius: 5px;
+  border-radius: 3px;
 }
 
-.spark-label {
-  font-size: 0.75rem;
-  color: #FF8C00;
+.spark-dots {
+  display: flex;
+  gap: 0.4rem;
 }
+
+.spark-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.spark-dot.earned {
+  background: #FFD93D;
+  box-shadow: 0 0 6px rgba(255, 217, 61, 0.5);
+}
+
+/* Lesson card */
+.lesson-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 2px solid rgba(255, 140, 0, 0.25);
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 140, 0, 0.05));
+  color: #E0E0E0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.lesson-card:hover {
+  border-color: #FF8C00;
+  transform: translateY(-1px);
+}
+
+.lesson-card.done {
+  border-color: rgba(100, 255, 218, 0.3);
+}
+
+.lesson-card .card-icon { font-size: 1.5rem; }
+
+.card-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* Activities grid */
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.activity-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.75rem 0.25rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 41, 59, 0.6);
+  color: #ccc;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  transition: border-color 0.2s, transform 0.15s, opacity 0.2s;
+}
+
+.activity-card:hover:not(:disabled) {
+  border-color: #FF8C00;
+  transform: translateY(-1px);
+}
+
+.activity-card .card-icon { font-size: 1.3rem; }
+.activity-card .card-label { font-weight: 500; }
+
+.activity-card.done {
+  border-color: rgba(100, 255, 218, 0.25);
+}
+
+.activity-card.locked {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Story card */
+.story-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border-radius: 1rem;
+  border: 2px solid rgba(100, 255, 218, 0.15);
+  background: linear-gradient(135deg, rgba(100, 255, 218, 0.06), rgba(100, 255, 218, 0.02));
+  color: #E0E0E0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, transform 0.15s, opacity 0.2s;
+}
+
+.story-card:hover:not(:disabled) {
+  border-color: #64FFDA;
+  transform: translateY(-1px);
+}
+
+.story-card.done {
+  border-color: rgba(100, 255, 218, 0.3);
+}
+
+.story-card.locked {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.story-card .card-icon { font-size: 1.3rem; }
 </style>
