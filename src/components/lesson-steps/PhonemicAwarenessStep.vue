@@ -4,29 +4,13 @@
 
     <div v-if="phase === 'blend' && currentBlend" class="task">
       <div class="prompt">I say the sounds, you say the word.</div>
-      <div class="sound-dots">
-        <span
-          v-for="(_, i) in currentBlend.phonemes"
-          :key="i"
-          class="sound-dot"
-        ></span>
-      </div>
       <button class="reveal-btn" @click="revealBlend">Show word</button>
       <div v-if="showWord" class="word">{{ currentBlend.word }}</div>
     </div>
 
     <div v-if="phase === 'segment' && currentSegment" class="task">
-      <div class="prompt">I say the word, you tap each sound.</div>
+      <div class="prompt">Listen to the word.</div>
       <div class="word big">{{ currentSegment.word }}</div>
-      <div class="sound-dots">
-        <button
-          v-for="(_, i) in currentSegment.phonemes"
-          :key="i"
-          class="sound-dot tappable"
-          :class="{ tapped: tappedSegments[i] }"
-          @click="tapSegment(i)"
-        ></button>
-      </div>
     </div>
 
     <div class="controls">
@@ -51,7 +35,6 @@ const segmentItems = computed(() => props.step?.segment ?? []);
 const totalItems = computed(() => blendItems.value.length + segmentItems.value.length);
 
 const cursor = ref(0);
-const tappedSegments = ref([]);
 const showWord = ref(false);
 
 const phase = computed(() => (cursor.value < blendItems.value.length ? 'blend' : 'segment'));
@@ -80,14 +63,6 @@ async function revealBlend() {
   }
 }
 
-async function tapSegment(i) {
-  tappedSegments.value[i] = true;
-  const item = currentSegment.value;
-  if (item) {
-    await ember.playPhoneme(item.phonemes?.[i]);
-  }
-}
-
 async function playCurrent() {
   if (phase.value === 'blend') {
     await playBlendPhonemes(currentBlend.value);
@@ -103,7 +78,6 @@ function next() {
   }
   cursor.value++;
   showWord.value = false;
-  tappedSegments.value = [];
 }
 
 watch(cursor, async () => {
@@ -129,18 +103,6 @@ onBeforeUnmount(() => {
 .step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
 .task { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
 .prompt { color: #aaa; font-size: 0.95rem; }
-.sound-dots { display: flex; gap: 0.6rem; justify-content: center; align-items: center; }
-.sound-dot {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 140, 0, 0.15);
-  border: 2px solid rgba(255, 140, 0, 0.5);
-  padding: 0;
-}
-button.sound-dot { cursor: pointer; font-family: inherit; }
-.sound-dot.tappable:hover { background: rgba(255, 140, 0, 0.3); }
-.sound-dot.tapped { background: rgba(100, 255, 218, 0.3); border-color: #64FFDA; }
 .word { font-size: 2rem; color: #64FFDA; font-weight: bold; }
 .word.big { font-size: 2.5rem; }
 .reveal-btn, .next-btn, .audio-btn {

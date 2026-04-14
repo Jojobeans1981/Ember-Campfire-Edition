@@ -5,7 +5,7 @@
     <div class="prompt-text" v-if="phase === 'listen'">Listen…</div>
     <div class="prompt-text" v-else-if="phase === 'pick'">Which letter makes that sound?</div>
     <div class="prompt-text success" v-else-if="phase === 'correct'">Correct!</div>
-    <div class="prompt-text wrong" v-else-if="phase === 'wrong'">It was {{ targetGrapheme?.toUpperCase() }}</div>
+    <div class="prompt-text wrong" v-else-if="phase === 'wrong'">It was {{ targetGrapheme }}</div>
 
     <div class="choices" v-if="phase === 'pick'">
       <button
@@ -13,7 +13,7 @@
         :key="choice"
         class="choice-btn"
         @click="pick(choice)"
-      >{{ choice.toUpperCase() }}</button>
+      >{{ choice }}</button>
     </div>
 
     <div class="controls" v-if="phase === 'listen' || phase === 'pick'">
@@ -107,7 +107,7 @@ async function pick(choice) {
     await ember.speak('Yes!');
   } else {
     phase.value = 'wrong';
-    await ember.speak(`It was ${targetGrapheme.value.toUpperCase()}.`);
+    await ember.speak(`It was ${targetGrapheme.value}.`);
     await ember.playPhoneme(currentItem.value.phoneme);
   }
 }

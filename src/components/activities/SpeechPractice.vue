@@ -2,7 +2,7 @@
   <div class="speech-practice">
     <h3>Say It!</h3>
 
-    <div class="current-phoneme">{{ currentPhoneme?.toUpperCase() }}</div>
+    <div class="current-phoneme">{{ currentPhoneme }}</div>
 
     <button v-if="phase === 'ready'" class="listen-btn" @click="playAndListen">
       🎤 Hear & Say '{{ currentPhoneme }}'

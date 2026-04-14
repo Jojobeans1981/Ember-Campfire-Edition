@@ -30,7 +30,7 @@
         :disabled="showResult"
         @click="pick(c)"
       >
-        {{ c.toUpperCase() }}
+        {{ c }}
       </button>
     </div>
 
@@ -39,7 +39,7 @@
     </div>
 
     <div v-if="phase === 'correct'" class="result success">Correct!</div>
-    <div v-if="phase === 'wrong'" class="result wrong">It was {{ targetPhoneme?.toUpperCase() }}</div>
+    <div v-if="phase === 'wrong'" class="result wrong">It was {{ targetPhoneme }}</div>
   </div>
 </template>
 

@@ -8,7 +8,7 @@
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
         </div>
-        <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ STEP_KEYS.length }}</div>
+        <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ activeSteps.length }}</div>
       </div>
 
       <div class="lesson-content">
@@ -18,7 +18,7 @@
           :is="currentStepComponent"
           v-if="currentStepData"
           :step="currentStepData"
-          :key="currentStepIndex"
+          :key="currentStepKey"
           @step-complete="onStepComplete"
         />
       </div>
@@ -68,24 +68,89 @@ onMounted(async () => {
   }
 });
 
-const currentStepKey = computed(() => STEP_KEYS[currentStepIndex.value]);
-const currentStepData = computed(() => lesson.value?.[currentStepKey.value] ?? null);
-const currentStepComponent = computed(() => stepComponentByKey[currentStepKey.value]);
+/**
+ * Skip a step when its content has nothing meaningful for the kid to do.
+ * Single-letter "wordChain" entries in step 4/6 are not worth showing,
+ * step 1 needs at least one blend item, etc.
+ */
+function isStepWorthShowing(key, data) {
+  if (!data) return false;
+  switch (key) {
+    case 'step1': {
+      const blend = data.blend ?? [];
+      const segment = data.segment ?? [];
+      return blend.length > 0 || segment.length > 0;
+    }
+    case 'step2':
+    case 'step3': {
+      return (data.items ?? []).length > 0;
+    }
+    case 'step4': {
+      const chain = data.wordChain ?? [];
+      // Only show if there's at least one multi-letter word to blend
+      return chain.some((w) => typeof w === 'string' && w.length >= 2);
+    }
+    case 'step5': {
+      const script = data.introductionScript ?? [];
+      return script.length > 0;
+    }
+    case 'step6': {
+      const chain = data.wordChain ?? [];
+      // Only show word work if there's at least one multi-letter word
+      return chain.some((w) => typeof w === 'string' && w.length >= 2);
+    }
+    case 'step7': {
+      const review = data.review ?? [];
+      const teach = data.teach ?? [];
+      return review.length > 0 || teach.length > 0;
+    }
+    case 'step8': {
+      const read = data.readSentences ?? [];
+      const spell = data.spellSentences ?? [];
+      // Skip step 8 if both lists are empty OR every entry is a single letter
+      const hasReal = (arr) => arr.some((s) => typeof s === 'string' && s.replace(/[^a-zA-Z]/g, '').length >= 2);
+      return hasReal(read) || hasReal(spell);
+    }
+    default:
+      return true;
+  }
+}
+
+const activeSteps = computed(() => {
+  const l = lesson.value;
+  if (!l) return [];
+  return STEP_KEYS.filter((k) => isStepWorthShowing(k, l[k]));
+});
+
+const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] ?? null);
+const currentStepData = computed(() => (currentStepKey.value ? lesson.value?.[currentStepKey.value] : null));
+const currentStepComponent = computed(() => (currentStepKey.value ? stepComponentByKey[currentStepKey.value] : null));
+
+function stripIpa(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
 
 const headerTitle = computed(() => {
   const l = lesson.value;
   if (!l) return '';
-  if (l.grapheme) return `${l.grapheme.toUpperCase()} ${l.phoneme || ''}`.trim();
-  return l.title || `Lesson ${l.lessonNumber}`;
+  if (l.grapheme) return l.grapheme.toLowerCase();
+  return stripIpa(l.title) || `Lesson ${l.lessonNumber}`;
 });
 
-const progressPercent = computed(() =>
-  Math.round((currentStepIndex.value / STEP_KEYS.length) * 100)
-);
+const progressPercent = computed(() => {
+  const total = activeSteps.value.length;
+  if (total === 0) return 0;
+  return Math.round((currentStepIndex.value / total) * 100);
+});
 
 function onStepComplete() {
   ember.stopSpeaking();
-  if (currentStepIndex.value < STEP_KEYS.length - 1) {
+  if (currentStepIndex.value < activeSteps.value.length - 1) {
     currentStepIndex.value++;
   } else {
     emit('complete');

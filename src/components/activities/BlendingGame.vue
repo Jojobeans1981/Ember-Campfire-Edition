@@ -10,7 +10,7 @@
         :class="{ tapped: tappedIdx > idx, current: tappedIdx === idx }"
         @click="tapTile(idx)"
       >
-        {{ seg.toUpperCase() }}
+        {{ seg }}
       </button>
     </div>
 

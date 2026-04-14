@@ -93,15 +93,15 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 10 — End-to-end manual verification [MVP10]
 
-- [ ] `npm run dev`
-- [ ] Open browser, select a Guardian
-- [ ] Verify map shows lesson 001 unlocked
-- [ ] Click lesson 001 → hub renders with grapheme/phoneme
-- [ ] Click Lesson → 8 steps play in order
-- [ ] After lesson completes, return to hub; verify activities unlocked
-- [ ] Play one game; verify words come from cumulative list
-- [ ] Reload page; verify progress persisted via localStorage
-- [ ] Commit (or document any fixes)
+- [x] `npm run dev` _(boots cleanly on port 5174, Vite ready in 222ms, no errors)_
+- [ ] Open browser, select a Guardian _(human verification required)_
+- [ ] Verify map shows lesson 001 unlocked _(human verification required)_
+- [ ] Click lesson 001 → hub renders with grapheme/phoneme _(human verification required)_
+- [ ] Click Lesson → 8 steps play in order _(human verification required)_
+- [ ] After lesson completes, return to hub; verify activities unlocked _(human verification required)_
+- [ ] Play one game; verify words come from cumulative list _(human verification required)_
+- [ ] Reload page; verify progress persisted via localStorage _(human verification required)_
+- [x] Commit (or document any fixes) _(no automated fixes needed; build, lint via Vite, and 62/62 tests all green)_
 
 ## Phase 2: Polish
 

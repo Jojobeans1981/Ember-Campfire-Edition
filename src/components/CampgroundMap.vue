@@ -1,7 +1,7 @@
 <template>
   <div class="campground-map">
     <h2 class="map-title">Ember Campground</h2>
-    <p class="map-subtitle">UFLI Lessons</p>
+    <p class="map-subtitle">Lessons</p>
 
     <div v-for="zone in zones" :key="zone.label" class="map-zone">
       <div class="zone-label">{{ zone.label }}</div>

@@ -42,11 +42,30 @@ export const PHONEME_GRAMMARS = {
 };
 
 /**
+ * Normalize a phoneme key to its bare-letter form. Accepts UFLI-style
+ * notations like "/ă/", "/sh/" or bare letters and returns the lookup key
+ * used in PHONEME_GRAMMARS.
+ */
+export function normalizePhonemeKey(phoneme) {
+  if (!phoneme) return '';
+  let p = String(phoneme).replace(/\//g, '').trim().toLowerCase();
+  const map = {
+    'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
+    'ā': 'a', 'ē': 'e', 'ī': 'i', 'ō': 'o', 'ū': 'u',
+    'ɹ': 'r', 'ŋ': 'n', 'ə': 'u', 'ɔ': 'o',
+  };
+  if (map[p]) return map[p];
+  p = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return p;
+}
+
+/**
  * Get the grammar word list for a phoneme.
- * Falls back to a broad grammar if the phoneme isn't mapped.
+ * Returns null if the phoneme isn't mapped (caller falls back to broad).
  */
 export function getGrammarForPhoneme(phoneme) {
-  return PHONEME_GRAMMARS[phoneme] || null;
+  const key = normalizePhonemeKey(phoneme);
+  return PHONEME_GRAMMARS[key] || null;
 }
 
 /**
@@ -55,8 +74,9 @@ export function getGrammarForPhoneme(phoneme) {
  * phoneme's accepted word list.
  */
 export function isPhonemeMatch(phoneme, voskText) {
-  if (!voskText || !PHONEME_GRAMMARS[phoneme]) return false;
+  const key = normalizePhonemeKey(phoneme);
+  if (!voskText || !PHONEME_GRAMMARS[key]) return false;
   const words = voskText.toLowerCase().trim().split(/\s+/);
-  const accepted = PHONEME_GRAMMARS[phoneme];
+  const accepted = PHONEME_GRAMMARS[key];
   return words.some((w) => accepted.includes(w));
 }

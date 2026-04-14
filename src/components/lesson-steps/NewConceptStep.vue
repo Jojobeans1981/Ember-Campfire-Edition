@@ -4,7 +4,6 @@
 
     <div v-if="phase === 'intro'" class="intro-section">
       <div v-if="grapheme" class="grapheme-card">{{ grapheme }}</div>
-      <div v-if="phoneme" class="phoneme-label">{{ phoneme }}</div>
       <div v-if="currentScriptLine" class="script-line">{{ stripIpa(currentScriptLine.text) }}</div>
       <div v-if="articulation" class="articulation">{{ stripIpa(articulation) }}</div>
       <div class="btn-row">
@@ -61,9 +60,6 @@ const articulation = computed(() => props.step?.articulatoryGesture ?? '');
 const grapheme = computed(() => {
   const placements = props.step?.graphemePlacements ?? [];
   return placements[0]?.grapheme ?? '';
-});
-const phoneme = computed(() => {
-  return '';
 });
 
 const currentScriptLine = computed(() => script.value[scriptIndex.value]);

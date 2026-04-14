@@ -3,18 +3,30 @@
     <h3 class="step-title">Visual Drill</h3>
 
     <div v-if="currentItem" class="big-letter">
-      {{ currentItem.grapheme.toUpperCase() }}
+      {{ currentItem.grapheme }}
     </div>
 
-    <div class="instruction">
-      {{ instruction }}
+    <div class="instruction">{{ instruction }}</div>
+
+    <div v-if="micPhase === 'listening'" class="mic-area">
+      <div class="mic-icon">🎤</div>
+      <div class="sustain-meter">
+        <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
+      </div>
+      <div class="listening-label">Listening… say the sound!</div>
     </div>
+
+    <div v-if="micPhase === 'matched'" class="result success">Great! You said it!</div>
+    <div v-if="micPhase === 'missed'" class="result help">Try again. Tap 🎤 and say the sound.</div>
 
     <div class="controls">
       <button class="audio-btn" @click="playCurrent" :disabled="busy">
         🔊 Hear sound
       </button>
-      <button class="next-btn" @click="next">
+      <button class="audio-btn" @click="startMic" :disabled="busy || micPhase === 'listening'">
+        🎤 My turn
+      </button>
+      <button class="next-btn" :disabled="!canAdvance" @click="next">
         {{ isLast ? 'Done' : 'Next' }}
       </button>
     </div>
@@ -26,23 +38,32 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
 
 const ember = useEmber();
+const {
+  startListening,
+  cancelListening,
+  requestMicPermission,
+  sustainProgress: micProgress,
+} = useSpeechRecognition();
 
 const items = computed(() => props.step?.items ?? []);
 const index = ref(0);
 const currentItem = computed(() => items.value[index.value]);
 const isLast = computed(() => index.value >= items.value.length - 1);
 const busy = ref(false);
+const micPhase = ref('idle'); // idle | listening | matched | missed
+const canAdvance = computed(() => micPhase.value === 'matched');
 let cancelled = false;
 
 const instruction = computed(() => {
   const i = currentItem.value;
   if (!i) return '';
-  return `What sound does ${i.grapheme.toUpperCase()} make?`;
+  return `The letter is ${i.grapheme}. Listen, then say the sound.`;
 });
 
 async function playCurrent() {
@@ -50,7 +71,7 @@ async function playCurrent() {
   const item = currentItem.value;
   if (!item) return;
   busy.value = true;
-  await ember.speak(`What sound does ${item.grapheme.toUpperCase()} make?`);
+  await ember.speak(`The letter is ${item.grapheme}. It says`);
   for (const p of item.phonemes ?? []) {
     if (cancelled) break;
     await ember.playPhoneme(p);
@@ -58,12 +79,34 @@ async function playCurrent() {
   busy.value = false;
 }
 
+async function startMic() {
+  if (cancelled || busy.value) return;
+  const item = currentItem.value;
+  if (!item) return;
+  busy.value = true;
+  micPhase.value = 'listening';
+  const target = item.phonemes?.[0] ?? item.grapheme;
+  const result = await startListening(target, 8000);
+  if (cancelled) return;
+  if (result?.matched) {
+    micPhase.value = 'matched';
+    await ember.speak('Great!');
+  } else {
+    micPhase.value = 'missed';
+  }
+  busy.value = false;
+}
+
 function next() {
+  if (!canAdvance.value) return;
+  cancelListening();
+  micPhase.value = 'idle';
   if (isLast.value) {
     emit('step-complete');
     return;
   }
   index.value++;
+  playCurrent();
 }
 
 onMounted(async () => {
@@ -71,12 +114,14 @@ onMounted(async () => {
     emit('step-complete');
     return;
   }
+  await requestMicPermission();
   await playCurrent();
 });
 
 onBeforeUnmount(() => {
   cancelled = true;
   ember.stopSpeaking();
+  cancelListening();
 });
 </script>
 
@@ -84,8 +129,17 @@ onBeforeUnmount(() => {
 .visual-drill-step { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; }
 .step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
 .big-letter { font-size: 6rem; color: #FF8C00; font-weight: bold; line-height: 1; text-shadow: 0 0 20px rgba(255, 140, 0, 0.3); }
-.instruction { color: #aaa; font-size: 1rem; text-align: center; }
-.controls { display: flex; gap: 0.75rem; }
+.instruction { color: #aaa; font-size: 1rem; text-align: center; max-width: 320px; }
+.mic-area { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.mic-icon { font-size: 2rem; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+.sustain-meter { width: 200px; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
+.sustain-fill { height: 100%; background: #FF8C00; transition: width 0.1s; }
+.listening-label { color: #64FFDA; font-size: 0.85rem; }
+.result { font-size: 1.1rem; text-align: center; max-width: 320px; }
+.result.success { color: #64FFDA; }
+.result.help { color: #FFD93D; }
+.controls { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
 .audio-btn, .next-btn {
   background: rgba(255, 140, 0, 0.15);
   border: 1.5px solid #FF8C00;
@@ -95,6 +149,6 @@ onBeforeUnmount(() => {
   font-family: inherit;
   cursor: pointer;
 }
-.audio-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.audio-btn:disabled, .next-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .item-progress { color: #666; font-size: 0.75rem; }
 </style>
