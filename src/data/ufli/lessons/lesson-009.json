@@ -1,0 +1,108 @@
+{
+  "lessonNumber": 9,
+  "title": "n /n/",
+  "grapheme": "n",
+  "phoneme": "/n/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/n/", "/ă/", "/p/"], "word": "nap" },
+      { "phonemes": ["/p/", "/ĭ/", "/n/"], "word": "pin" },
+      { "phonemes": ["/t/", "/ă/", "/n/"], "word": "tan" }
+    ],
+    "segment": [
+      { "word": "nap", "phonemes": ["/n/", "/ă/", "/p/"] },
+      { "word": "pin", "phonemes": ["/p/", "/ĭ/", "/n/"] },
+      { "word": "fin", "phonemes": ["/f/", "/ĭ/", "/n/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "n", "phonemes": ["/n/"] },
+      { "grapheme": "i", "phonemes": ["/ĭ/"] },
+      { "grapheme": "f", "phonemes": ["/f/"] },
+      { "grapheme": "p", "phonemes": ["/p/"] },
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/n/", "graphemes": ["n"] },
+      { "phoneme": "/ĭ/", "graphemes": ["i"] },
+      { "phoneme": "/f/", "graphemes": ["f"] },
+      { "phoneme": "/p/", "graphemes": ["p"] },
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["nap", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an"],
+    "tiles": {
+      "initial": ["s", "m", "t", "p", "f", "n"],
+      "medial": ["a", "i"],
+      "final": ["t", "s", "m", "p", "f", "n"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter N. Tongue tip touches behind the top teeth. Voice on, air through the nose. /nnn/.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter N." },
+      { "line": "2", "text": "N says /n/, like in nap." },
+      { "line": "3", "text": "Tongue behind your top teeth, voice on. /nnn/." },
+      { "line": "4", "text": "Your turn. Say /n/." }
+    ],
+    "articulatoryGesture": "Tongue tip behind top teeth. Voice on. Air flows through the nose. Continuous /nnn/.",
+    "graphemePlacements": [
+      { "grapheme": "n", "position": "initial", "examples": ["nap", "net", "nip"] },
+      { "grapheme": "n", "position": "final", "examples": ["pan", "tan", "fin"] }
+    ],
+    "readWords": {
+      "iDo": ["nap", "pin"],
+      "weDo": ["tan", "fan"],
+      "youDo": ["pan", "fin", "tin"]
+    },
+    "spellWords": {
+      "iDo": ["nap"],
+      "weDo": ["pan"],
+      "youDo": ["pin", "fan"]
+    }
+  },
+  "step6": {
+    "wordChain": ["nap", "pan", "tan", "fan", "fin", "pin", "tin", "in", "an"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "his",
+        "breakdown": [
+          { "grapheme": "h", "phoneme": "/h/", "regular": true },
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "and",
+        "breakdown": [
+          { "grapheme": "a", "phoneme": "/ă/", "regular": true },
+          { "grapheme": "n", "phoneme": "/n/", "regular": true },
+          { "grapheme": "d", "phoneme": "/d/", "regular": true }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["sam has a pin and a fan.", "I nap in the tan tin."],
+    "spellSentences": ["sam has a pin.", "I nap."]
+  },
+  "wordList": ["nap", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "sam", "am", "as", "at", "sap", "fap", "fas", "fam"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "his", "it", "the", "to", "of", "and", "a"],
+    "fry": ["I", "is", "his", "it", "the", "to", "of", "and", "a"]
+  }
+}

@@ -1,35 +1,96 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { store } from './index';
+import { usePersistence } from '../composables/usePersistence';
 
 describe('Global Store', () => {
   beforeEach(() => {
     store.xp = 0;
     store.currentPage = 'selection';
-    store.activeUnitId = null;
-    store.unitProgress = {};
+    store.activeLessonId = null;
+    for (const k of Object.keys(store.ufliProgress)) {
+      delete store.ufliProgress[k];
+    }
+    localStorage.clear();
   });
 
   it('should initialize with 0 XP', () => {
     expect(store.xp).toBe(0);
   });
 
-  it('should track unit progress', () => {
-    store.unitProgress['unit-01'] = {
+  it('should track UFLI lesson progress', () => {
+    store.ufliProgress['001'] = {
       lessonComplete: false,
       activitiesComplete: {},
-      storyRead: false,
+      connectedTextRead: false,
     };
-    expect(store.unitProgress['unit-01'].lessonComplete).toBe(false);
-    store.unitProgress['unit-01'].lessonComplete = true;
-    expect(store.unitProgress['unit-01'].lessonComplete).toBe(true);
+    expect(store.ufliProgress['001'].lessonComplete).toBe(false);
+    store.ufliProgress['001'].lessonComplete = true;
+    expect(store.ufliProgress['001'].lessonComplete).toBe(true);
   });
 
   it('should support page navigation', () => {
     expect(store.currentPage).toBe('selection');
     store.currentPage = 'campground';
     expect(store.currentPage).toBe('campground');
-    store.activeUnitId = 'unit-01';
+    store.activeLessonId = '001';
     store.currentPage = 'unit-hub';
     expect(store.currentPage).toBe('unit-hub');
+  });
+});
+
+describe('Persistence — ufliProgress round-trip', () => {
+  beforeEach(() => {
+    store.xp = 0;
+    store.activeLessonId = null;
+    for (const k of Object.keys(store.ufliProgress)) {
+      delete store.ufliProgress[k];
+    }
+    localStorage.clear();
+  });
+
+  it('saves and reloads ufliProgress', () => {
+    const { save, load } = usePersistence();
+
+    store.ufliProgress['001'] = {
+      lessonComplete: true,
+      activitiesComplete: {
+        speech: true,
+        match: true,
+        blend: false,
+        build: false,
+        sentence: false,
+      },
+      connectedTextRead: false,
+    };
+    store.xp = 150;
+    save();
+
+    for (const k of Object.keys(store.ufliProgress)) {
+      delete store.ufliProgress[k];
+    }
+    store.xp = 0;
+    expect(store.ufliProgress['001']).toBeUndefined();
+
+    load();
+    expect(store.ufliProgress['001']).toBeDefined();
+    expect(store.ufliProgress['001'].lessonComplete).toBe(true);
+    expect(store.ufliProgress['001'].activitiesComplete.speech).toBe(true);
+    expect(store.ufliProgress['001'].activitiesComplete.blend).toBe(false);
+    expect(store.ufliProgress['001'].connectedTextRead).toBe(false);
+    expect(store.xp).toBe(150);
+  });
+
+  it('preserves XP and selectedFriend across save/load (no regression)', () => {
+    const { save, load } = usePersistence();
+    store.xp = 275;
+    store.selectedFriend = { name: 'Ember' };
+    save();
+
+    store.xp = 0;
+    store.selectedFriend = null;
+    load();
+
+    expect(store.xp).toBe(275);
+    expect(store.selectedFriend).toEqual({ name: 'Ember' });
   });
 });

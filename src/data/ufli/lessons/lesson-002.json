@@ -1,0 +1,83 @@
+{
+  "lessonNumber": 2,
+  "title": "m /m/",
+  "grapheme": "m",
+  "phoneme": "/m/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/m/"], "word": "m" },
+      { "phonemes": ["/ă/", "/m/"], "word": "am" }
+    ],
+    "segment": [
+      { "word": "am", "phonemes": ["/ă/", "/m/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["am"],
+    "tiles": {
+      "initial": ["m"],
+      "medial": ["a"],
+      "final": ["m"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter M. Lips press together. Voice on. The sound hums. Now that we have two letters (a and m), we can read our first real word: 'am'.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter M." },
+      { "line": "2", "text": "M says /m/, like the start of mom." },
+      { "line": "3", "text": "Press your lips together and hum. /mmm/." },
+      { "line": "4", "text": "Your turn. Say /m/." },
+      { "line": "5", "text": "Now we can put A and M together to make our first word: am." }
+    ],
+    "articulatoryGesture": "Lips pressed together. Voice on. The sound is held and hums through the nose.",
+    "graphemePlacements": [
+      { "grapheme": "m", "position": "initial", "examples": ["m"] },
+      { "grapheme": "m", "position": "final", "examples": ["am"] }
+    ],
+    "readWords": {
+      "iDo": ["am"],
+      "weDo": ["am"],
+      "youDo": ["am"]
+    },
+    "spellWords": {
+      "iDo": ["am"],
+      "weDo": ["am"],
+      "youDo": []
+    }
+  },
+  "step6": {
+    "wordChain": ["am"]
+  },
+  "step7": {
+    "review": [],
+    "teach": [
+      {
+        "word": "I",
+        "breakdown": [
+          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["I am."],
+    "spellSentences": ["I am."]
+  },
+  "wordList": ["am"],
+  "highFrequencyWords": {
+    "dolch": ["I", "a", "am"],
+    "fry": ["I", "a"]
+  }
+}

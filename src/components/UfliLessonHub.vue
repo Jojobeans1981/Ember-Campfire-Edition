@@ -1,18 +1,17 @@
 <template>
   <div class="unit-hub">
-    <!-- Header -->
     <div class="hub-header">
-      <h2 class="unit-title">{{ unit.title }}</h2>
+      <h2 class="unit-title">Lesson {{ meta?.lessonNumber }}</h2>
       <div class="unit-phonemes">
-        <span v-for="p in unit.phonemes" :key="p" class="phoneme-badge">{{ p.toUpperCase() }}</span>
+        <span v-if="meta?.grapheme" class="phoneme-badge">{{ meta.grapheme.toLowerCase() }}</span>
       </div>
+      <div class="title-line" v-if="cleanTitle">{{ cleanTitle }}</div>
       <div class="hub-status">
         <span class="status-icon">{{ statusIcon }}</span>
         <span class="status-text">{{ statusLabel }}</span>
       </div>
     </div>
 
-    <!-- Spark progress -->
     <div class="spark-tracker">
       <div class="spark-bar">
         <div class="spark-fill" :style="{ width: sparkPercent + '%' }"></div>
@@ -27,7 +26,6 @@
       </div>
     </div>
 
-    <!-- Main action: Lesson -->
     <button
       class="lesson-card"
       :class="{ done: progress.lessonComplete }"
@@ -40,7 +38,6 @@
       </div>
     </button>
 
-    <!-- Activities grid -->
     <div class="activities-grid">
       <button
         v-for="act in activityList"
@@ -55,41 +52,85 @@
       </button>
     </div>
 
-    <!-- Story -->
     <button
       class="story-card"
-      :class="{ done: progress.storyRead, locked: !storyUnlocked }"
-      :disabled="!storyUnlocked"
-      @click="startStory"
+      :class="{ done: progress.connectedTextRead, locked: !connectedTextUnlocked }"
+      :disabled="!connectedTextUnlocked"
+      @click="startConnectedText"
     >
-      <span class="card-icon">{{ progress.storyRead ? '🏕️' : '📕' }}</span>
+      <span class="card-icon">{{ progress.connectedTextRead ? '🏕️' : '📕' }}</span>
       <div class="card-text">
-        <span class="card-title">Story</span>
-        <span class="card-subtitle">{{ progress.storyRead ? 'Read again' : storyUnlocked ? 'Ready to read!' : 'Complete activities to unlock' }}</span>
+        <span class="card-title">Connected Text</span>
+        <span class="card-subtitle">{{
+          progress.connectedTextRead
+            ? 'Read again'
+            : connectedTextUnlocked
+              ? 'Ready to read!'
+              : 'Complete activities to unlock'
+        }}</span>
       </div>
     </button>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watchEffect } from 'vue';
 import { store } from '../store';
-import { UNITS } from '../data/curriculum.js';
-import { useProgression } from '../composables/useProgression.js';
+import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
+import { useUfliProgression } from '../composables/useUfliProgression.js';
 
-const { getUnitStatus, isStoryUnlocked, ensureUnitProgress } = useProgression();
+const {
+  getUfliLessonStatus,
+  completeUfliLesson, // eslint-disable-line no-unused-vars
+  ACTIVITY_TYPES,
+} = useUfliProgression();
 
-const unit = computed(() => UNITS.find(u => u.unitId === store.activeUnitId));
-const progress = computed(() => {
-  ensureUnitProgress(store.activeUnitId);
-  return store.unitProgress[store.activeUnitId];
+const meta = computed(() => getLessonMeta(store.activeLessonId));
+
+function stripIpa(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
+const cleanTitle = computed(() => {
+  const t = meta.value?.title;
+  if (!t) return '';
+  // After stripping IPA from "a /ă/" we get just "a" — that duplicates
+  // the grapheme badge, so suppress the title in that case.
+  const cleaned = stripIpa(t);
+  if (cleaned === meta.value?.grapheme) return '';
+  return cleaned;
 });
 
-const status = computed(() => getUnitStatus(store.activeUnitId));
-const storyUnlocked = computed(() => isStoryUnlocked(store.activeUnitId));
+const progress = computed(() => store.ufliProgress[store.activeLessonId] ?? {
+  lessonComplete: false,
+  activitiesComplete: { speech: false, match: false, blend: false, build: false, sentence: false },
+  connectedTextRead: false,
+});
+
+// Ensure the progress entry exists in the store so the template stays reactive.
+watchEffect(() => {
+  const id = store.activeLessonId;
+  if (!id) return;
+  if (!store.ufliProgress[id]) {
+    const ac = {};
+    for (const t of ACTIVITY_TYPES) ac[t] = false;
+    store.ufliProgress[id] = {
+      lessonComplete: false,
+      activitiesComplete: ac,
+      connectedTextRead: false,
+    };
+  }
+});
+
+const status = computed(() => getUfliLessonStatus(store.activeLessonId));
 
 const statusIcon = computed(() => {
-  const icons = { kindling: '🪵', sparks: '✨', fire: '🔥', stories: '🏕️' };
+  const icons = { kindling: '🪵', sparks: '✨', fire: '🔥', complete: '🏕️', locked: '🔒' };
   return icons[status.value] || '🪵';
 });
 
@@ -98,24 +139,28 @@ const statusLabel = computed(() => {
     kindling: 'Ready to Learn',
     sparks: 'Practicing',
     fire: 'Story Time!',
-    stories: 'Complete!',
+    complete: 'Complete!',
+    locked: 'Locked',
   };
   return labels[status.value] || '';
 });
 
 const sparksEarned = computed(() => {
   const p = progress.value;
-  if (!p) return 0;
   let count = 0;
   if (p.lessonComplete) count++;
-  if (p.activitiesComplete) {
-    count += Object.values(p.activitiesComplete).filter(Boolean).length;
-  }
-  if (p.storyRead) count++;
+  count += Object.values(p.activitiesComplete || {}).filter(Boolean).length;
+  if (p.connectedTextRead) count++;
   return count;
 });
 
 const sparkPercent = computed(() => Math.round((sparksEarned.value / 7) * 100));
+
+const connectedTextUnlocked = computed(() => {
+  const p = progress.value;
+  if (!p.lessonComplete) return false;
+  return ACTIVITY_TYPES.every((t) => p.activitiesComplete[t]);
+});
 
 const activityList = [
   { type: 'speech', label: 'Say It', icon: '🎤' },
@@ -134,7 +179,7 @@ function startActivity(type) {
   store.currentPage = 'activity';
 }
 
-function startStory() {
+function startConnectedText() {
   store.currentPage = 'story';
 }
 </script>
@@ -150,7 +195,6 @@ function startStory() {
   width: 100%;
 }
 
-/* Header */
 .hub-header {
   display: flex;
   flex-direction: column;
@@ -177,7 +221,16 @@ function startStory() {
   border-radius: 1rem;
   font-size: 1.1rem;
   font-weight: bold;
+  text-transform: lowercase;
 }
+
+.phoneme-badge.ipa {
+  background: rgba(100, 255, 218, 0.12);
+  color: #64FFDA;
+  font-weight: 500;
+}
+
+.title-line { color: #aaa; font-size: 0.85rem; }
 
 .hub-status {
   display: flex;
@@ -189,7 +242,6 @@ function startStory() {
 
 .status-icon { font-size: 1.2rem; }
 
-/* Spark tracker */
 .spark-tracker {
   width: 100%;
   display: flex;
@@ -231,8 +283,7 @@ function startStory() {
   box-shadow: 0 0 6px rgba(255, 217, 61, 0.5);
 }
 
-/* Lesson card */
-.lesson-card {
+.lesson-card, .story-card {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -247,16 +298,14 @@ function startStory() {
   transition: border-color 0.2s, transform 0.15s;
 }
 
-.lesson-card:hover {
+.lesson-card:hover, .story-card:hover:not(:disabled) {
   border-color: #FF8C00;
   transform: translateY(-1px);
 }
 
-.lesson-card.done {
-  border-color: rgba(100, 255, 218, 0.3);
-}
+.lesson-card.done { border-color: rgba(100, 255, 218, 0.3); }
 
-.lesson-card .card-icon { font-size: 1.5rem; }
+.lesson-card .card-icon, .story-card .card-icon { font-size: 1.5rem; }
 
 .card-text {
   display: flex;
@@ -274,7 +323,6 @@ function startStory() {
   color: #888;
 }
 
-/* Activities grid */
 .activities-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -306,44 +354,14 @@ function startStory() {
 .activity-card .card-icon { font-size: 1.3rem; }
 .activity-card .card-label { font-weight: 500; }
 
-.activity-card.done {
-  border-color: rgba(100, 255, 218, 0.25);
-}
+.activity-card.done { border-color: rgba(100, 255, 218, 0.25); }
+.activity-card.locked { opacity: 0.25; cursor: not-allowed; }
 
-.activity-card.locked {
-  opacity: 0.25;
-  cursor: not-allowed;
-}
-
-/* Story card */
 .story-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.85rem 1.25rem;
-  border-radius: 1rem;
-  border: 2px solid rgba(100, 255, 218, 0.15);
+  border-color: rgba(100, 255, 218, 0.15);
   background: linear-gradient(135deg, rgba(100, 255, 218, 0.06), rgba(100, 255, 218, 0.02));
-  color: #E0E0E0;
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color 0.2s, transform 0.15s, opacity 0.2s;
 }
 
-.story-card:hover:not(:disabled) {
-  border-color: #64FFDA;
-  transform: translateY(-1px);
-}
-
-.story-card.done {
-  border-color: rgba(100, 255, 218, 0.3);
-}
-
-.story-card.locked {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.story-card .card-icon { font-size: 1.3rem; }
+.story-card.done { border-color: rgba(100, 255, 218, 0.3); }
+.story-card.locked { opacity: 0.3; cursor: not-allowed; }
 </style>

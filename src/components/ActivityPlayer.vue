@@ -2,7 +2,7 @@
   <div class="activity-player">
     <component
       :is="activityComponent"
-      :unitId="unitId"
+      :lessonId="lessonId"
       :activityType="activityType"
       @complete="$emit('complete')"
     />
@@ -18,7 +18,7 @@ import WordBuilder from './activities/WordBuilder.vue';
 import SentenceReader from './activities/SentenceReader.vue';
 
 const props = defineProps({
-  unitId: { type: String, required: true },
+  lessonId: { type: String, required: true },
   activityType: { type: String, required: true },
 });
 

@@ -14,7 +14,7 @@
         class="slot"
         :class="{ filled: slot !== null, correct: showResult && slot === currentWord?.phonemes[idx], wrong: showResult && slot !== null && slot !== currentWord?.phonemes[idx] }"
       >
-        {{ slot ? slot.toUpperCase() : '_' }}
+        {{ slot ? slot : '_' }}
       </div>
     </div>
 
@@ -28,7 +28,7 @@
         :disabled="usedIndices.has(idx)"
         @click="pickLetter(idx)"
       >
-        {{ letter.toUpperCase() }}
+        {{ letter }}
       </button>
     </div>
 
@@ -41,20 +41,17 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { UNITS } from '../../data/curriculum.js';
-import { useProgression } from '../../composables/useProgression.js';
-import { getDecodableWords } from '../../data/wordLists.js';
+import { getCumulativeDecodableWords, getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
-const props = defineProps({ unitId: String, activityType: String });
+const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
-const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
 
-const allPhonemes = getPhonemesForUnit(props.unitId);
-const words = getDecodableWords(allPhonemes).filter(w => w.phonemes.length >= 3);
+const words = ref([]);
+const allPhonemes = ref([]);
 
 const currentWord = ref(null);
 const slots = ref([]);
@@ -80,13 +77,13 @@ function shuffle(arr) {
 }
 
 function pickWord() {
-  const word = words[Math.floor(Math.random() * words.length)];
+  const word = words.value[Math.floor(Math.random() * words.value.length)];
   currentWord.value = word;
   slots.value = new Array(word.phonemes.length).fill(null);
 
   // Create letter bank: word's phonemes + 2 distractors, shuffled
-  const distractors = allPhonemes
-    .filter(p => !word.phonemes.includes(p))
+  const distractors = allPhonemes.value
+    .filter((p) => !word.phonemes.includes(p))
     .sort(() => Math.random() - 0.5)
     .slice(0, 2);
   availableLetters.value = shuffle([...word.phonemes, ...distractors]);
@@ -131,8 +128,11 @@ async function hearWord() {
   await ember.speak(currentWord.value.word);
 }
 
-onMounted(() => {
-  if (words.length === 0) {
+onMounted(async () => {
+  const all = await getCumulativeDecodableWords(props.lessonId);
+  words.value = all.filter((w) => w.phonemes.length >= 3);
+  allPhonemes.value = await getCumulativeLetters(props.lessonId);
+  if (words.value.length === 0) {
     emit('complete');
     return;
   }

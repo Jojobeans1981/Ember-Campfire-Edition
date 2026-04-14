@@ -10,7 +10,7 @@
         :class="{ tapped: tappedIdx > idx, current: tappedIdx === idx }"
         @click="tapTile(idx)"
       >
-        {{ seg.toUpperCase() }}
+        {{ seg }}
       </button>
     </div>
 
@@ -27,20 +27,16 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { UNITS } from '../../data/curriculum.js';
-import { useProgression } from '../../composables/useProgression.js';
-import { getDecodableWords } from '../../data/wordLists.js';
+import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
-const props = defineProps({ unitId: String, activityType: String });
+const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
-const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
 
-const allPhonemes = getPhonemesForUnit(props.unitId);
-const words = getDecodableWords(allPhonemes).filter(w => w.phonemes.length >= 3);
+const words = ref([]);
 
 const currentWord = ref(null);
 const tappedIdx = ref(-1);
@@ -51,7 +47,7 @@ let resolveTap = null;
 let cancelled = false;
 
 function pickWord() {
-  currentWord.value = words[Math.floor(Math.random() * words.length)];
+  currentWord.value = words.value[Math.floor(Math.random() * words.value.length)];
   tappedIdx.value = 0;
   phase.value = 'tap';
 }
@@ -96,7 +92,9 @@ async function runRound() {
 }
 
 onMounted(async () => {
-  if (words.length === 0) {
+  const all = await getCumulativeDecodableWords(props.lessonId);
+  words.value = all.filter((w) => w.phonemes.length >= 3);
+  if (words.value.length === 0) {
     emit('complete');
     return;
   }

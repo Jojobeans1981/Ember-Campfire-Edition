@@ -8,8 +8,7 @@
       <div v-if="status === 'locked'" class="lock-icon">🔒</div>
       <CampfireIcon v-else :sparks="sparksEarned" :stage="status" />
     </div>
-    <div class="station-label">{{ unit.stationLabel }}</div>
-    <!-- Spark progress dots -->
+    <div class="station-label">{{ stationLabel }}</div>
     <div v-if="status !== 'locked'" class="spark-dots">
       <span class="dot" :class="{ lit: sparksEarned >= 1 }"></span>
       <span class="dot" :class="{ lit: sparksEarned >= 2 }"></span>
@@ -23,33 +22,40 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue';
+import { computed } from 'vue';
 import { store } from '../store';
+import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
 import CampfireIcon from './ui/CampfireIcon.vue';
 
 const props = defineProps({
-  unit: { type: Object, required: true },
+  lessonId: { type: String, required: true },
   status: { type: String, required: true },
 });
 
 const emit = defineEmits(['select']);
 
-// 7 sparks total per unit: lesson(1) + 5 activities(5) + story(1)
+const meta = computed(() => getLessonMeta(props.lessonId));
+
+const stationLabel = computed(() => {
+  const m = meta.value;
+  if (!m) return props.lessonId;
+  if (m.grapheme) return m.grapheme.toLowerCase();
+  return `l${m.lessonNumber}`;
+});
+
 const sparksEarned = computed(() => {
-  const progress = store.unitProgress[props.unit.unitId];
-  if (!progress) return 0;
+  const p = store.ufliProgress[props.lessonId];
+  if (!p) return 0;
   let count = 0;
-  if (progress.lessonComplete) count++;
-  if (progress.activitiesComplete) {
-    count += Object.values(progress.activitiesComplete).filter(Boolean).length;
-  }
-  if (progress.storyRead) count++;
+  if (p.lessonComplete) count++;
+  count += Object.values(p.activitiesComplete || {}).filter(Boolean).length;
+  if (p.connectedTextRead) count++;
   return count;
 });
 
 function handleClick() {
   if (props.status === 'locked') return;
-  emit('select', props.unit);
+  emit('select', props.lessonId);
 }
 </script>
 
@@ -59,12 +65,12 @@ function handleClick() {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.75rem 0.5rem;
-  border-radius: 1rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 0.85rem;
   background: rgba(30, 41, 59, 0.7);
   border: 2px solid rgba(255, 255, 255, 0.05);
   transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
-  min-width: 90px;
+  min-width: 70px;
 }
 
 .station.clickable { cursor: pointer; }
@@ -73,11 +79,11 @@ function handleClick() {
 .station.kindling { border-color: rgba(160, 82, 45, 0.5); }
 .station.sparks { border-color: rgba(255, 200, 0, 0.5); box-shadow: 0 0 8px rgba(255, 200, 0, 0.2); }
 .station.fire { border-color: rgba(255, 140, 0, 0.6); box-shadow: 0 0 12px rgba(255, 140, 0, 0.3); }
-.station.stories { border-color: rgba(100, 255, 218, 0.5); box-shadow: 0 0 12px rgba(100, 255, 218, 0.2); }
+.station.complete { border-color: rgba(100, 255, 218, 0.5); box-shadow: 0 0 12px rgba(100, 255, 218, 0.2); }
 
 .station-icon {
-  font-size: 2rem;
-  height: 2.5rem;
+  font-size: 1.6rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,18 +95,24 @@ function handleClick() {
 @keyframes sparkle { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }
 @keyframes flicker { 0% { transform: scale(1) rotate(-2deg); } 100% { transform: scale(1.1) rotate(2deg); } }
 
-.station-label { font-size: 0.7rem; color: #aaa; text-align: center; }
+.station-label {
+  font-size: 0.85rem;
+  color: #FF8C00;
+  font-weight: 700;
+  text-align: center;
+  text-transform: lowercase;
+}
 
 .spark-dots {
   display: flex;
-  gap: 3px;
+  gap: 2px;
   align-items: center;
   margin-top: 2px;
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #333;
   transition: background 0.3s;
@@ -112,8 +124,8 @@ function handleClick() {
 }
 
 .dot.big {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 .dot.big.lit {

@@ -30,7 +30,7 @@
         :disabled="showResult"
         @click="pick(c)"
       >
-        {{ c.toUpperCase() }}
+        {{ c }}
       </button>
     </div>
 
@@ -39,25 +39,22 @@
     </div>
 
     <div v-if="phase === 'correct'" class="result success">Correct!</div>
-    <div v-if="phase === 'wrong'" class="result wrong">It was {{ targetPhoneme?.toUpperCase() }}</div>
+    <div v-if="phase === 'wrong'" class="result wrong">It was {{ targetPhoneme }}</div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { UNITS } from '../../data/curriculum.js';
-import { useProgression } from '../../composables/useProgression.js';
+import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
-const props = defineProps({ unitId: String, activityType: String });
+const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
-const { getPhonemesForUnit } = useProgression();
 const ember = useEmber();
 
-const unit = UNITS.find(u => u.unitId === props.unitId);
-const allPhonemes = getPhonemesForUnit(props.unitId);
+const allPhonemes = ref([]);
 
 const targetPhoneme = ref('');
 const choices = ref([]);
@@ -78,11 +75,13 @@ function shuffle(arr) {
 }
 
 function setupRound() {
-  const target = allPhonemes[Math.floor(Math.random() * Math.min(allPhonemes.length, unit.phonemes.length + 4))];
+  const pool = allPhonemes.value;
+  if (pool.length === 0) return;
+  const target = pool[Math.floor(Math.random() * pool.length)];
   targetPhoneme.value = target;
 
-  const distractors = allPhonemes
-    .filter(p => p !== target)
+  const distractors = pool
+    .filter((p) => p !== target)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
   choices.value = shuffle([target, ...distractors]);
@@ -126,7 +125,12 @@ function pick(choice) {
   }, 1000);
 }
 
-onMounted(() => {
+onMounted(async () => {
+  allPhonemes.value = await getCumulativeLetters(props.lessonId);
+  if (allPhonemes.value.length === 0) {
+    emit('complete');
+    return;
+  }
   playRound();
 });
 
