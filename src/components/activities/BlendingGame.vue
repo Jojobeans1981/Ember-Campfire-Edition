@@ -29,12 +29,14 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
 const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
 
 const ember = useEmber();
+const { startWordListening, requestMicPermission, cancelListening } = useSpeechRecognition();
 
 const words = ref([]);
 
@@ -44,16 +46,29 @@ const phase = ref('tap');
 const correct = ref(0);
 const targetCount = 5;
 let resolveTap = null;
+let sessionRunning = false;
+let completionEmitted = false;
 let cancelled = false;
+const MAX_BLEND_ATTEMPTS = 2;
 
 function pickWord() {
-  currentWord.value = words.value[Math.floor(Math.random() * words.value.length)];
+  if (words.value.length === 0) {
+    currentWord.value = null;
+    return;
+  }
+
+  // Avoid immediate repeats when possible.
+  const current = currentWord.value?.word;
+  const pool = words.value.length > 1
+    ? words.value.filter((w) => w.word !== current)
+    : words.value;
+  currentWord.value = pool[Math.floor(Math.random() * pool.length)];
   tappedIdx.value = 0;
   phase.value = 'tap';
 }
 
 function tapTile(idx) {
-  if (idx === tappedIdx.value && resolveTap) {
+  if (phase.value === 'tap' && idx === tappedIdx.value && resolveTap) {
     resolveTap();
   }
 }
@@ -67,44 +82,75 @@ async function runRound() {
     tappedIdx.value = i;
     await new Promise(r => { resolveTap = r; });
     resolveTap = null;
+    if (cancelled) return;
     await ember.playPhoneme(word.phonemes[i]);
   }
   tappedIdx.value = word.phonemes.length;
 
   if (cancelled) return;
   phase.value = 'blend';
-  await ember.speak('Blend!');
-  await new Promise(r => setTimeout(r, 400));
+  await ember.speak('Your turn. Say the whole word.');
+
+  let attempts = 0;
+  let matched = false;
+  while (!cancelled && attempts < MAX_BLEND_ATTEMPTS && !matched) {
+    attempts++;
+    const result = await startWordListening(word.word, 7000);
+    matched = Boolean(result?.matched);
+    if (!matched && attempts < MAX_BLEND_ATTEMPTS) {
+      await ember.speak('Try again. Say the whole word.');
+    }
+  }
 
   phase.value = 'reveal';
+  if (!matched) {
+    await ember.speak(`The word is ${word.word}.`);
+  }
   await ember.speak(word.word);
   correct.value++;
   celebrateCorrect();
 
   await new Promise(r => setTimeout(r, 800));
+}
 
-  if (correct.value >= targetCount) {
-    emit('complete');
-  } else {
-    pickWord();
-    await runRound();
+async function runSession() {
+  if (sessionRunning) return;
+  sessionRunning = true;
+  try {
+    while (!cancelled && correct.value < targetCount) {
+      if (!currentWord.value) pickWord();
+      await runRound();
+      if (cancelled) return;
+      if (correct.value < targetCount) pickWord();
+    }
+
+    if (!cancelled && !completionEmitted && correct.value >= targetCount) {
+      completionEmitted = true;
+      emit('complete');
+    }
+  } finally {
+    sessionRunning = false;
   }
 }
 
 onMounted(async () => {
+  await requestMicPermission();
   const all = await getCumulativeDecodableWords(props.lessonId);
   words.value = all.filter((w) => w.phonemes.length >= 3);
   if (words.value.length === 0) {
+    completionEmitted = true;
     emit('complete');
     return;
   }
   pickWord();
-  await runRound();
+  await runSession();
 });
 
 onBeforeUnmount(() => {
   cancelled = true;
   ember.stopSpeaking();
+  cancelListening();
+  if (resolveTap) resolveTap();
   resolveTap = null;
 });
 </script>
