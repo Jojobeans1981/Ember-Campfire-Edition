@@ -17,17 +17,15 @@
     </div>
 
     <div v-if="micPhase === 'matched'" class="result success">Great reading!</div>
-    <div v-if="micPhase === 'missed'" class="result help">Good try! Let's keep going.</div>
+    <div v-if="micPhase === 'missed'" class="result help">Try again. Tap 🎤 and read it out loud.</div>
 
     <div class="controls">
       <button v-if="currentSentence" class="audio-btn" @click="speakCurrent">🔊 Read to me</button>
       <button v-if="currentSentence" class="audio-btn" @click="startMic" :disabled="micPhase === 'listening'">
         🎤 My turn
       </button>
-      <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
+      <button class="next-btn" :disabled="!canAdvance" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
     </div>
-
-    <button v-if="micPhase === 'listening'" class="skip-btn" @click="skipMic">Skip</button>
 
     <div v-if="sentences.length > 0" class="progress">{{ index + 1 }} / {{ sentences.length }}</div>
   </div>
@@ -56,6 +54,7 @@ const index = ref(0);
 const currentSentence = computed(() => sentences.value[index.value]);
 const isLast = computed(() => index.value >= sentences.value.length - 1);
 const micPhase = ref('idle'); // idle | listening | matched | missed
+const canAdvance = computed(() => micPhase.value === 'matched' || sentences.value.length === 0);
 
 async function speakCurrent() {
   const s = currentSentence.value;
@@ -66,17 +65,17 @@ async function startMic() {
   const s = currentSentence.value;
   if (!s) return;
   micPhase.value = 'listening';
-  // Use the first decodable word as the listening target — sentence-level
-  // recognition is unreliable, but matching any keyword counts as success.
+  // Sentence-level recognition is unreliable; match the first decodable
+  // word as a proxy for "the kid actually read this aloud."
   const firstWord = s.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/)[0] || s;
   const result = await startWordListening(firstWord, 8000);
   if (cancelled) return;
-  micPhase.value = result?.matched ? 'matched' : 'missed';
-}
-
-function skipMic() {
-  cancelListening();
-  micPhase.value = 'missed';
+  if (result?.matched) {
+    micPhase.value = 'matched';
+    await ember.speak('Great reading!');
+  } else {
+    micPhase.value = 'missed';
+  }
 }
 
 watch(index, () => {
@@ -94,6 +93,7 @@ onBeforeUnmount(() => {
 });
 
 function next() {
+  if (!canAdvance.value) return;
   cancelListening();
   micPhase.value = 'idle';
   if (sentences.value.length === 0 || isLast.value) {
@@ -131,15 +131,5 @@ function next() {
   font-family: inherit;
   cursor: pointer;
 }
-.audio-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.skip-btn {
-  background: transparent;
-  border: 1px solid #555;
-  color: #888;
-  padding: 0.3rem 1rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-  font-family: inherit;
-}
+.audio-btn:disabled, .next-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 </style>
