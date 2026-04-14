@@ -7,6 +7,7 @@ export function usePersistence() {
     try {
       const data = {
         unitProgress: store.unitProgress,
+        ufliProgress: store.ufliProgress,
         xp: store.xp,
         selectedFriend: store.selectedFriend,
         skillState: { ...skillState },
@@ -24,6 +25,9 @@ export function usePersistence() {
       const data = JSON.parse(raw);
       if (data.unitProgress) {
         Object.assign(store.unitProgress, data.unitProgress);
+      }
+      if (data.ufliProgress) {
+        Object.assign(store.ufliProgress, data.ufliProgress);
       }
       if (typeof data.xp === 'number') {
         store.xp = data.xp;

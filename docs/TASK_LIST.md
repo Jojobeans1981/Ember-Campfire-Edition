@@ -26,11 +26,11 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 
 ### Task Group 3 — Persistence update [MVP3]
 
-- [ ] Add red test in `src/store/index.test.js`: `ufliProgress` round-trips through save/load
-- [ ] Run; expected: fail
-- [ ] Update `src/composables/usePersistence.js` to save/load `ufliProgress` (drop `unitProgress` references)
-- [ ] Run tests; expected: green
-- [ ] Commit
+- [x] Add red test in `src/store/index.test.js`: `ufliProgress` round-trips through save/load
+- [x] Run; expected: fail
+- [x] Update `src/composables/usePersistence.js` to save/load `ufliProgress` (drop `unitProgress` references)
+- [x] Run tests; expected: green
+- [x] Commit
 
 ### Task Group 4 — New lesson step components [MVP4]
 
