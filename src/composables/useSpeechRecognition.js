@@ -43,10 +43,10 @@ export async function requestMicPermission() {
   return stream;
 }
 
-// Sustain target: 1.5 seconds at ~60fps = 90 frames
-const SUSTAIN_FRAMES = 90;
-// Plosive: just need a brief burst detected
-const PLOSIVE_FRAMES = 15;
+// Sustain target: ~0.5 second at ~60fps = 30 frames
+const SUSTAIN_FRAMES = 30;
+// Plosive/short consonant target: very brief burst (~0.1-0.15s)
+const PLOSIVE_FRAMES = 8;
 // Minimum speech frames before we consider it "real speech" (not noise)
 // ~0.5s at 60fps — filters out coughs, bumps, background spikes
 const SPEECH_MIN_FRAMES = 30;
@@ -465,6 +465,10 @@ export function useSpeechRecognition() {
 
       const shouldAllowEarlySpeechFallback = () => {
         if (!allowEarlyFallback || !volumeHandle) return false;
+        // Only allow audio-shape fallback when no recognizer is available.
+        // If Vosk/browser is running, require an actual recognition match.
+        const noRecognizerAvailable = !voskReady && !browserReady;
+        if (!noRecognizerAvailable) return false;
         const enoughSpeech = volumeHandle.speechDetected;
         const enoughSustain = volumeHandle.getSustainedFrames() >= Math.max(12, Math.floor(sustainTarget * 0.7));
         const noTranscript = !transcript.value || transcript.value === '[unk]';

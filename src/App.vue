@@ -99,6 +99,7 @@ const xpPop = ref(false);
 const showCelebration = ref(false);
 const celebrationData = ref({ icon: '', title: '', message: '', sparks: 0 });
 let celebrationResolve = null;
+let completionFlowBusy = false;
 
 function killAudio() {
   stopAllAudio();
@@ -160,48 +161,66 @@ function goBack() {
 }
 
 async function onLessonComplete() {
+  if (completionFlowBusy) return;
+  completionFlowBusy = true;
   killAudio();
-  completeUfliLesson(store.activeLessonId);
-  save();
-  celebrateComplete();
-  await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
-  store.currentPage = 'unit-hub';
+  try {
+    completeUfliLesson(store.activeLessonId);
+    save();
+    celebrateComplete();
+    await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
+    store.currentPage = 'unit-hub';
+  } finally {
+    completionFlowBusy = false;
+  }
 }
 
 async function onActivityComplete() {
+  if (completionFlowBusy) return;
+  completionFlowBusy = true;
   killAudio();
-  const wasLocked = !isConnectedTextUnlocked(store.activeLessonId);
-  completeUfliActivity(store.activeLessonId, store.activeActivity);
-  save();
+  try {
+    const wasLocked = !isConnectedTextUnlocked(store.activeLessonId);
+    completeUfliActivity(store.activeLessonId, store.activeActivity);
+    save();
 
-  const nowUnlocked = isConnectedTextUnlocked(store.activeLessonId);
+    const nowUnlocked = isConnectedTextUnlocked(store.activeLessonId);
 
-  if (wasLocked && nowUnlocked) {
-    celebrateFireLit();
-    await showCelebrationScreen('🔥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
-  } else {
-    celebrateComplete();
-    await showCelebrationScreen('✨', 'Activity Complete!', 'You earned a spark!', 50);
+    if (wasLocked && nowUnlocked) {
+      celebrateFireLit();
+      await showCelebrationScreen('🔥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
+    } else {
+      celebrateComplete();
+      await showCelebrationScreen('✨', 'Activity Complete!', 'You earned a spark!', 50);
+    }
+
+    store.currentPage = 'unit-hub';
+  } finally {
+    completionFlowBusy = false;
   }
-
-  store.currentPage = 'unit-hub';
 }
 
 async function onStoryComplete() {
+  if (completionFlowBusy) return;
+  completionFlowBusy = true;
   killAudio();
-  const prevStatus = getUfliLessonStatus(store.activeLessonId);
-  completeUfliConnectedText(store.activeLessonId);
-  save();
+  try {
+    const prevStatus = getUfliLessonStatus(store.activeLessonId);
+    completeUfliConnectedText(store.activeLessonId);
+    save();
 
-  if (prevStatus !== 'complete') {
-    celebrateUnitComplete();
-    await showCelebrationScreen('🏕️', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
-  } else {
-    celebrateStory();
-    await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);
+    if (prevStatus !== 'complete') {
+      celebrateUnitComplete();
+      await showCelebrationScreen('🏕️', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
+    } else {
+      celebrateStory();
+      await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);
+    }
+
+    store.currentPage = 'unit-hub';
+  } finally {
+    completionFlowBusy = false;
   }
-
-  store.currentPage = 'unit-hub';
 }
 </script>
 
@@ -478,3 +497,4 @@ body {
   to { opacity: 0; }
 }
 </style>
+

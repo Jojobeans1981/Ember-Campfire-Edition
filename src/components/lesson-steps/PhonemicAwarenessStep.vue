@@ -44,7 +44,6 @@ const isLast = computed(() => cursor.value >= totalItems.value - 1);
 
 async function playBlendPhonemes(item) {
   if (!item) return;
-  await ember.speak('Listen to the sounds.');
   for (const p of item.phonemes ?? []) {
     if (cancelled) return;
     await ember.playPhoneme(p);
@@ -89,6 +88,7 @@ onMounted(async () => {
     emit('step-complete');
     return;
   }
+  await ember.speak('In this section, listen carefully to sounds and words, then blend what you hear.');
   await playCurrent();
 });
 

@@ -88,7 +88,6 @@ async function playCurrent() {
   const item = currentItem.value;
   if (!item) return;
   busy.value = true;
-  await ember.speak(`The letter is ${item.grapheme}. It says`);
   for (const p of item.phonemes ?? []) {
     if (cancelled) break;
     await ember.playPhoneme(p);
@@ -132,6 +131,7 @@ onMounted(async () => {
     return;
   }
   await requestMicPermission();
+  await ember.speak('In this section, listen to the sound, then tap My turn and say it.');
   await playCurrent();
 });
 

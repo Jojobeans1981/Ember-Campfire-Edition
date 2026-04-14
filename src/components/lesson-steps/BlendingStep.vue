@@ -2,7 +2,7 @@
   <div class="blending-step">
     <!-- UFLI mode: word chain + tile pools -->
     <div v-if="ufliMode" class="ufli-mode">
-      <div class="prompt-text">Tap the sound tiles, then read the word.</div>
+      <div class="prompt-text">Tap the sound tiles, then blend it out loud.</div>
 
       <div class="chain-display">
         <div class="current-word">{{ currentChainWord }}</div>
@@ -91,7 +91,6 @@ async function nextChainWord() {
     return;
   }
   chainIndex.value++;
-  await speakCurrentWord();
 }
 
 async function speakCurrentWord() {
@@ -149,13 +148,11 @@ async function runItem(item) {
 
   showWord.value = true;
   phase.value = 'done';
-  await ember.speak(item.word);
   await new Promise(r => setTimeout(r, 800));
 }
 
 onMounted(async () => {
   if (ufliMode.value) {
-    if (wordChain.value.length > 0) await speakCurrentWord();
     return;
   }
   if (!Array.isArray(props.step?.items)) return;

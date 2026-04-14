@@ -61,6 +61,7 @@ const stepComponentByKey = {
 
 const lesson = ref(null);
 const currentStepIndex = ref(0);
+const isAdvancing = ref(false);
 
 onMounted(async () => {
   lesson.value = await getUfliLesson(props.unitId);
@@ -168,11 +169,15 @@ const progressPercent = computed(() => {
 });
 
 function onStepComplete() {
+  if (isAdvancing.value) return;
+  isAdvancing.value = true;
   ember.stopSpeaking();
   if (currentStepIndex.value < activeSteps.value.length - 1) {
     currentStepIndex.value++;
+    setTimeout(() => { isAdvancing.value = false; }, 0);
   } else {
     emit('complete');
+    setTimeout(() => { isAdvancing.value = false; }, 0);
   }
 }
 </script>

@@ -196,7 +196,9 @@ const zones = computed(() => {
   return ZONE_DEFS.map((zone) => {
     const lessonIds = lessonIdsForRange(zone.range);
     const statuses = lessonIds.map((lessonId) => getUfliLessonStatus(lessonId));
-    const completedCount = statuses.filter((status) => status === 'complete').length;
+    // "Stops done" should reflect finished lesson stops, not only fully
+    // maxed lessons with connected text completed.
+    const completedCount = lessonIds.filter((lessonId) => store.ufliProgress[lessonId]?.lessonComplete === true).length;
     const firstPlayableId = lessonIds.find((lessonId) => getUfliLessonStatus(lessonId) !== 'locked');
     const nextMeta = firstPlayableId ? getLessonMeta(firstPlayableId) : null;
 

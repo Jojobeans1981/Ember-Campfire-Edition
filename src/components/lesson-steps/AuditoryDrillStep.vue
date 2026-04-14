@@ -101,7 +101,6 @@ async function playCurrent() {
   const item = currentItem.value;
   if (!item) return;
   busy.value = true;
-  await ember.speak('Listen.');
   await ember.playPhoneme(item.phoneme);
   busy.value = false;
   if (cancelled) return;
@@ -126,7 +125,6 @@ async function pick(choice) {
     await ember.speak('Yes!');
   } else {
     phase.value = 'wrong';
-    await ember.speak(`It was ${targetGrapheme.value}.`);
     await ember.playPhoneme(currentItem.value.phoneme);
   }
 }
@@ -149,6 +147,7 @@ onMounted(async () => {
   if (props.lessonId) {
     knownLetters.value = await getCumulativeLetters(props.lessonId);
   }
+  await ember.speak('In this section, listen to the sound and tap the matching letter.');
   await playCurrent();
 });
 

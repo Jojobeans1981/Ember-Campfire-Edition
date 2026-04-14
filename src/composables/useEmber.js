@@ -7,6 +7,15 @@ const currentText = ref('');
 let activeAudio = null;
 let preferredVoice = null;
 let voiceBootstrapDone = false;
+let activePlayback = null; // { id, type, priority }
+let playbackIdSeed = 0;
+
+const AUDIO_PRIORITY = {
+  background: 10,
+  instruction: 40,
+  phoneme: 70,
+  critical: 100,
+};
 
 const VOICE_NAME_PREFERENCES = [
   'aria',
@@ -78,6 +87,98 @@ function bootstrapPreferredVoice() {
   window.speechSynthesis.addEventListener?.('voiceschanged', updatePreferredVoice);
 }
 
+function stopActiveAudio() {
+  if (!activeAudio) return;
+  activeAudio.pause();
+  activeAudio.currentTime = 0;
+  activeAudio = null;
+}
+
+function resolvePriority(priority, fallback) {
+  if (typeof priority === 'number' && Number.isFinite(priority)) return priority;
+  if (typeof priority === 'string' && AUDIO_PRIORITY[priority] !== undefined) {
+    return AUDIO_PRIORITY[priority];
+  }
+  return fallback;
+}
+
+function isPlaybackCurrent(playbackId) {
+  return Boolean(activePlayback && activePlayback.id === playbackId);
+}
+
+function releasePlayback(playbackId) {
+  if (isPlaybackCurrent(playbackId)) {
+    activePlayback = null;
+  }
+}
+
+function stopAllPlaybackNow() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  stopActiveAudio();
+  activePlayback = null;
+}
+
+function claimPlayback(type, priority) {
+  const current = activePlayback;
+  if (current && priority < current.priority) {
+    return null;
+  }
+
+  if (current) {
+    // New playback takes priority, so preempt current playback first.
+    stopAllPlaybackNow();
+  }
+
+  const id = ++playbackIdSeed;
+  activePlayback = { id, type, priority };
+  return id;
+}
+
+function playAudioSources(sources, playbackId) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      releasePlayback(playbackId);
+      resolve(ok);
+    };
+
+    const tryIndex = (index) => {
+      if (!isPlaybackCurrent(playbackId)) {
+        finish(false);
+        return;
+      }
+      if (index >= sources.length) {
+        activeAudio = null;
+        finish(false);
+        return;
+      }
+
+      const audio = new Audio(sources[index]);
+      activeAudio = audio;
+
+      audio.onended = () => {
+        activeAudio = null;
+        finish(true);
+      };
+      audio.onerror = () => {
+        if (activeAudio === audio) activeAudio = null;
+        tryIndex(index + 1);
+      };
+      audio.play().catch(() => {
+        if (activeAudio === audio) activeAudio = null;
+        tryIndex(index + 1);
+      });
+    };
+
+    tryIndex(0);
+  });
+}
+
 /**
  * Map a phoneme (in any common notation) to the audio file key under
  * /audio/phonemes/. Accepts UFLI-style notation like "/ă/", "/sh/", or
@@ -109,10 +210,15 @@ export function useEmber() {
   function speak(text, options = {}) {
     return new Promise((resolve) => {
       if (!window.speechSynthesis) {
-        resolve();
+        resolve(false);
         return;
       }
-      window.speechSynthesis.cancel();
+      const priority = resolvePriority(options.priority, AUDIO_PRIORITY.instruction);
+      const playbackId = claimPlayback('tts', priority);
+      if (!playbackId) {
+        resolve(false);
+        return;
+      }
 
       // Strip IPA notation (/.../) from anything we speak — TTS would
       // otherwise read "slash a slash" or skip entirely.
@@ -121,6 +227,11 @@ export function useEmber() {
         .replace(/\s{2,}/g, ' ')
         .replace(/\s+([,.!?])/g, '$1')
         .trim();
+      if (!cleaned) {
+        releasePlayback(playbackId);
+        resolve(false);
+        return;
+      }
 
       currentText.value = cleaned;
       isSpeaking.value = true;
@@ -134,14 +245,16 @@ export function useEmber() {
       utterance.lang = 'en-US';
 
       utterance.onend = () => {
+        releasePlayback(playbackId);
         isSpeaking.value = false;
         currentText.value = '';
-        resolve();
+        resolve(true);
       };
       utterance.onerror = () => {
+        releasePlayback(playbackId);
         isSpeaking.value = false;
         currentText.value = '';
-        resolve();
+        resolve(false);
       };
 
       window.speechSynthesis.speak(utterance);
@@ -150,33 +263,20 @@ export function useEmber() {
 
   function playPhoneme(phoneme) {
     return new Promise((resolve) => {
-      // Stop any currently playing audio
-      if (activeAudio) {
-        activeAudio.pause();
-        activeAudio.currentTime = 0;
-        activeAudio = null;
+      const playbackId = claimPlayback('clip', AUDIO_PRIORITY.phoneme);
+      if (!playbackId) {
+        resolve(false);
+        return;
       }
 
       const key = phonemeToAudioKey(phoneme);
       if (!key) {
-        resolve();
+        releasePlayback(playbackId);
+        resolve(false);
         return;
       }
-      const audio = new Audio(`/audio/phonemes/${key}.mp3`);
-      activeAudio = audio;
-
-      audio.onended = () => {
-        activeAudio = null;
-        resolve();
-      };
-      audio.onerror = () => {
-        activeAudio = null;
-        resolve();
-      };
-      audio.play().catch(() => {
-        activeAudio = null;
-        resolve();
-      });
+      const sources = [`/audio/phonemes/context/${key}.mp3`];
+      playAudioSources(sources, playbackId).then((ok) => resolve(ok));
     });
   }
 
@@ -206,14 +306,7 @@ export function useEmber() {
   }
 
   function stopSpeaking() {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    if (activeAudio) {
-      activeAudio.pause();
-      activeAudio.currentTime = 0;
-      activeAudio = null;
-    }
+    stopAllPlaybackNow();
     isSpeaking.value = false;
     currentText.value = '';
   }
@@ -226,14 +319,7 @@ export function useEmber() {
  * Call this on every page navigation to prevent audio bleeding between pages.
  */
 export function stopAllAudio() {
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
-  if (activeAudio) {
-    activeAudio.pause();
-    activeAudio.currentTime = 0;
-    activeAudio = null;
-  }
+  stopAllPlaybackNow();
   isSpeaking.value = false;
   currentText.value = '';
 }
