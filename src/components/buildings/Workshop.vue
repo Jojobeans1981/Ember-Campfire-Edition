@@ -28,6 +28,20 @@ const checkMatch = (rune) => {
     forged.value = true;
     store.xp += 25;
 
+    if (!skillState[currentTarget.value]) {
+      skillState[currentTarget.value] = {
+        conceptSlug: currentTarget.value,
+        strand: 'foundational',
+        taught: false,
+        recognitionStatus: 'not_introduced',
+        recallStatus: null,
+        reviewPressure: 'none',
+        lastPracticed: null,
+        lastAssessed: null,
+        currentSupportLevel: 'guided',
+      };
+    }
+
     pushEvent({
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),

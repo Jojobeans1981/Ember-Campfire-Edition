@@ -58,7 +58,6 @@ function getStatus(lessonId) {
 
 function selectLesson(lessonId) {
   store.activeLessonId = lessonId;
-  store.activeUnitId = lessonId; // legacy alias until task 8 deletes it
   store.currentPage = 'unit-hub';
 }
 </script>

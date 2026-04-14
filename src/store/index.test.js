@@ -6,9 +6,7 @@ describe('Global Store', () => {
   beforeEach(() => {
     store.xp = 0;
     store.currentPage = 'selection';
-    store.activeUnitId = null;
     store.activeLessonId = null;
-    store.unitProgress = {};
     for (const k of Object.keys(store.ufliProgress)) {
       delete store.ufliProgress[k];
     }
@@ -19,22 +17,22 @@ describe('Global Store', () => {
     expect(store.xp).toBe(0);
   });
 
-  it('should track unit progress', () => {
-    store.unitProgress['unit-01'] = {
+  it('should track UFLI lesson progress', () => {
+    store.ufliProgress['001'] = {
       lessonComplete: false,
       activitiesComplete: {},
-      storyRead: false,
+      connectedTextRead: false,
     };
-    expect(store.unitProgress['unit-01'].lessonComplete).toBe(false);
-    store.unitProgress['unit-01'].lessonComplete = true;
-    expect(store.unitProgress['unit-01'].lessonComplete).toBe(true);
+    expect(store.ufliProgress['001'].lessonComplete).toBe(false);
+    store.ufliProgress['001'].lessonComplete = true;
+    expect(store.ufliProgress['001'].lessonComplete).toBe(true);
   });
 
   it('should support page navigation', () => {
     expect(store.currentPage).toBe('selection');
     store.currentPage = 'campground';
     expect(store.currentPage).toBe('campground');
-    store.activeUnitId = 'unit-01';
+    store.activeLessonId = '001';
     store.currentPage = 'unit-hub';
     expect(store.currentPage).toBe('unit-hub');
   });
