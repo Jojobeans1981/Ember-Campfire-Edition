@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(./node_modules/.bin/vitest run:*)",
-      "Bash(npm test:*)",
-      "Bash(git branch:*)"
-    ]
-  }
-}
