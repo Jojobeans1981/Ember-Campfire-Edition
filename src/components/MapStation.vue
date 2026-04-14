@@ -39,8 +39,8 @@ const meta = computed(() => getLessonMeta(props.lessonId));
 const stationLabel = computed(() => {
   const m = meta.value;
   if (!m) return props.lessonId;
-  if (m.grapheme) return m.grapheme;
-  return `L${m.lessonNumber}`;
+  if (m.grapheme) return m.grapheme.toLowerCase();
+  return `l${m.lessonNumber}`;
 });
 
 const sparksEarned = computed(() => {
@@ -100,6 +100,7 @@ function handleClick() {
   color: #FF8C00;
   font-weight: 700;
   text-align: center;
+  text-transform: lowercase;
 }
 
 .spark-dots {

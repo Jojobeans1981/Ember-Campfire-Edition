@@ -72,11 +72,20 @@ const currentStepKey = computed(() => STEP_KEYS[currentStepIndex.value]);
 const currentStepData = computed(() => lesson.value?.[currentStepKey.value] ?? null);
 const currentStepComponent = computed(() => stepComponentByKey[currentStepKey.value]);
 
+function stripIpa(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 const headerTitle = computed(() => {
   const l = lesson.value;
   if (!l) return '';
-  if (l.grapheme) return l.grapheme;
-  return l.title || `Lesson ${l.lessonNumber}`;
+  if (l.grapheme) return l.grapheme.toLowerCase();
+  return stripIpa(l.title) || `Lesson ${l.lessonNumber}`;
 });
 
 const progressPercent = computed(() =>

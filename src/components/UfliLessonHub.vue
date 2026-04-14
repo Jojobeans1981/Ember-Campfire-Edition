@@ -3,9 +3,9 @@
     <div class="hub-header">
       <h2 class="unit-title">Lesson {{ meta?.lessonNumber }}</h2>
       <div class="unit-phonemes">
-        <span v-if="meta?.grapheme" class="phoneme-badge">{{ meta.grapheme }}</span>
+        <span v-if="meta?.grapheme" class="phoneme-badge">{{ meta.grapheme.toLowerCase() }}</span>
       </div>
-      <div class="title-line" v-if="meta?.title">{{ meta.title }}</div>
+      <div class="title-line" v-if="cleanTitle">{{ cleanTitle }}</div>
       <div class="hub-status">
         <span class="status-icon">{{ statusIcon }}</span>
         <span class="status-text">{{ statusLabel }}</span>
@@ -86,6 +86,25 @@ const {
 } = useUfliProgression();
 
 const meta = computed(() => getLessonMeta(store.activeLessonId));
+
+function stripIpa(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
+const cleanTitle = computed(() => {
+  const t = meta.value?.title;
+  if (!t) return '';
+  // After stripping IPA from "a /ă/" we get just "a" — that duplicates
+  // the grapheme badge, so suppress the title in that case.
+  const cleaned = stripIpa(t);
+  if (cleaned === meta.value?.grapheme) return '';
+  return cleaned;
+});
 
 const progress = computed(() => store.ufliProgress[store.activeLessonId] ?? {
   lessonComplete: false,
@@ -202,6 +221,7 @@ function startConnectedText() {
   border-radius: 1rem;
   font-size: 1.1rem;
   font-weight: bold;
+  text-transform: lowercase;
 }
 
 .phoneme-badge.ipa {
