@@ -40,10 +40,18 @@ export function useEmber() {
       }
       window.speechSynthesis.cancel();
 
-      currentText.value = text;
+      // Strip IPA notation (/.../) from anything we speak — TTS would
+      // otherwise read "slash a slash" or skip entirely.
+      const cleaned = String(text || '')
+        .replace(/\/[^/]*\//g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.!?])/g, '$1')
+        .trim();
+
+      currentText.value = cleaned;
       isSpeaking.value = true;
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(cleaned);
       utterance.rate = options.rate || 0.85;
       utterance.pitch = options.pitch || 1.1;
       utterance.lang = 'en-US';

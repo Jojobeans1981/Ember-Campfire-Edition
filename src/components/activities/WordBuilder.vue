@@ -14,7 +14,7 @@
         class="slot"
         :class="{ filled: slot !== null, correct: showResult && slot === currentWord?.phonemes[idx], wrong: showResult && slot !== null && slot !== currentWord?.phonemes[idx] }"
       >
-        {{ slot ? slot.toUpperCase() : '_' }}
+        {{ slot ? slot : '_' }}
       </div>
     </div>
 
@@ -28,7 +28,7 @@
         :disabled="usedIndices.has(idx)"
         @click="pickLetter(idx)"
       >
-        {{ letter.toUpperCase() }}
+        {{ letter }}
       </button>
     </div>
 

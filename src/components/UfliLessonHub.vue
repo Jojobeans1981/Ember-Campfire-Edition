@@ -3,8 +3,7 @@
     <div class="hub-header">
       <h2 class="unit-title">Lesson {{ meta?.lessonNumber }}</h2>
       <div class="unit-phonemes">
-        <span v-if="meta?.grapheme" class="phoneme-badge">{{ meta.grapheme.toUpperCase() }}</span>
-        <span v-if="meta?.phoneme" class="phoneme-badge ipa">{{ meta.phoneme }}</span>
+        <span v-if="meta?.grapheme" class="phoneme-badge">{{ meta.grapheme }}</span>
       </div>
       <div class="title-line" v-if="meta?.title">{{ meta.title }}</div>
       <div class="hub-status">

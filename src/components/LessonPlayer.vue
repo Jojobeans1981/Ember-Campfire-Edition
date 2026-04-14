@@ -75,7 +75,7 @@ const currentStepComponent = computed(() => stepComponentByKey[currentStepKey.va
 const headerTitle = computed(() => {
   const l = lesson.value;
   if (!l) return '';
-  if (l.grapheme) return `${l.grapheme.toUpperCase()} ${l.phoneme || ''}`.trim();
+  if (l.grapheme) return l.grapheme;
   return l.title || `Lesson ${l.lessonNumber}`;
 });
 

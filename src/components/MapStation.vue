@@ -39,7 +39,7 @@ const meta = computed(() => getLessonMeta(props.lessonId));
 const stationLabel = computed(() => {
   const m = meta.value;
   if (!m) return props.lessonId;
-  if (m.grapheme) return m.grapheme.toUpperCase();
+  if (m.grapheme) return m.grapheme;
   return `L${m.lessonNumber}`;
 });
 

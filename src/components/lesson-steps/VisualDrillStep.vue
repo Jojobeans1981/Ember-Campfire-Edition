@@ -3,7 +3,7 @@
     <h3 class="step-title">Visual Drill</h3>
 
     <div v-if="currentItem" class="big-letter">
-      {{ currentItem.grapheme.toUpperCase() }}
+      {{ currentItem.grapheme }}
     </div>
 
     <div class="instruction">
@@ -42,7 +42,7 @@ let cancelled = false;
 const instruction = computed(() => {
   const i = currentItem.value;
   if (!i) return '';
-  return `What sound does ${i.grapheme.toUpperCase()} make?`;
+  return `What sound does ${i.grapheme} make?`;
 });
 
 async function playCurrent() {
@@ -50,7 +50,7 @@ async function playCurrent() {
   const item = currentItem.value;
   if (!item) return;
   busy.value = true;
-  await ember.speak(`What sound does ${item.grapheme.toUpperCase()} make?`);
+  await ember.speak(`What sound does ${item.grapheme} make?`);
   for (const p of item.phonemes ?? []) {
     if (cancelled) break;
     await ember.playPhoneme(p);
