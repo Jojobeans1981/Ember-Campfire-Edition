@@ -1,0 +1,98 @@
+{
+  "lessonNumber": 4,
+  "title": "t /t/",
+  "grapheme": "t",
+  "phoneme": "/t/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/ă/", "/t/"], "word": "at" },
+      { "phonemes": ["/m/", "/ă/", "/t/"], "word": "mat" },
+      { "phonemes": ["/s/", "/ă/", "/t/"], "word": "sat" }
+    ],
+    "segment": [
+      { "word": "at", "phonemes": ["/ă/", "/t/"] },
+      { "word": "mat", "phonemes": ["/m/", "/ă/", "/t/"] },
+      { "word": "sat", "phonemes": ["/s/", "/ă/", "/t/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["at", "mat", "sat", "Sam", "am"],
+    "tiles": {
+      "initial": ["s", "m", "t"],
+      "medial": ["a"],
+      "final": ["t", "s", "m"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter T. Tongue tip taps the ridge behind the top teeth. Voice off. Quick pop — /t/.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter T." },
+      { "line": "2", "text": "T says /t/, like in tap." },
+      { "line": "3", "text": "Tap your tongue behind your top teeth. /t/ /t/ /t/." },
+      { "line": "4", "text": "Your turn. Say /t/." }
+    ],
+    "articulatoryGesture": "Tongue tip taps the alveolar ridge behind the top teeth. Voice off. Short, crisp release.",
+    "graphemePlacements": [
+      { "grapheme": "t", "position": "initial", "examples": ["tap", "ten", "top"] },
+      { "grapheme": "t", "position": "final", "examples": ["at", "mat", "sat"] }
+    ],
+    "readWords": {
+      "iDo": ["at", "mat"],
+      "weDo": ["sat", "mat"],
+      "youDo": ["at", "Sam"]
+    },
+    "spellWords": {
+      "iDo": ["at"],
+      "weDo": ["mat"],
+      "youDo": ["sat"]
+    }
+  },
+  "step6": {
+    "wordChain": ["at", "mat", "sat", "Sam"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "is",
+        "breakdown": [
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "the",
+        "breakdown": [
+          { "grapheme": "th", "phoneme": "/th/", "regular": false },
+          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["Sam sat.", "I sat at the mat."],
+    "spellSentences": ["Sam sat at a mat."]
+  },
+  "wordList": ["at", "mat", "sat", "Sam", "am", "as"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "the", "a"],
+    "fry": ["I", "is", "the", "a"]
+  }
+}

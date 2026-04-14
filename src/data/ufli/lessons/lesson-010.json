@@ -1,0 +1,114 @@
+{
+  "lessonNumber": 10,
+  "title": "CVC practice short a, short i",
+  "grapheme": "a, i",
+  "phoneme": "/ă/, /ĭ/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/m/", "/ă/", "/n/"], "word": "man" },
+      { "phonemes": ["/p/", "/ĭ/", "/n/"], "word": "pin" },
+      { "phonemes": ["/f/", "/ă/", "/n/"], "word": "fan" }
+    ],
+    "segment": [
+      { "word": "man", "phonemes": ["/m/", "/ă/", "/n/"] },
+      { "word": "pin", "phonemes": ["/p/", "/ĭ/", "/n/"] },
+      { "word": "tap", "phonemes": ["/t/", "/ă/", "/p/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "a", "phonemes": ["/ă/"] },
+      { "grapheme": "i", "phonemes": ["/ĭ/"] },
+      { "grapheme": "n", "phonemes": ["/n/"] },
+      { "grapheme": "f", "phonemes": ["/f/"] },
+      { "grapheme": "p", "phonemes": ["/p/"] },
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/ă/", "graphemes": ["a"] },
+      { "phoneme": "/ĭ/", "graphemes": ["i"] },
+      { "phoneme": "/n/", "graphemes": ["n"] },
+      { "phoneme": "/f/", "graphemes": ["f"] },
+      { "phoneme": "/p/", "graphemes": ["p"] },
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["man", "pan", "pin", "fin", "fan", "tan", "tin", "tip", "sip", "sap", "map", "mat", "fat", "fit"],
+    "tiles": {
+      "initial": ["s", "m", "t", "p", "f", "n"],
+      "medial": ["a", "i"],
+      "final": ["t", "s", "m", "p", "f", "n"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Practice contrasting short A and short I in CVC words. No new grapheme — focus on hearing and producing the difference between /ă/ and /ĭ/.",
+    "introductionScript": [
+      { "line": "1", "text": "We've learned two vowel sounds: /ă/ and /ĭ/." },
+      { "line": "2", "text": "/ă/ is in cat. /ĭ/ is in sit." },
+      { "line": "3", "text": "Listen carefully and pick the right vowel." }
+    ],
+    "articulatoryGesture": "Contrast: /ă/ has the mouth open and the jaw lower. /ĭ/ has the mouth slightly open and tongue forward and high.",
+    "graphemePlacements": [
+      { "grapheme": "a", "position": "medial", "examples": ["pan", "man", "fan"] },
+      { "grapheme": "i", "position": "medial", "examples": ["pin", "fin", "sit"] }
+    ],
+    "readWords": {
+      "iDo": ["man", "pin"],
+      "weDo": ["fan", "fit"],
+      "youDo": ["man", "pin", "tan", "tin"]
+    },
+    "spellWords": {
+      "iDo": ["man"],
+      "weDo": ["pin"],
+      "youDo": ["fan", "fit"]
+    }
+  },
+  "step6": {
+    "wordChain": ["man", "pan", "pin", "fin", "fan", "tan", "tin", "tip", "tap", "map", "mat", "fat", "fit", "sit", "sip", "sap"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "and",
+        "breakdown": [
+          { "grapheme": "a", "phoneme": "/ă/", "regular": true },
+          { "grapheme": "n", "phoneme": "/n/", "regular": true },
+          { "grapheme": "d", "phoneme": "/d/", "regular": true }
+        ]
+      },
+      {
+        "word": "his",
+        "breakdown": [
+          { "grapheme": "h", "phoneme": "/h/", "regular": true },
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "in",
+        "breakdown": [
+          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
+          { "grapheme": "n", "phoneme": "/n/", "regular": true }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["The man has a fan and a pin.", "Sam sat in the tan map."],
+    "spellSentences": ["The man sat.", "I sit in the tan pit."]
+  },
+  "wordList": ["man", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "nap", "Sam", "am", "as", "at"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "his", "it", "in", "the", "to", "of", "and", "a"],
+    "fry": ["I", "is", "his", "it", "in", "the", "to", "of", "and", "a"]
+  }
+}

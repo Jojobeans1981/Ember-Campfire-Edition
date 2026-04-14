@@ -11,9 +11,9 @@ Phased breakdown of work for the UFLI lessons integration. Each task group refer
 - [x] Write `src/data/ufli/ufliLessons.test.js` red tests: loader returns lesson, `getCumulativeWordList('003')` includes lessons 1+2+3, `lessonIdFromNumber(45) === '045'`, `lessonIdFromNumber('35a') === '035a'`, `ALL_UFLI_LESSON_IDS` length matches manifest
 - [x] Write `src/data/ufli/ufliLessons.js` implementing `getUfliLesson`, `getUfliLessonSync`, `ALL_UFLI_LESSON_IDS`, `getCumulativeWordList`, `lessonIdFromNumber`
 - [x] Run `npm test src/data/ufli/ufliLessons.test.js`; expected: tests fail with "lesson file not found"
-- [ ] Author `src/data/ufli/lessons/lesson-001.json` through `lesson-010.json` conforming to the `UfliLesson` schema (all 8 steps populated, non-empty `wordList`)
-- [ ] Run tests again; expected: green
-- [ ] Commit
+- [x] Author `src/data/ufli/lessons/lesson-001.json` through `lesson-010.json` conforming to the `UfliLesson` schema (all 8 steps populated, non-empty `wordList`)
+- [x] Run tests again; expected: green
+- [x] Commit
 
 ### Task Group 2 — UFLI progression composable [MVP2]
 

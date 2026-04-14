@@ -1,0 +1,97 @@
+{
+  "lessonNumber": 5,
+  "title": "VC & CVC Words",
+  "grapheme": "",
+  "phoneme": "",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/ă/", "/t/"], "word": "at" },
+      { "phonemes": ["/m/", "/ă/", "/t/"], "word": "mat" },
+      { "phonemes": ["/s/", "/ă/", "/t/"], "word": "sat" }
+    ],
+    "segment": [
+      { "word": "at", "phonemes": ["/ă/", "/t/"] },
+      { "word": "Sam", "phonemes": ["/s/", "/ă/", "/m/"] },
+      { "word": "mat", "phonemes": ["/m/", "/ă/", "/t/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "t", "phonemes": ["/t/"] },
+      { "grapheme": "s", "phonemes": ["/s/"] },
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/t/", "graphemes": ["t"] },
+      { "phoneme": "/s/", "graphemes": ["s"] },
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["at", "sat", "mat", "Sam", "am"],
+    "tiles": {
+      "initial": ["s", "m", "t"],
+      "medial": ["a"],
+      "final": ["t", "s", "m"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Practice reading and spelling VC and CVC words using the four letters taught so far (a, m, s, t). No new grapheme — focus on blending and segmenting fluency.",
+    "introductionScript": [
+      { "line": "1", "text": "Today we practice the letters and sounds we already know." },
+      { "line": "2", "text": "We'll read and spell short words." },
+      { "line": "3", "text": "Sound out each letter, then blend them together." }
+    ],
+    "articulatoryGesture": "Review of all four phonemes: /ă/ /m/ /s/ /t/. Watch each mouth shape carefully.",
+    "graphemePlacements": [
+      { "grapheme": "a", "position": "medial", "examples": ["mat", "sat"] },
+      { "grapheme": "m", "position": "initial", "examples": ["mat"] },
+      { "grapheme": "s", "position": "initial", "examples": ["sat", "Sam"] },
+      { "grapheme": "t", "position": "final", "examples": ["at", "sat", "mat"] }
+    ],
+    "readWords": {
+      "iDo": ["at", "Sam"],
+      "weDo": ["mat", "sat"],
+      "youDo": ["at", "am", "as"]
+    },
+    "spellWords": {
+      "iDo": ["at"],
+      "weDo": ["mat", "Sam"],
+      "youDo": ["sat", "am"]
+    }
+  },
+  "step6": {
+    "wordChain": ["at", "sat", "mat", "Sam", "am", "as"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "I",
+        "breakdown": [
+          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+        ]
+      },
+      {
+        "word": "the",
+        "breakdown": [
+          { "grapheme": "th", "phoneme": "/th/", "regular": false },
+          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
+        ]
+      }
+    ],
+    "teach": []
+  },
+  "step8": {
+    "readSentences": ["Sam sat at the mat.", "I am Sam."],
+    "spellSentences": ["Sam sat.", "I am at the mat."]
+  },
+  "wordList": ["at", "mat", "sat", "Sam", "am", "as"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "is", "the", "a"],
+    "fry": ["I", "is", "the", "a"]
+  }
+}

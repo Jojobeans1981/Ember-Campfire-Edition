@@ -1,0 +1,88 @@
+{
+  "lessonNumber": 2,
+  "title": "m /m/",
+  "grapheme": "m",
+  "phoneme": "/m/",
+  "step1": {
+    "blend": [
+      { "phonemes": ["/ă/", "/m/"], "word": "am" }
+    ],
+    "segment": [
+      { "word": "am", "phonemes": ["/ă/", "/m/"] }
+    ]
+  },
+  "step2": {
+    "items": [
+      { "grapheme": "m", "phonemes": ["/m/"] },
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
+  },
+  "step3": {
+    "items": [
+      { "phoneme": "/m/", "graphemes": ["m"] },
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
+  },
+  "step4": {
+    "wordChain": ["am", "ma"],
+    "tiles": {
+      "initial": ["m"],
+      "medial": ["a"],
+      "final": ["m"]
+    }
+  },
+  "step5": {
+    "instructionalNotes": "Introduce the letter M. Lips press together. Voice on. The sound hums.",
+    "introductionScript": [
+      { "line": "1", "text": "This is the letter M." },
+      { "line": "2", "text": "M says /m/, like in mom." },
+      { "line": "3", "text": "Press your lips together and hum. /mmm/." },
+      { "line": "4", "text": "Your turn. Say /m/." }
+    ],
+    "articulatoryGesture": "Lips pressed together. Voice on. The sound is held and hums through the nose.",
+    "graphemePlacements": [
+      { "grapheme": "m", "position": "initial", "examples": ["mat", "map", "mom"] },
+      { "grapheme": "m", "position": "final", "examples": ["am", "ham", "him"] }
+    ],
+    "readWords": {
+      "iDo": ["am"],
+      "weDo": ["am"],
+      "youDo": ["am"]
+    },
+    "spellWords": {
+      "iDo": ["am"],
+      "weDo": ["am"],
+      "youDo": ["am"]
+    }
+  },
+  "step6": {
+    "wordChain": ["am", "ma"]
+  },
+  "step7": {
+    "review": [
+      {
+        "word": "a",
+        "breakdown": [
+          { "grapheme": "a", "phoneme": "/ă/", "regular": true }
+        ]
+      }
+    ],
+    "teach": [
+      {
+        "word": "I",
+        "breakdown": [
+          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+        ]
+      }
+    ]
+  },
+  "step8": {
+    "readSentences": ["I am."],
+    "spellSentences": ["I am."]
+  },
+  "wordList": ["am", "ma"],
+  "highFrequencyWords": {
+    "dolch": ["I", "am", "a"],
+    "fry": ["I", "a"]
+  }
+}
