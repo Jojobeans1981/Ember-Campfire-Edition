@@ -25,6 +25,7 @@
     </div>
 
     <div class="controls">
+      <button v-if="currentWord" class="audio-btn" @click="speakCurrent">🔊 Hear again</button>
       <div class="progress">{{ index + 1 }} / {{ allWords.length }}</div>
       <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
     </div>
@@ -94,7 +95,7 @@ function next() {
 .dot.irregular { background: #FF6B6B; }
 .controls { display: flex; align-items: center; gap: 1rem; }
 .progress { color: #666; font-size: 0.8rem; }
-.next-btn {
+.next-btn, .audio-btn {
   background: rgba(255, 140, 0, 0.15);
   border: 1.5px solid #FF8C00;
   color: #FF8C00;

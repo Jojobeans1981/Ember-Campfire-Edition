@@ -7,7 +7,10 @@
       <div v-if="phoneme" class="phoneme-label">{{ phoneme }}</div>
       <div v-if="currentScriptLine" class="script-line">{{ currentScriptLine.text }}</div>
       <div v-if="articulation" class="articulation">{{ articulation }}</div>
-      <button class="next-btn" @click="advanceScript">{{ scriptDone ? "Let's practice" : 'Next' }}</button>
+      <div class="btn-row">
+        <button class="audio-btn" @click="speakCurrentLine">🔊 Hear again</button>
+        <button class="next-btn" @click="advanceScript">{{ scriptDone ? "Let's practice" : 'Next' }}</button>
+      </div>
     </div>
 
     <div v-else-if="phase === 'read'" class="practice-section">
@@ -157,7 +160,7 @@ function finish() {
   cursor: pointer;
 }
 .word-chip.done { background: rgba(100, 255, 218, 0.15); border-color: #64FFDA; color: #64FFDA; }
-.next-btn {
+.next-btn, .audio-btn {
   background: rgba(255, 140, 0, 0.15);
   border: 1.5px solid #FF8C00;
   color: #FF8C00;
@@ -167,4 +170,5 @@ function finish() {
   cursor: pointer;
 }
 .next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-row { display: flex; gap: 0.5rem; }
 </style>

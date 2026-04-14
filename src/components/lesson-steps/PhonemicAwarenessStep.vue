@@ -26,6 +26,7 @@
     </div>
 
     <div class="controls">
+      <button class="audio-btn" @click="playCurrent">🔊 Hear again</button>
       <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
     </div>
   </div>
@@ -140,7 +141,7 @@ onBeforeUnmount(() => {
 .phoneme.tapped { background: rgba(100, 255, 218, 0.2); border-color: #64FFDA; color: #64FFDA; }
 .word { font-size: 2rem; color: #64FFDA; font-weight: bold; }
 .word.big { font-size: 2.5rem; }
-.reveal-btn, .next-btn {
+.reveal-btn, .next-btn, .audio-btn {
   background: rgba(255, 140, 0, 0.15);
   border: 1.5px solid #FF8C00;
   color: #FF8C00;

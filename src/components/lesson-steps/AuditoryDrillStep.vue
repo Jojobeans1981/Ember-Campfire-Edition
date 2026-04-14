@@ -7,12 +7,6 @@
     <div class="prompt-text success" v-else-if="phase === 'correct'">Correct!</div>
     <div class="prompt-text wrong" v-else-if="phase === 'wrong'">It was {{ targetGrapheme?.toUpperCase() }}</div>
 
-    <div class="controls" v-if="phase !== 'pick'">
-      <button class="audio-btn" @click="playCurrent" :disabled="busy">
-        🔊 Hear again
-      </button>
-    </div>
-
     <div class="choices" v-if="phase === 'pick'">
       <button
         v-for="choice in choices"
@@ -20,6 +14,12 @@
         class="choice-btn"
         @click="pick(choice)"
       >{{ choice.toUpperCase() }}</button>
+    </div>
+
+    <div class="controls" v-if="phase === 'listen' || phase === 'pick'">
+      <button class="audio-btn" @click="playPhonemeAgain" :disabled="busy">
+        🔊 Hear again
+      </button>
     </div>
 
     <div class="controls" v-if="phase === 'correct' || phase === 'wrong'">
@@ -90,6 +90,15 @@ async function playCurrent() {
     choices.value = buildChoices();
     phase.value = 'pick';
   }
+}
+
+async function playPhonemeAgain() {
+  if (cancelled || busy.value) return;
+  const item = currentItem.value;
+  if (!item) return;
+  busy.value = true;
+  await ember.playPhoneme(item.phoneme);
+  busy.value = false;
 }
 
 async function pick(choice) {
