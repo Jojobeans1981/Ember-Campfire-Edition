@@ -46,11 +46,14 @@
       <Transition name="page" mode="out-in">
         <!-- Selection screen -->
         <div v-if="store.currentPage === 'selection'" key="selection" class="selection">
-          <div class="selection-bursts" aria-hidden="true">
-            <span class="burst burst-a">✨</span>
-            <span class="burst burst-b">🌈</span>
-            <span class="burst burst-c">🔥</span>
-            <span class="burst burst-d">⭐</span>
+          <div class="selection-scene" aria-hidden="true">
+            <img src="/assets/friends/fox_1984443.png" alt="" class="scene-animal fox" />
+            <img src="/assets/friends/lion_1817275.png" alt="" class="scene-animal lion" />
+            <img src="/assets/friends/panda_8493111.png" alt="" class="scene-animal panda" />
+            <img src="/assets/friends/kangaroo_1018379.png" alt="" class="scene-animal kangaroo" />
+            <span class="scene-spark s1">✨</span>
+            <span class="scene-spark s2">🔥</span>
+            <span class="scene-spark s3">⭐</span>
           </div>
           <div class="logo-area">
             <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
@@ -120,6 +123,18 @@
       ></span>
     </div>
 
+    <Transition name="storybeat">
+      <div v-if="showStoryBeat" class="storybeat-overlay" @click="dismissStoryBeat">
+        <div class="storybeat-card" @click.stop>
+          <p class="storybeat-kicker">{{ storyBeatData.chapter }}</p>
+          <h3 class="storybeat-title">{{ storyBeatData.title }}</h3>
+          <p class="storybeat-line">{{ storyBeatData.line }}</p>
+          <p class="storybeat-hint">{{ storyBeatData.hint }}</p>
+          <button class="adventure-btn" @click="dismissStoryBeat">Next Spark</button>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Celebration overlay -->
     <Transition name="celebration">
       <div v-if="!showLaunchSplash && showCelebration" class="celebration-overlay" @click="dismissCelebration">
@@ -136,7 +151,22 @@
     <Transition name="adventure">
       <div v-if="showAdventureIntro" class="adventure-overlay">
         <div class="adventure-card">
-          <img :src="'/assets/friends/' + store.selectedFriend.file" :alt="store.selectedFriend.name" class="adventure-guardian" />
+          <video
+            v-if="selectedFriendClipSrc"
+            ref="adventureClipEl"
+            class="adventure-clip"
+            :src="selectedFriendClipSrc"
+            :aria-label="`${store.selectedFriend.name} animation`"
+            playsinline
+            autoplay
+            preload="auto"
+          ></video>
+          <img
+            v-else
+            :src="'/assets/friends/' + store.selectedFriend.file"
+            :alt="store.selectedFriend.name"
+            class="adventure-guardian"
+          />
           <p class="adventure-kicker">Story Time</p>
           <h2 class="adventure-title">{{ store.selectedFriend.name }} and the Spark Trail</h2>
           <p class="adventure-copy">{{ selectedStory }}</p>
@@ -148,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, onErrorCaptured } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, onErrorCaptured, nextTick } from 'vue';
 import { store } from './store';
 import { usePersistence } from './composables/usePersistence.js';
 import { useUfliProgression } from './composables/useUfliProgression.js';
@@ -188,6 +218,7 @@ const hadRuntimeError = ref(false);
 const streakCount = ref(0);
 const streakBest = ref(0);
 const sparkBursts = ref([]);
+const adventureClipEl = ref(null);
 const splashLines = [
   'Every campfire starts with an Ember,',
   "Let's make reading your fire",
@@ -195,6 +226,10 @@ const splashLines = [
 const splashMessage = splashLines.join('. ');
 const splashLineWords = splashLines.map((line) => line.split(' '));
 const celebrationData = ref({ icon: '', title: '', message: '', sparks: 0 });
+const showStoryBeat = ref(false);
+const storyBeatData = ref({ chapter: '', title: '', line: '', hint: '' });
+const storyBeatProgress = ref(0);
+let storyBeatResolve = null;
 let celebrationResolve = null;
 let completionFlowBusy = false;
 let launchSplashTimer = null;
@@ -206,6 +241,7 @@ let hasSpokenSelectionIntro = false;
 let userGestureWarmupAttached = false;
 let firstGestureWarmupHandler = null;
 let introSpeakInFlight = false;
+let storyBeatAutoDismissTimer = null;
 
 function splashLetterIndex(lineIndex, wordIndex, charIndex) {
   let offset = 0;
@@ -219,8 +255,26 @@ function splashLetterIndex(lineIndex, wordIndex, charIndex) {
 }
 
 function killAudio() {
+  stopAdventureClip();
   stopAllAudio();
   cancelListening();
+}
+
+function stopAdventureClip() {
+  const clip = adventureClipEl.value;
+  if (!clip) return;
+  clip.pause();
+  clip.currentTime = 0;
+}
+
+function playAdventureClip() {
+  const clip = adventureClipEl.value;
+  if (!clip) return;
+  clip.currentTime = 0;
+  const maybePromise = clip.play();
+  if (maybePromise && typeof maybePromise.catch === 'function') {
+    maybePromise.catch(() => {});
+  }
 }
 
 function pickRandomLine(lines) {
@@ -333,6 +387,7 @@ watch(() => store.currentPage, (nextPage, prevPage) => {
 
 async function speakAdventureIntro() {
   if (!showAdventureIntro.value || introSpeakInFlight) return;
+  if (selectedFriendClipSrc.value) return;
   introSpeakInFlight = true;
   try {
     void preloadEmberVoice();
@@ -347,10 +402,94 @@ async function speakAdventureIntro() {
   }
 }
 
-watch(showAdventureIntro, (isOpen) => {
-  if (!isOpen) return;
+watch(showAdventureIntro, async (isOpen) => {
+  if (!isOpen) {
+    stopAdventureClip();
+    return;
+  }
+  await nextTick();
+  playAdventureClip();
   void speakAdventureIntro();
 });
+
+const storyBeatsByFriend = {
+  Fox: [
+    { title: 'Trail Clue Found', line: 'Fox spots glowing tracks in the grass.', hint: 'Your reading lights the next clue.' },
+    { title: 'Lantern Bridge', line: 'A tiny lantern bridge wakes up ahead.', hint: 'One more session powers the bridge.' },
+    { title: 'Campfire Near', line: 'Fox hears the big campfire crackle nearby.', hint: 'Keep going and we reach story night.' },
+  ],
+  Lion: [
+    { title: 'Roar Echo', line: 'Lion hears a brave roar echo in the canyon.', hint: 'Your sounds make Lion stronger.' },
+    { title: 'Golden Gate', line: 'A golden gate shimmers open step by step.', hint: 'Each session unlocks one more bar.' },
+    { title: 'Summit Glow', line: 'The summit fire glows at the top ridge.', hint: 'Finish this trail and claim the glow.' },
+  ],
+  Panda: [
+    { title: 'Bamboo Spark', line: 'Panda finds a bamboo spark map.', hint: 'Your reading fills in the path.' },
+    { title: 'Moon Pond', line: 'The moon pond lights up with each win.', hint: 'One session adds one moon ripple.' },
+    { title: 'Cozy Fire Ring', line: 'A cozy fire ring appears in the forest.', hint: 'Almost there. Keep the streak alive.' },
+  ],
+  Kangaroo: [
+    { title: 'Jump Marker', line: 'Kangaroo sees bright jump markers ahead.', hint: 'Your session powers the next leap.' },
+    { title: 'Sky Step', line: 'A sky step pops up over the creek.', hint: 'Read strong and jump farther.' },
+    { title: 'Firelight Finish', line: 'The finish ring shines in firelight.', hint: 'One more session to land the finish.' },
+  ],
+};
+
+function getStoryBeatsForFriend() {
+  const name = store.selectedFriend?.name;
+  return storyBeatsByFriend[name] || [
+    { title: 'Trail Start', line: 'Your story trail is lighting up.', hint: 'Each session reveals the next scene.' },
+  ];
+}
+
+function showStoryBeatCard(triggerLabel) {
+  return new Promise((resolve) => {
+    if (storyBeatResolve) {
+      storyBeatResolve();
+      storyBeatResolve = null;
+    }
+    if (storyBeatAutoDismissTimer) {
+      window.clearTimeout(storyBeatAutoDismissTimer);
+      storyBeatAutoDismissTimer = null;
+    }
+
+    const beats = getStoryBeatsForFriend();
+    const index = storyBeatProgress.value % beats.length;
+    const beat = beats[index];
+    storyBeatProgress.value += 1;
+
+    storyBeatData.value = {
+      chapter: `Story Spark ${storyBeatProgress.value}`,
+      title: `${beat.title} - ${triggerLabel}`,
+      line: beat.line,
+      hint: beat.hint,
+    };
+    showStoryBeat.value = true;
+    storyBeatResolve = resolve;
+    storyBeatAutoDismissTimer = window.setTimeout(() => {
+      dismissStoryBeat();
+    }, 9000);
+
+    void ember.speak(`${storyBeatData.value.chapter}. ${beat.title}. ${beat.line} ${beat.hint}`, {
+      priority: 'instruction',
+      rate: 0.92,
+      pitch: 1.06,
+    });
+  });
+}
+
+function dismissStoryBeat() {
+  if (storyBeatAutoDismissTimer) {
+    window.clearTimeout(storyBeatAutoDismissTimer);
+    storyBeatAutoDismissTimer = null;
+  }
+  killAudio();
+  showStoryBeat.value = false;
+  if (storyBeatResolve) {
+    storyBeatResolve();
+    storyBeatResolve = null;
+  }
+}
 
 function showCelebrationScreen(icon, title, message, sparks) {
   return new Promise((resolve) => {
@@ -374,6 +513,12 @@ const friendList = [
   { name: 'Panda', file: 'panda_8493111.png' },
   { name: 'Kangaroo', file: 'kangaroo_1018379.png' },
 ];
+const clipByFriend = {
+  Fox: '/clips/fox.mp4',
+  Lion: '/clips/lion.mp4',
+  Panda: '/clips/panda.mp4',
+  Kangaroo: '/clips/kangaroo.mp4',
+};
 const storyByFriend = {
   Fox: 'Fox found glow-tracks in Spark Meadow. Each sound you say lights another track. Help Fox reach the giant story campfire!',
   Lion: 'Lion heard tiny letters whispering in the wind. Each sound you say gives Lion a brave roar-boost toward the story campfire!',
@@ -390,6 +535,11 @@ const selectedStory = computed(() => {
   const name = store.selectedFriend?.name;
   if (!name) return '';
   return storyByFriend[name] || 'Your guardian is ready. Each sound you say lights the path to tonight\'s story campfire!';
+});
+const selectedFriendClipSrc = computed(() => {
+  const name = store.selectedFriend?.name;
+  if (!name) return '';
+  return clipByFriend[name] || '';
 });
 
 onMounted(() => {
@@ -427,6 +577,10 @@ onUnmounted(() => {
   if (streakResetTimer) {
     window.clearInterval(streakResetTimer);
   }
+  if (storyBeatAutoDismissTimer) {
+    window.clearTimeout(storyBeatAutoDismissTimer);
+    storyBeatAutoDismissTimer = null;
+  }
   if (firstGestureWarmupHandler) {
     window.removeEventListener('pointerdown', firstGestureWarmupHandler);
     window.removeEventListener('keydown', firstGestureWarmupHandler);
@@ -452,6 +606,9 @@ function selectFriend(friend) {
   store.selectedFriend = friend;
   showAdventureIntro.value = true;
   save();
+  void nextTick().then(() => {
+    playAdventureClip();
+  });
   // Trigger speech directly from the click path to satisfy stricter autoplay policies.
   void speakAdventureIntro();
 }
@@ -482,6 +639,7 @@ async function onLessonComplete() {
     save();
     celebrateComplete();
     await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
+    await showStoryBeatCard('Lesson Session');
     store.currentPage = 'unit-hub';
   } finally {
     completionFlowBusy = false;
@@ -502,9 +660,11 @@ async function onActivityComplete() {
     if (wasLocked && nowUnlocked) {
       celebrateFireLit();
       await showCelebrationScreen('🔥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
+      await showStoryBeatCard('Game Session');
     } else {
       celebrateComplete();
       await showCelebrationScreen('✨', 'Activity Complete!', 'You earned a spark!', 50);
+      await showStoryBeatCard('Game Session');
     }
 
     store.currentPage = 'unit-hub';
@@ -525,9 +685,11 @@ async function onStoryComplete() {
     if (prevStatus !== 'complete') {
       celebrateUnitComplete();
       await showCelebrationScreen('🏕️', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
+      await showStoryBeatCard('Story Session');
     } else {
       celebrateStory();
       await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);
+      await showStoryBeatCard('Story Session');
     }
 
     store.currentPage = 'unit-hub';
@@ -855,30 +1017,46 @@ body {
   text-align: center;
   max-width: 90vw;
   gap: 0.5rem;
+  overflow: hidden;
 }
 
-.selection-bursts {
+.selection-scene {
+  position: relative;
+  width: min(94vw, 390px);
+  height: 92px;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(140deg, rgba(255, 104, 166, 0.35), rgba(255, 177, 87, 0.34), rgba(88, 205, 255, 0.35));
+  overflow: hidden;
+  z-index: 2;
+}
+
+.scene-animal {
   position: absolute;
-  inset: 0;
+  bottom: 6px;
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+  animation: none;
+}
+
+.scene-animal.fox { left: 8%; animation-delay: 0s; }
+.scene-animal.lion { left: 30%; animation-delay: 0.2s; }
+.scene-animal.panda { left: 52%; animation-delay: 0.4s; }
+.scene-animal.kangaroo { left: 74%; animation-delay: 0.6s; }
+
+.scene-spark {
+  position: absolute;
+  font-size: 1.1rem;
+  opacity: 0.78;
+  animation: none;
   pointer-events: none;
 }
 
-.burst {
-  position: absolute;
-  font-size: clamp(1.4rem, 4vw, 2.4rem);
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
-  animation: burstFloat 2.6s ease-in-out infinite alternate;
-}
-
-.burst-a { top: 4%; left: 8%; animation-delay: 0s; }
-.burst-b { top: 9%; right: 10%; animation-delay: 0.5s; }
-.burst-c { bottom: 10%; left: 12%; animation-delay: 0.9s; }
-.burst-d { bottom: 8%; right: 16%; animation-delay: 1.2s; }
-
-@keyframes burstFloat {
-  from { transform: translateY(0) scale(0.95) rotate(-6deg); }
-  to { transform: translateY(-10px) scale(1.08) rotate(7deg); }
-}
+.scene-spark.s1 { top: 10px; left: 16%; }
+.scene-spark.s2 { top: 18px; left: 48%; animation-delay: 0.3s; }
+.scene-spark.s3 { top: 9px; left: 79%; animation-delay: 0.5s; }
 
 .logo-area {
   display: flex;
@@ -892,12 +1070,12 @@ body {
   height: auto;
   margin-bottom: 0.5rem;
   filter: drop-shadow(0 14px 28px rgba(16, 24, 40, 0.45));
-  animation: logoFlicker 2s ease-in-out infinite alternate;
+  animation: logoGlow 2.6s ease-in-out infinite;
 }
 
-@keyframes logoFlicker {
-  0% { transform: scale(1) rotate(-3deg); filter: brightness(1); }
-  100% { transform: scale(1.1) rotate(3deg); filter: brightness(1.3); }
+@keyframes logoGlow {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.02); filter: brightness(1.09); }
 }
 
 .app-title {
@@ -943,7 +1121,19 @@ body {
   cursor: pointer;
   transition: border-color 0.2s, transform 0.2s, box-shadow 0.3s, filter 0.2s;
   gap: 0.3rem;
-  animation: cardWiggle 3.2s ease-in-out infinite;
+  animation: cardPulse 3.2s ease-in-out infinite;
+  isolation: isolate;
+}
+
+.char-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.35) 40%, transparent 60%);
+  transform: translateX(-120%);
+  animation: cardShine 2.8s ease-in-out infinite;
+  z-index: -1;
 }
 
 .char-card:hover {
@@ -953,10 +1143,15 @@ body {
   box-shadow: 0 0 24px rgba(255, 144, 92, 0.45);
 }
 
-@keyframes cardWiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-1.4deg); }
-  75% { transform: rotate(1.4deg); }
+@keyframes cardShine {
+  0%, 100% { transform: translateX(-120%); opacity: 0; }
+  30% { opacity: 0.8; }
+  60% { transform: translateX(120%); opacity: 0; }
+}
+
+@keyframes cardPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 167, 101, 0.18); }
+  50% { box-shadow: 0 0 16px rgba(255, 167, 101, 0.24); }
 }
 
 .friend-img {
@@ -964,6 +1159,7 @@ body {
   height: 60%;
   object-fit: contain;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+  animation: none;
 }
 
 .friend-name {
@@ -971,6 +1167,75 @@ body {
   color: #fff7dd;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+/* Story beat overlay */
+.storybeat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: radial-gradient(circle at center, rgba(255, 188, 75, 0.22), rgba(7, 9, 16, 0.9) 62%);
+}
+
+.storybeat-card {
+  width: min(92vw, 460px);
+  border-radius: 1.1rem;
+  border: 2px solid rgba(255, 236, 164, 0.7);
+  background: linear-gradient(145deg, rgba(255, 104, 170, 0.9), rgba(255, 177, 87, 0.92), rgba(78, 203, 255, 0.88));
+  color: #2f1100;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 0 34px rgba(255, 145, 81, 0.45);
+  animation: storyBeatPop 0.35s ease-out, storyBeatPulse 1.6s ease-in-out infinite;
+}
+
+.storybeat-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.storybeat-title {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+}
+
+.storybeat-line {
+  margin: 0.55rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.storybeat-hint {
+  margin: 0.5rem 0 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.storybeat-enter-active,
+.storybeat-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.storybeat-enter-from,
+.storybeat-leave-to {
+  opacity: 0;
+}
+
+@keyframes storyBeatPop {
+  from { transform: scale(0.9) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes storyBeatPulse {
+  0%, 100% { box-shadow: 0 0 34px rgba(255, 145, 81, 0.45); }
+  50% { box-shadow: 0 0 46px rgba(103, 215, 255, 0.55); }
 }
 
 /* Celebration overlay */
@@ -1007,7 +1272,7 @@ body {
   border: 2px solid rgba(255, 245, 185, 0.62);
   background: linear-gradient(160deg, rgba(255, 128, 151, 0.88), rgba(255, 181, 86, 0.9), rgba(78, 216, 255, 0.85));
   box-shadow: 0 0 34px rgba(255, 170, 88, 0.4);
-  animation: storyPop 0.4s ease-out;
+  animation: storyPop 0.4s ease-out, adventurePulse 1.8s ease-in-out infinite;
 }
 
 .adventure-guardian {
@@ -1015,6 +1280,17 @@ body {
   height: 94px;
   object-fit: contain;
   filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.25));
+  animation: mascotHop 1.4s ease-in-out infinite;
+}
+
+.adventure-clip {
+  width: min(100%, 340px);
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.95rem;
+  border: 2px solid rgba(255, 245, 185, 0.75);
+  background: rgba(13, 18, 29, 0.55);
+  box-shadow: 0 8px 18px rgba(38, 13, 0, 0.28);
 }
 
 .adventure-kicker {
@@ -1066,6 +1342,16 @@ body {
 .adventure-enter-from,
 .adventure-leave-to {
   opacity: 0;
+}
+
+@keyframes mascotHop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-2deg); }
+}
+
+@keyframes adventurePulse {
+  0%, 100% { box-shadow: 0 0 34px rgba(255, 170, 88, 0.4); }
+  50% { box-shadow: 0 0 42px rgba(92, 214, 255, 0.55); }
 }
 
 @keyframes storyPop {
@@ -1164,5 +1450,6 @@ body {
   font-size: 0.82rem;
 }
 </style>
+
 
 
