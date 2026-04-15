@@ -1,12 +1,17 @@
 <template>
   <div class="campground-map">
     <header class="map-hero">
+      <div class="hero-stickers" aria-hidden="true">
+        <span class="sticker">WOW</span>
+        <span class="sticker">GO</span>
+        <span class="sticker">YAY</span>
+      </div>
       <p class="hero-kicker">Choose a Trail</p>
-      <h2 class="map-title">Pick Your Reading Adventure</h2>
+      <h2 class="map-title">{{ friendName }}'s Reading Adventure</h2>
       <p class="map-subtitle">
-        Each trail teaches one family of reading skills. Open one trail at a time
-        so the journey feels calm and easy to follow.
+        {{ missionLine }}
       </p>
+      <p class="mission-chip">Today's Mission: Light 1 new reading stop!</p>
     </header>
 
     <div class="trail-list">
@@ -65,14 +70,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ALL_UFLI_LESSON_IDS } from '../data/ufli/ufliLessons.js';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
 import { useUfliProgression } from '../composables/useUfliProgression.js';
+import { useEmber } from '../composables/useEmber.js';
 import { store } from '../store';
 import MapStation from './MapStation.vue';
 
 const { getUfliLessonStatus } = useUfliProgression();
+const ember = useEmber();
 
 const ZONE_DEFS = [
   {
@@ -215,6 +222,30 @@ const zones = computed(() => {
 const openZoneId = ref(
   zones.value.find((zone) => zone.hasUnlockedLessons)?.id ?? ZONE_DEFS[0].id,
 );
+const friendName = computed(() => store.selectedFriend?.name || 'Your Guardian');
+const missionLine = computed(
+  () => `${friendName.value} needs your sounds to light the campfire path. Tap a glowing trail and start the fun!`,
+);
+
+function speakMapIntro() {
+  void ember.speak(`${friendName.value}'s reading adventure. ${missionLine.value} Today's mission: light one new reading stop.`, {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.06,
+  });
+}
+
+onMounted(() => {
+  speakMapIntro();
+});
+
+watch(friendName, () => {
+  speakMapIntro();
+});
+
+onBeforeUnmount(() => {
+  ember.stopSpeaking();
+});
 
 function getStatus(lessonId) {
   return getUfliLessonStatus(lessonId);
@@ -240,6 +271,51 @@ function selectLesson(lessonId) {
   gap: 1rem;
   overflow-y: auto;
   max-height: 100%;
+  border-radius: 1.4rem;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(255, 119, 166, 0.2), transparent 35%),
+    radial-gradient(circle at 88% 8%, rgba(102, 222, 255, 0.2), transparent 38%),
+    rgba(8, 12, 20, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.3);
+}
+
+.hero-stickers {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  min-height: 30px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #351200;
+  background: linear-gradient(135deg, #ffd166, #ff8e53);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+  animation: stickerBop 1.2s ease-in-out infinite alternate;
+}
+
+.sticker:nth-child(2) {
+  background: linear-gradient(135deg, #88f2ff, #67c4ff);
+  animation-delay: 0.25s;
+}
+
+.sticker:nth-child(3) {
+  background: linear-gradient(135deg, #ffa6d7, #ff73aa);
+  animation-delay: 0.5s;
+}
+
+@keyframes stickerBop {
+  from { transform: translateY(0) rotate(-3deg); }
+  to { transform: translateY(-4px) rotate(3deg); }
 }
 
 .map-hero {
@@ -258,15 +334,30 @@ function selectLesson(lessonId) {
 .map-title {
   margin: 0;
   font-size: clamp(1.7rem, 4vw, 2.4rem);
-  color: #fff4db;
+  color: #ffe8bc;
+  text-shadow:
+    0 0 14px rgba(255, 128, 91, 0.45),
+    0 0 26px rgba(255, 74, 153, 0.35);
 }
 
 .map-subtitle {
   margin: 0.65rem auto 0;
   max-width: 560px;
-  color: #cdd6e3;
+  color: #e3ecf7;
   line-height: 1.5;
   font-size: 0.98rem;
+}
+
+.mission-chip {
+  display: inline-flex;
+  margin: 0.65rem auto 0;
+  padding: 0.38rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #2f1200;
+  background: linear-gradient(120deg, #ffd166, #ff8b55);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
 }
 
 .trail-list {
@@ -282,6 +373,7 @@ function selectLesson(lessonId) {
     linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(10, 16, 28, 0.98));
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
   overflow: hidden;
+  animation: cardDrift 3.8s ease-in-out infinite;
 }
 
 .trail-card.locked {
@@ -291,6 +383,11 @@ function selectLesson(lessonId) {
 .trail-card.active {
   border-color: color-mix(in srgb, var(--trail-accent) 55%, white 10%);
   box-shadow: 0 22px 55px rgba(0, 0, 0, 0.28);
+}
+
+@keyframes cardDrift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
 .trail-button {
@@ -303,6 +400,13 @@ function selectLesson(lessonId) {
   grid-template-columns: 78px 1fr;
   gap: 0.9rem;
   text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.trail-button:hover {
+  transform: scale(1.015);
+  filter: saturate(1.1);
 }
 
 .trail-art {
@@ -314,6 +418,12 @@ function selectLesson(lessonId) {
   font-size: 2rem;
   background: linear-gradient(180deg, color-mix(in srgb, var(--trail-accent) 28%, white 8%), rgba(255, 255, 255, 0.05));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  animation: iconBounce 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes iconBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-5px); }
 }
 
 .trail-copy {
@@ -344,6 +454,12 @@ function selectLesson(lessonId) {
   background: var(--trail-accent);
   padding: 0.32rem 0.6rem;
   border-radius: 999px;
+  animation: statePulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes statePulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
 }
 
 .trail-description {

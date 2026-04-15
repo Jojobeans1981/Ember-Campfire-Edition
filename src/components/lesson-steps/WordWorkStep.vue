@@ -51,10 +51,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
+import { useEmber } from '../../composables/useEmber.js';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
+const ember = useEmber();
 
 const wordChain = computed(() => props.step?.wordChain ?? []);
 const sort = computed(() => props.step?.wordSort ?? null);
@@ -89,6 +91,21 @@ const nextPhaseLabel = computed(() => {
   return 'Done';
 });
 
+function currentInstruction() {
+  if (phase.value === 'chain') return 'Word work. Tap each word when you read it.';
+  if (phase.value === 'sort') return sort.value?.prompt || 'Sort the words by category.';
+  if (phase.value === 'meaning') return meaning.value?.prompt || 'Let us explore word meaning.';
+  return 'Word work.';
+}
+
+async function speakInstruction() {
+  await ember.speak(currentInstruction(), {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.04,
+  });
+}
+
 function markChain(i) {
   chainDone.value[i] = true;
 }
@@ -122,6 +139,18 @@ function nextMeaning() {
   }
   meaningIndex.value++;
 }
+
+onMounted(() => {
+  void speakInstruction();
+});
+
+watch(phase, () => {
+  void speakInstruction();
+});
+
+onBeforeUnmount(() => {
+  ember.stopSpeaking();
+});
 </script>
 
 <style scoped>

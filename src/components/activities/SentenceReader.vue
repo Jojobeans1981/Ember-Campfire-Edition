@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
@@ -115,8 +115,24 @@ async function attemptRead() {
 
 onMounted(async () => {
   await requestMicPermission();
+  await ember.speak('Read the sentence. Tap each word to hear it, then read the whole sentence out loud.', {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.06,
+  });
   words.value = await getCumulativeDecodableWords(props.lessonId);
   buildSentence();
+});
+
+watch(phase, async (nextPhase) => {
+  if (cancelled) return;
+  if (nextPhase === 'read') {
+    await ember.speak('Tap words to hear them, then tap I can read it.', {
+      priority: 'instruction',
+      rate: 0.9,
+      pitch: 1.05,
+    });
+  }
 });
 
 onBeforeUnmount(() => {
