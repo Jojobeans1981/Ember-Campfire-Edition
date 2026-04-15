@@ -1,6 +1,37 @@
 import { store, skillState } from '../store';
 
 const STORAGE_KEY = 'ember-campground-save';
+const memoryStorage = new Map();
+
+function hasStorageMethod(name) {
+  return (
+    typeof globalThis.localStorage !== 'undefined' &&
+    typeof globalThis.localStorage[name] === 'function'
+  );
+}
+
+function writeStorage(key, value) {
+  if (hasStorageMethod('setItem')) {
+    globalThis.localStorage.setItem(key, value);
+    return;
+  }
+  memoryStorage.set(key, value);
+}
+
+function readStorage(key) {
+  if (hasStorageMethod('getItem')) {
+    return globalThis.localStorage.getItem(key);
+  }
+  return memoryStorage.has(key) ? memoryStorage.get(key) : null;
+}
+
+function removeStorage(key) {
+  if (hasStorageMethod('removeItem')) {
+    globalThis.localStorage.removeItem(key);
+    return;
+  }
+  memoryStorage.delete(key);
+}
 
 export function usePersistence() {
   function save() {
@@ -11,7 +42,7 @@ export function usePersistence() {
         selectedFriend: store.selectedFriend,
         skillState: { ...skillState },
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      writeStorage(STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
       console.warn('Failed to save progress:', err);
     }
@@ -19,7 +50,7 @@ export function usePersistence() {
 
   function load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = readStorage(STORAGE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
       if (data.ufliProgress) {
@@ -42,7 +73,7 @@ export function usePersistence() {
   }
 
   function clearSave() {
-    localStorage.removeItem(STORAGE_KEY);
+    removeStorage(STORAGE_KEY);
   }
 
   return { save, load, clearSave };

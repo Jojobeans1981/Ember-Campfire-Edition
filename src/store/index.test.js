@@ -4,13 +4,14 @@ import { usePersistence } from '../composables/usePersistence';
 
 describe('Global Store', () => {
   beforeEach(() => {
+    const { clearSave } = usePersistence();
     store.xp = 0;
     store.currentPage = 'selection';
     store.activeLessonId = null;
     for (const k of Object.keys(store.ufliProgress)) {
       delete store.ufliProgress[k];
     }
-    localStorage.clear();
+    clearSave();
   });
 
   it('should initialize with 0 XP', () => {
@@ -40,12 +41,13 @@ describe('Global Store', () => {
 
 describe('Persistence — ufliProgress round-trip', () => {
   beforeEach(() => {
+    const { clearSave } = usePersistence();
     store.xp = 0;
     store.activeLessonId = null;
     for (const k of Object.keys(store.ufliProgress)) {
       delete store.ufliProgress[k];
     }
-    localStorage.clear();
+    clearSave();
   });
 
   it('saves and reloads ufliProgress', () => {
