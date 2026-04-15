@@ -7,18 +7,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, defineEmits } from 'vue';
+import { ref, onMounted, onBeforeUnmount, defineProps, defineEmits } from 'vue';
 import { getUfliLesson } from '../data/ufli/ufliLessons.js';
+import { useEmber } from '../composables/useEmber.js';
 import ConnectedTextStep from './lesson-steps/ConnectedTextStep.vue';
 
 const props = defineProps({ unitId: { type: String, required: true } });
 defineEmits(['complete']);
 
 const step8 = ref(null);
+const ember = useEmber();
 
 onMounted(async () => {
+  await ember.speak('Connected text. I will read this story with you. Listen first, then take your turn.', {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.05,
+  });
   const lesson = await getUfliLesson(props.unitId);
   step8.value = lesson?.step8 ?? null;
+});
+
+onBeforeUnmount(() => {
+  ember.stopSpeaking();
 });
 </script>
 

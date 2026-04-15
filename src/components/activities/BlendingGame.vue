@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
@@ -135,6 +135,11 @@ async function runSession() {
 
 onMounted(async () => {
   await requestMicPermission();
+  await ember.speak('Blend it. Tap each sound from left to right, then say the whole word.', {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.06,
+  });
   const all = await getCumulativeDecodableWords(props.lessonId);
   words.value = all.filter((w) => w.phonemes.length >= 3);
   if (words.value.length === 0) {
@@ -144,6 +149,13 @@ onMounted(async () => {
   }
   pickWord();
   await runSession();
+});
+
+watch(phase, async (nextPhase) => {
+  if (cancelled) return;
+  if (nextPhase === 'tap') {
+    await ember.speak('Tap each sound from left to right.', { priority: 'instruction', rate: 0.9, pitch: 1.05 });
+  }
 });
 
 onBeforeUnmount(() => {

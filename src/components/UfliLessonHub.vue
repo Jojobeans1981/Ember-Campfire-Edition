@@ -75,17 +75,19 @@
 </template>
 
 <script setup>
-import { computed, ref, watchEffect, onMounted, watch } from 'vue';
+import { computed, ref, watchEffect, onMounted, watch, onBeforeUnmount } from 'vue';
 import { store } from '../store';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
 import { getUfliLesson } from '../data/ufli/ufliLessons.js';
 import { useUfliProgression } from '../composables/useUfliProgression.js';
+import { useEmber } from '../composables/useEmber.js';
 
 const {
   getUfliLessonStatus,
   completeUfliLesson, // eslint-disable-line no-unused-vars
   ACTIVITY_TYPES,
 } = useUfliProgression();
+const ember = useEmber();
 
 const meta = computed(() => getLessonMeta(store.activeLessonId));
 const lessonData = ref(null);
@@ -204,6 +206,29 @@ const visibleActivities = computed(() => {
 });
 
 const showConnectedText = computed(() => learnedLetterCount.value >= 3);
+
+function speakHubIntro() {
+  const lessonNum = meta.value?.lessonNumber || '';
+  const title = cleanTitle.value ? `${cleanTitle.value}.` : '';
+  const statusText = statusLabel.value ? `${statusLabel.value}.` : '';
+  void ember.speak(`Lesson ${lessonNum}. ${title} ${statusText} Tap Lesson to learn sounds, then play the activity cards.`, {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.04,
+  });
+}
+
+watch(() => store.activeLessonId, () => {
+  speakHubIntro();
+});
+
+onMounted(() => {
+  speakHubIntro();
+});
+
+onBeforeUnmount(() => {
+  ember.stopSpeaking();
+});
 
 function startLesson() {
   store.currentPage = 'lesson';
