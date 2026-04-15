@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "voiceId": "JQsDyUXTx396FAC3C7GS",
+  "modelId": "eleven_multilingual_v2",
+  "generatedAt": "2026-04-15T21:43:36.796Z",
+  "entries": {
+    "86f7e437faa5": {
+      "text": "a",
+      "file": "/audio/tts/86f7e437faa5.mp3"
+    },
+    "246791dceeb2": {
+      "text": "a.",
+      "file": "/audio/tts/246791dceeb2.mp3"
+    },
+    "42a7df14aa92": {
+      "text": "Big kid energy. Next challenge!",
+      "file": "/audio/tts/42a7df14aa92.mp3"
+    },
+    "60cc1f517a7d": {
+      "text": "Blend it. Tap each sound from left to right, then say the whole word.",
+      "file": "/audio/tts/60cc1f517a7d.mp3"
+    },
+    "a45960f42569": {
+      "text": "Build the word! Tap the hear button to listen.",
+      "file": "/audio/tts/a45960f42569.mp3"
+    },
+    "6ebd5d4d99e5": {
+      "text": "Can you read this word?",
+      "file": "/audio/tts/6ebd5d4d99e5.mp3"
+    },
+    "0a790ecd0d00": {
+      "text": "Can you say A?",
+      "file": "/audio/tts/0a790ecd0d00.mp3"
+    },
+    "7594cf403e99": {
+      "text": "Choose your guardian friend. Then we will start your reading adventure.",
+      "file": "/audio/tts/7594cf403e99.mp3"
+    },
+    "ab0bcf2c6fa3": {
+      "text": "Connected text. I will read this story with you. Listen first, then take your turn.",
+      "file": "/audio/tts/ab0bcf2c6fa3.mp3"
+    },
+    "c98b148e540d": {
+      "text": "Fox and the spark trail. Fox found glow-tracks in Spark Meadow. Each sound you say lights another track. Help Fox reach the giant story campfire!",
+      "file": "/audio/tts/c98b148e540d.mp3"
+    },
+    "8bd5f2487ff2": {
+      "text": "Fox says you are on a spark streak. Keep going!",
+      "file": "/audio/tts/8bd5f2487ff2.mp3"
+    },
+    "5bd2b79a1628": {
+      "text": "Fox's reading adventure. Fox needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "file": "/audio/tts/5bd2b79a1628.mp3"
+    },
+    "c7094334af44": {
+      "text": "Great reading!",
+      "file": "/audio/tts/c7094334af44.mp3"
+    },
+    "6380dde2a788": {
+      "text": "Great spelling!",
+      "file": "/audio/tts/6380dde2a788.mp3"
+    },
+    "91bb266617e2": {
+      "text": "Great!",
+      "file": "/audio/tts/91bb266617e2.mp3"
+    },
+    "d18b311f1c04": {
+      "text": "In this section, listen carefully to sounds and words, then blend what you hear.",
+      "file": "/audio/tts/d18b311f1c04.mp3"
+    },
+    "e3a6f56c0343": {
+      "text": "In this section, listen to the sound and tap the matching letter.",
+      "file": "/audio/tts/e3a6f56c0343.mp3"
+    },
+    "4542c4fdd0a7": {
+      "text": "In this section, listen to the sound, then tap My turn and say it.",
+      "file": "/audio/tts/4542c4fdd0a7.mp3"
+    },
+    "358108da13c3": {
+      "text": "It says",
+      "file": "/audio/tts/358108da13c3.mp3"
+    },
+    "c9f2133278c1": {
+      "text": "Kangaroo and the spark trail. Kangaroo spotted bouncing ember dots. Each sound you say launches the next leap toward the story campfire!",
+      "file": "/audio/tts/c9f2133278c1.mp3"
+    },
+    "bd6f2fa73d50": {
+      "text": "Kangaroo is ready for the next leap!",
+      "file": "/audio/tts/bd6f2fa73d50.mp3"
+    },
+    "1f5b7d6616ba": {
+      "text": "Kangaroo says boing, awesome work!",
+      "file": "/audio/tts/1f5b7d6616ba.mp3"
+    },
+    "85c9cc6f1a64": {
+      "text": "Kangaroo's reading adventure. Kangaroo needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "file": "/audio/tts/85c9cc6f1a64.mp3"
+    },
+    "ac2728810d8b": {
+      "text": "Let's sound it out together.",
+      "file": "/audio/tts/ac2728810d8b.mp3"
+    },
+    "be5bfcc4e032": {
+      "text": "Lion and the spark trail. Lion heard tiny letters whispering in the wind. Each sound you say gives Lion a brave roar-boost toward the story campfire!",
+      "file": "/audio/tts/be5bfcc4e032.mp3"
+    },
+    "f5219597fbd0": {
+      "text": "Lion is cheering. One more big win!",
+      "file": "/audio/tts/f5219597fbd0.mp3"
+    },
+    "c20575a4e5d2": {
+      "text": "Lion says wow, that was powerful reading.",
+      "file": "/audio/tts/c20575a4e5d2.mp3"
+    },
+    "d06f605ab292": {
+      "text": "Lion's reading adventure. Lion needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "file": "/audio/tts/d06f605ab292.mp3"
+    },
+    "10724987768e": {
+      "text": "Nice job!",
+      "file": "/audio/tts/10724987768e.mp3"
+    },
+    "123bf290834c": {
+      "text": "Now blend them together.",
+      "file": "/audio/tts/123bf290834c.mp3"
+    },
+    "36f64892db6c": {
+      "text": "Panda and the spark trail. Panda discovered sleepy spark-bamboo. Each sound you say wakes the next spark and opens the path to the story campfire!",
+      "file": "/audio/tts/36f64892db6c.mp3"
+    },
+    "c204e4cfa2e1": {
+      "text": "Panda is smiling. Let us light another stop!",
+      "file": "/audio/tts/c204e4cfa2e1.mp3"
+    },
+    "71f91c218112": {
+      "text": "Panda says that was cozy and amazing.",
+      "file": "/audio/tts/71f91c218112.mp3"
+    },
+    "c0c563799042": {
+      "text": "Panda's reading adventure. Panda needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "file": "/audio/tts/c0c563799042.mp3"
+    },
+    "78a1d743a1e7": {
+      "text": "Read the sentence. Tap each word to hear it, then read the whole sentence out loud.",
+      "file": "/audio/tts/78a1d743a1e7.mp3"
+    },
+    "d7fecff3c657": {
+      "text": "Read the story. I will read each sentence first, then it is your turn.",
+      "file": "/audio/tts/d7fecff3c657.mp3"
+    },
+    "de9489076f1d": {
+      "text": "Say it. Tap hear and say, listen to the sound, then say it clearly into the microphone.",
+      "file": "/audio/tts/de9489076f1d.mp3"
+    },
+    "b68a884a1dac": {
+      "text": "Tap each letter.",
+      "file": "/audio/tts/b68a884a1dac.mp3"
+    },
+    "ce2e89834a5a": {
+      "text": "Tap each sound from left to right.",
+      "file": "/audio/tts/ce2e89834a5a.mp3"
+    },
+    "7ca89bb6aefb": {
+      "text": "Tap words to hear them, then tap I can read it.",
+      "file": "/audio/tts/7ca89bb6aefb.mp3"
+    },
+    "72e472b597fa": {
+      "text": "That was awesome. Ready for another one?",
+      "file": "/audio/tts/72e472b597fa.mp3"
+    },
+    "2373ea7d3aca": {
+      "text": "The word is a.",
+      "file": "/audio/tts/2373ea7d3aca.mp3"
+    },
+    "6997d98e0ce5": {
+      "text": "This is the letter A.",
+      "file": "/audio/tts/6997d98e0ce5.mp3"
+    },
+    "6c5571c034e4": {
+      "text": "Try again!",
+      "file": "/audio/tts/6c5571c034e4.mp3"
+    },
+    "d415befb0413": {
+      "text": "Try again. Say the whole word.",
+      "file": "/audio/tts/d415befb0413.mp3"
+    },
+    "ee33f3746755": {
+      "text": "Yes!",
+      "file": "/audio/tts/ee33f3746755.mp3"
+    },
+    "8e2dbd995b15": {
+      "text": "Yes! Great reading!",
+      "file": "/audio/tts/8e2dbd995b15.mp3"
+    },
+    "09289400146c": {
+      "text": "You and Fox are flying. Next stop!",
+      "file": "/audio/tts/09289400146c.mp3"
+    },
+    "dd3c30067ccb": {
+      "text": "You are on fire. Let us keep the streak going!",
+      "file": "/audio/tts/dd3c30067ccb.mp3"
+    },
+    "ab05c5347cba": {
+      "text": "Your guardian and the spark trail. Your guardian is ready. Each sound you say lights the path to tonight's story campfire!",
+      "file": "/audio/tts/ab05c5347cba.mp3"
+    },
+    "d6c6123f7c76": {
+      "text": "Your Guardian's reading adventure. Your Guardian needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "file": "/audio/tts/d6c6123f7c76.mp3"
+    },
+    "6db0595cd8fc": {
+      "text": "Your turn. Say the whole word.",
+      "file": "/audio/tts/6db0595cd8fc.mp3"
+    },
+    "1795cf6b9acb": {
+      "text": "Lesson 1. a Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/1795cf6b9acb.mp3"
+    },
+    "33c570d0b037": {
+      "text": "Lesson 1. a Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/33c570d0b037.mp3"
+    },
+    "711233f78c3d": {
+      "text": "Lesson 1. a Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/711233f78c3d.mp3"
+    },
+    "8d3b0b98e5e6": {
+      "text": "Lesson 1. a Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/8d3b0b98e5e6.mp3"
+    },
+    "fb7ee3f6fc57": {
+      "text": "Lesson 1. a Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/fb7ee3f6fc57.mp3"
+    },
+    "857191668973": {
+      "text": "Lesson 1. a Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/857191668973.mp3"
+    }
+  }
+}

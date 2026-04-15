@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-04-15T21:43:13.453Z",
+  "scope": {
+    "lessonIds": [
+      "001"
+    ],
+    "lessonsScanned": 1
+  },
+  "entryCount": 58,
+  "totalCharacters": 3511,
+  "skippedIpa": [
+    {
+      "text": "The letter A says /ă/, like the start of apple.",
+      "source": "lesson-001 step5.introductionScript"
+    },
+    {
+      "text": "Watch my mouth. Open and relaxed. /ă/.",
+      "source": "lesson-001 step5.introductionScript"
+    },
+    {
+      "text": "Now you try. Say /ă/.",
+      "source": "lesson-001 step5.introductionScript"
+    }
+  ],
+  "entries": [
+    {
+      "text": "a",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "a.",
+      "sources": [
+        "lesson-001 step8.readSentences",
+        "lesson-001 step8.spellSentences"
+      ]
+    },
+    {
+      "text": "Big kid energy. Next challenge!",
+      "sources": [
+        "hypeLines.generic"
+      ]
+    },
+    {
+      "text": "Blend it. Tap each sound from left to right, then say the whole word.",
+      "sources": [
+        "BlendingGame.vue:138"
+      ]
+    },
+    {
+      "text": "Build the word! Tap the hear button to listen.",
+      "sources": [
+        "WordBuilder.vue:140"
+      ]
+    },
+    {
+      "text": "Can you read this word?",
+      "sources": [
+        "WordReadingStep.vue:57"
+      ]
+    },
+    {
+      "text": "Can you say A?",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "Choose your guardian friend. Then we will start your reading adventure.",
+      "sources": [
+        "App.vue:331"
+      ]
+    },
+    {
+      "text": "Connected text. I will read this story with you. Listen first, then take your turn.",
+      "sources": [
+        "StoryReader.vue:22"
+      ]
+    },
+    {
+      "text": "Fox and the spark trail. Fox found glow-tracks in Spark Meadow. Each sound you say lights another track. Help Fox reach the giant story campfire!",
+      "sources": [
+        "adventureIntro.Fox"
+      ]
+    },
+    {
+      "text": "Fox says you are on a spark streak. Keep going!",
+      "sources": [
+        "hypeLines.Fox"
+      ]
+    },
+    {
+      "text": "Fox's reading adventure. Fox needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "sources": [
+        "campgroundMap.Fox"
+      ]
+    },
+    {
+      "text": "Great reading!",
+      "sources": [
+        "ConnectedTextStep.vue:84 / SentenceReader.vue:106"
+      ]
+    },
+    {
+      "text": "Great spelling!",
+      "sources": [
+        "WordBuilder.vue:108"
+      ]
+    },
+    {
+      "text": "Great!",
+      "sources": [
+        "VisualDrillStep.vue:109 / SpeechPractice.vue:114"
+      ]
+    },
+    {
+      "text": "In this section, listen carefully to sounds and words, then blend what you hear.",
+      "sources": [
+        "PhonemicAwarenessStep.vue:91"
+      ]
+    },
+    {
+      "text": "In this section, listen to the sound and tap the matching letter.",
+      "sources": [
+        "AuditoryDrillStep.vue:150"
+      ]
+    },
+    {
+      "text": "In this section, listen to the sound, then tap My turn and say it.",
+      "sources": [
+        "VisualDrillStep.vue:134"
+      ]
+    },
+    {
+      "text": "It says",
+      "sources": [
+        "useEmber.js:677 (teachPhoneme)"
+      ]
+    },
+    {
+      "text": "Kangaroo and the spark trail. Kangaroo spotted bouncing ember dots. Each sound you say launches the next leap toward the story campfire!",
+      "sources": [
+        "adventureIntro.Kangaroo"
+      ]
+    },
+    {
+      "text": "Kangaroo is ready for the next leap!",
+      "sources": [
+        "hypeLines.Kangaroo"
+      ]
+    },
+    {
+      "text": "Kangaroo says boing, awesome work!",
+      "sources": [
+        "hypeLines.Kangaroo"
+      ]
+    },
+    {
+      "text": "Kangaroo's reading adventure. Kangaroo needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "sources": [
+        "campgroundMap.Kangaroo"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.Complete!"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.Locked"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.Practicing"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.Ready to Learn"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.Story Time!"
+      ]
+    },
+    {
+      "text": "Lesson 1. a Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.1.noStatus"
+      ]
+    },
+    {
+      "text": "Let's sound it out together.",
+      "sources": [
+        "WordReadingStep.vue:72"
+      ]
+    },
+    {
+      "text": "Lion and the spark trail. Lion heard tiny letters whispering in the wind. Each sound you say gives Lion a brave roar-boost toward the story campfire!",
+      "sources": [
+        "adventureIntro.Lion"
+      ]
+    },
+    {
+      "text": "Lion is cheering. One more big win!",
+      "sources": [
+        "hypeLines.Lion"
+      ]
+    },
+    {
+      "text": "Lion says wow, that was powerful reading.",
+      "sources": [
+        "hypeLines.Lion"
+      ]
+    },
+    {
+      "text": "Lion's reading adventure. Lion needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "sources": [
+        "campgroundMap.Lion"
+      ]
+    },
+    {
+      "text": "Nice job!",
+      "sources": [
+        "NewConceptStep.vue:146"
+      ]
+    },
+    {
+      "text": "Now blend them together.",
+      "sources": [
+        "BlendingStep.vue:146"
+      ]
+    },
+    {
+      "text": "Panda and the spark trail. Panda discovered sleepy spark-bamboo. Each sound you say wakes the next spark and opens the path to the story campfire!",
+      "sources": [
+        "adventureIntro.Panda"
+      ]
+    },
+    {
+      "text": "Panda is smiling. Let us light another stop!",
+      "sources": [
+        "hypeLines.Panda"
+      ]
+    },
+    {
+      "text": "Panda says that was cozy and amazing.",
+      "sources": [
+        "hypeLines.Panda"
+      ]
+    },
+    {
+      "text": "Panda's reading adventure. Panda needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "sources": [
+        "campgroundMap.Panda"
+      ]
+    },
+    {
+      "text": "Read the sentence. Tap each word to hear it, then read the whole sentence out loud.",
+      "sources": [
+        "SentenceReader.vue:118"
+      ]
+    },
+    {
+      "text": "Read the story. I will read each sentence first, then it is your turn.",
+      "sources": [
+        "ConnectedTextStep.vue:96"
+      ]
+    },
+    {
+      "text": "Say it. Tap hear and say, listen to the sound, then say it clearly into the microphone.",
+      "sources": [
+        "SpeechPractice.vue:132"
+      ]
+    },
+    {
+      "text": "Tap each letter.",
+      "sources": [
+        "BlendingStep.vue:133"
+      ]
+    },
+    {
+      "text": "Tap each sound from left to right.",
+      "sources": [
+        "BlendingGame.vue:157"
+      ]
+    },
+    {
+      "text": "Tap words to hear them, then tap I can read it.",
+      "sources": [
+        "SentenceReader.vue:130"
+      ]
+    },
+    {
+      "text": "That was awesome. Ready for another one?",
+      "sources": [
+        "hypeLines.generic"
+      ]
+    },
+    {
+      "text": "The word is a.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "This is the letter A.",
+      "sources": [
+        "lesson-001 step5.introductionScript",
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "Try again!",
+      "sources": [
+        "SpeechPractice.vue:117"
+      ]
+    },
+    {
+      "text": "Try again. Say the whole word.",
+      "sources": [
+        "BlendingGame.vue:101"
+      ]
+    },
+    {
+      "text": "Yes!",
+      "sources": [
+        "AuditoryDrillStep.vue:125"
+      ]
+    },
+    {
+      "text": "Yes! Great reading!",
+      "sources": [
+        "WordReadingStep.vue:69"
+      ]
+    },
+    {
+      "text": "You and Fox are flying. Next stop!",
+      "sources": [
+        "hypeLines.Fox"
+      ]
+    },
+    {
+      "text": "You are on fire. Let us keep the streak going!",
+      "sources": [
+        "hypeLines.generic"
+      ]
+    },
+    {
+      "text": "Your guardian and the spark trail. Your guardian is ready. Each sound you say lights the path to tonight's story campfire!",
+      "sources": [
+        "adventureIntro.fallback"
+      ]
+    },
+    {
+      "text": "Your Guardian's reading adventure. Your Guardian needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
+      "sources": [
+        "campgroundMap.fallback"
+      ]
+    },
+    {
+      "text": "Your turn. Say the whole word.",
+      "sources": [
+        "BlendingGame.vue:92"
+      ]
+    }
+  ]
+}
