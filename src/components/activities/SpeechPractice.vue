@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import { getCumulativeIntroducedGraphemes } from '../../data/ufli/ufliLessons.js';
 import { getLessonMeta } from '../../data/ufli/ufliCurriculum.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
@@ -134,7 +134,7 @@ onMounted(async () => {
     rate: 0.9,
     pitch: 1.06,
   });
-  allPhonemes.value = await getCumulativeLetters(props.lessonId);
+  allPhonemes.value = getCumulativeIntroducedGraphemes(props.lessonId);
   // Focus phoneme(s) for this lesson — pulled from the manifest grapheme field
   const meta = getLessonMeta(props.lessonId);
   if (meta && meta.grapheme) {

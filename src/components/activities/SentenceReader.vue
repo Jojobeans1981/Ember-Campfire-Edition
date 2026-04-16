@@ -40,7 +40,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
+import { getCumulativeReadSentences } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 
@@ -50,7 +50,12 @@ const emit = defineEmits(['complete']);
 const ember = useEmber();
 const { startWordListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
 
-const words = ref([]);
+// Authored, decodable sentences from lessons 1..lessonId. Random-joining
+// cumulative words produces nonsense like "cat at at" for early lessons,
+// so we only use real sentences an author has written. If none exist yet
+// (e.g. lesson 1 status:"no_decodable"), the activity auto-completes.
+const sentencePool = ref([]);
+const sentenceIdx = ref(0);
 
 const currentSentence = ref('');
 const currentWords = ref([]);
@@ -61,19 +66,11 @@ const targetCount = 3;
 let cancelled = false;
 
 function buildSentence() {
-  const pool = words.value;
-  if (pool.length < 2) {
-    currentSentence.value = pool[0]?.word || 'a';
-    currentWords.value = [currentSentence.value];
-    return;
-  }
-  const count = 2 + Math.floor(Math.random() * 3);
-  const picked = [];
-  for (let i = 0; i < count && i < pool.length; i++) {
-    picked.push(pool[Math.floor(Math.random() * pool.length)].word);
-  }
-  currentWords.value = picked;
-  currentSentence.value = picked.join(' ');
+  if (sentencePool.value.length === 0) return;
+  const sentence = sentencePool.value[sentenceIdx.value % sentencePool.value.length];
+  sentenceIdx.value++;
+  currentSentence.value = sentence;
+  currentWords.value = sentence.split(/\s+/).filter(Boolean);
   highlightIdx.value = -1;
   phase.value = 'read';
 }
@@ -114,13 +111,19 @@ async function attemptRead() {
 }
 
 onMounted(async () => {
+  sentencePool.value = await getCumulativeReadSentences(props.lessonId);
+  if (sentencePool.value.length === 0) {
+    // No authored sentences available yet at this lesson — the activity
+    // would have nothing real to read. Skip instead of faking sentences.
+    emit('complete');
+    return;
+  }
   await requestMicPermission();
   await ember.speak('Read the sentence. Tap each word to hear it, then read the whole sentence out loud.', {
     priority: 'instruction',
     rate: 0.9,
     pitch: 1.06,
   });
-  words.value = await getCumulativeDecodableWords(props.lessonId);
   buildSentence();
 });
 

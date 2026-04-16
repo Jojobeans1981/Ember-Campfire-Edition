@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-16T17:17:07.827Z",
+  "generatedAt": "2026-04-16T22:22:55.365Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -239,6 +239,46 @@
     "c3597b77c09e": {
       "text": "Every campfire starts with an Ember. Let's make reading your fire.",
       "file": "/audio/tts/c3597b77c09e.mp3"
+    },
+    "27e90dfa57c3": {
+      "text": "at",
+      "file": "/audio/tts/27e90dfa57c3.mp3"
+    },
+    "9d989e8d27dc": {
+      "text": "cat",
+      "file": "/audio/tts/9d989e8d27dc.mp3"
+    },
+    "37745ed7a0f0": {
+      "text": "map",
+      "file": "/audio/tts/37745ed7a0f0.mp3"
+    },
+    "532699a319b1": {
+      "text": "The short vowel A spells the short A sound, like the A at the beginning of the word apple.",
+      "file": "/audio/tts/532699a319b1.mp3"
+    },
+    "718504242647": {
+      "text": "The word is at.",
+      "file": "/audio/tts/718504242647.mp3"
+    },
+    "409aa147d9cc": {
+      "text": "The word is cat.",
+      "file": "/audio/tts/409aa147d9cc.mp3"
+    },
+    "f039240e9e13": {
+      "text": "The word is map.",
+      "file": "/audio/tts/f039240e9e13.mp3"
+    },
+    "cc82616d6e78": {
+      "text": "The word is the.",
+      "file": "/audio/tts/cc82616d6e78.mp3"
+    },
+    "fceb8eda0f52": {
+      "text": "This is the letter A. A is a vowel. The long vowel sound is the same as its name, A. Today we are going to read words with the short vowel sound.",
+      "file": "/audio/tts/fceb8eda0f52.mp3"
+    },
+    "bbccdf2efb33": {
+      "text": "the",
+      "file": "/audio/tts/bbccdf2efb33.mp3"
     }
   }
 }

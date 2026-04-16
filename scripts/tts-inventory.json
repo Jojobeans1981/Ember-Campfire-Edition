@@ -1,39 +1,19 @@
 {
-  "generatedAt": "2026-04-16T17:15:19.685Z",
+  "generatedAt": "2026-04-16T21:51:53.820Z",
   "scope": {
     "lessonIds": [
       "001"
     ],
     "lessonsScanned": 1
   },
-  "entryCount": 59,
-  "totalCharacters": 3577,
-  "skippedIpa": [
-    {
-      "text": "The letter A says /ă/, like the start of apple.",
-      "source": "lesson-001 step5.introductionScript"
-    },
-    {
-      "text": "Watch my mouth. Open and relaxed. /ă/.",
-      "source": "lesson-001 step5.introductionScript"
-    },
-    {
-      "text": "Now you try. Say /ă/.",
-      "source": "lesson-001 step5.introductionScript"
-    }
-  ],
+  "entryCount": 64,
+  "totalCharacters": 3834,
+  "skippedIpa": [],
   "entries": [
     {
-      "text": "a",
+      "text": "at",
       "sources": [
         "word-list (bare)"
-      ]
-    },
-    {
-      "text": "a.",
-      "sources": [
-        "lesson-001 step8.readSentences",
-        "lesson-001 step8.spellSentences"
       ]
     },
     {
@@ -61,9 +41,9 @@
       ]
     },
     {
-      "text": "Can you say A?",
+      "text": "cat",
       "sources": [
-        "teachPhoneme (grapheme)"
+        "word-list (bare)"
       ]
     },
     {
@@ -235,6 +215,12 @@
       ]
     },
     {
+      "text": "map",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
       "text": "Nice job!",
       "sources": [
         "NewConceptStep.vue:146"
@@ -313,16 +299,45 @@
       ]
     },
     {
-      "text": "The word is a.",
+      "text": "the",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "The short vowel A spells the short A sound, like the A at the beginning of the word apple.",
+      "sources": [
+        "lesson-001 step5.introductionScript"
+      ]
+    },
+    {
+      "text": "The word is at.",
       "sources": [
         "word-list (The word is X.)"
       ]
     },
     {
-      "text": "This is the letter A.",
+      "text": "The word is cat.",
       "sources": [
-        "lesson-001 step5.introductionScript",
-        "teachPhoneme (grapheme)"
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is map.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is the.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "This is the letter A. A is a vowel. The long vowel sound is the same as its name, A. Today we are going to read words with the short vowel sound.",
+      "sources": [
+        "lesson-001 step5.introductionScript"
       ]
     },
     {
