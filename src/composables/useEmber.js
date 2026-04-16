@@ -3,7 +3,6 @@ import { ref } from 'vue';
 const isSpeaking = ref(false);
 const currentText = ref('');
 
-// Track all active audio elements so we can stop them on navigation
 let activeAudio = null;
 let preferredVoice = null;
 let voiceBootstrapDone = false;
@@ -18,6 +17,14 @@ const AUDIO_PRIORITY = {
 };
 
 const VOICE_NAME_PREFERENCES = [
+  'aria online',
+  'jenny online',
+  'guy online',
+  'ava online',
+  'sara online',
+  'alloy',
+  'nova',
+  'shimmer',
   'aria',
   'jenny',
   'samantha',
@@ -30,6 +37,16 @@ const VOICE_NAME_PREFERENCES = [
   'libby',
 ];
 
+const VOICE_NAME_AVOID = [
+  'espeak',
+  'rhvoice',
+  'festival',
+  'microsoft david',
+  'microsoft mark',
+  'compact',
+  'robot',
+];
+
 function scoreVoice(voice) {
   const name = String(voice?.name || '').toLowerCase();
   const lang = String(voice?.lang || '').toLowerCase();
@@ -40,15 +57,24 @@ function scoreVoice(voice) {
   else if (lang.startsWith('en-')) score += 15;
   else if (lang.startsWith('en')) score += 10;
 
-  for (let i = 0; i < VOICE_NAME_PREFERENCES.length; i++) {
+  for (let i = 0; i < VOICE_NAME_PREFERENCES.length; i += 1) {
     if (name.includes(VOICE_NAME_PREFERENCES[i])) {
       score += 120 - i;
       break;
     }
   }
 
+  for (let i = 0; i < VOICE_NAME_AVOID.length; i += 1) {
+    if (name.includes(VOICE_NAME_AVOID[i])) {
+      score -= 160;
+      break;
+    }
+  }
+
   if (name.includes('natural')) score += 8;
   if (name.includes('neural')) score += 8;
+  if (name.includes('online')) score += 10;
+  if (name.includes('enhanced')) score += 5;
   if (name.includes('female')) score += 4;
 
   return score;
@@ -85,6 +111,29 @@ function bootstrapPreferredVoice() {
 
   updatePreferredVoice();
   window.speechSynthesis.addEventListener?.('voiceschanged', updatePreferredVoice);
+}
+
+async function waitForVoices(timeoutMs = 1500) {
+  if (!window.speechSynthesis?.getVoices) return;
+  const existing = window.speechSynthesis.getVoices() || [];
+  if (existing.length) return;
+
+  await new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timeoutId);
+      window.speechSynthesis?.removeEventListener?.('voiceschanged', onVoicesChanged);
+      resolve();
+    };
+    const onVoicesChanged = () => {
+      const voices = window.speechSynthesis?.getVoices?.() || [];
+      if (voices.length) finish();
+    };
+    const timeoutId = window.setTimeout(finish, timeoutMs);
+    window.speechSynthesis?.addEventListener?.('voiceschanged', onVoicesChanged);
+  });
 }
 
 function stopActiveAudio() {
@@ -127,7 +176,6 @@ function claimPlayback(type, priority) {
   }
 
   if (current) {
-    // New playback takes priority, so preempt current playback first.
     stopAllPlaybackNow();
   }
 
@@ -179,27 +227,23 @@ function playAudioSources(sources, playbackId) {
   });
 }
 
-/**
- * Map a phoneme (in any common notation) to the audio file key under
- * /audio/phonemes/. Accepts UFLI-style notation like "/ă/", "/sh/", or
- * bare letters like "a", "sh".
- */
+export async function preloadEmberVoice() {
+  return false;
+}
+
 export function phonemeToAudioKey(phoneme) {
   if (!phoneme) return '';
-  // Strip slashes and lowercase
+
   let p = String(phoneme).replace(/\//g, '').trim().toLowerCase();
-  // UFLI uses combining diacritics for short vowels; strip them
-  // ă ĕ ĭ ŏ ŭ → a e i o u
   const map = {
-    'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
-    'ā': 'long_a', 'ē': 'long_e', 'ī': 'long_i', 'ō': 'long_o', 'ū': 'long_u',
-    'ɹ': 'r', 'ŋ': 'ng', 'ə': 'u', 'ɔ': 'o',
+    'a': 'a', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u',
+    'long_a': 'long_a', 'long_e': 'long_e', 'long_i': 'long_i', 'long_o': 'long_o', 'long_u': 'long_u',
+    'r': 'r', 'ng': 'ng',
   };
   if (map[p]) return map[p];
-  // Strip any remaining combining marks
+
   p = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  // Common multi-char phonemes
-  const aliases = { 'kw': 'q', 'ks': 'x', 'thv': 'th_v' };
+  const aliases = { kw: 'q', ks: 'x', thv: 'th_v' };
   if (aliases[p]) return aliases[p];
   return p;
 }
@@ -209,10 +253,11 @@ export function useEmber() {
 
   function speak(text, options = {}) {
     return new Promise((resolve) => {
-      if (!window.speechSynthesis) {
+      if (typeof window === 'undefined') {
         resolve(false);
         return;
       }
+
       const priority = resolvePriority(options.priority, AUDIO_PRIORITY.instruction);
       const playbackId = claimPlayback('tts', priority);
       if (!playbackId) {
@@ -220,13 +265,12 @@ export function useEmber() {
         return;
       }
 
-      // Strip IPA notation (/.../) from anything we speak — TTS would
-      // otherwise read "slash a slash" or skip entirely.
       const cleaned = String(text || '')
         .replace(/\/[^/]*\//g, '')
         .replace(/\s{2,}/g, ' ')
         .replace(/\s+([,.!?])/g, '$1')
         .trim();
+
       if (!cleaned) {
         releasePlayback(playbackId);
         resolve(false);
@@ -236,28 +280,45 @@ export function useEmber() {
       currentText.value = cleaned;
       isSpeaking.value = true;
 
-      const utterance = new SpeechSynthesisUtterance(cleaned);
-      preferredVoice = pickPreferredVoice(options.voiceName) || preferredVoice || pickPreferredVoice();
-      if (preferredVoice) utterance.voice = preferredVoice;
-      utterance.rate = options.rate ?? 0.92;
-      utterance.pitch = options.pitch ?? 1.0;
-      utterance.volume = options.volume ?? 1.0;
-      utterance.lang = 'en-US';
+      const speakBrowser = async () => {
+        if (!window.speechSynthesis) {
+          releasePlayback(playbackId);
+          isSpeaking.value = false;
+          currentText.value = '';
+          resolve(false);
+          return;
+        }
 
-      utterance.onend = () => {
-        releasePlayback(playbackId);
-        isSpeaking.value = false;
-        currentText.value = '';
-        resolve(true);
-      };
-      utterance.onerror = () => {
-        releasePlayback(playbackId);
-        isSpeaking.value = false;
-        currentText.value = '';
-        resolve(false);
+        await waitForVoices(1400);
+        const utterance = new SpeechSynthesisUtterance(cleaned);
+        preferredVoice = pickPreferredVoice(options.voiceName) || preferredVoice || pickPreferredVoice();
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+          utterance.voiceURI = preferredVoice.voiceURI || '';
+        }
+        utterance.rate = options.rate ?? 0.88;
+        utterance.pitch = options.pitch ?? 1.08;
+        utterance.volume = options.volume ?? 1.0;
+        utterance.lang = 'en-US';
+
+        utterance.onend = () => {
+          releasePlayback(playbackId);
+          isSpeaking.value = false;
+          currentText.value = '';
+          resolve(true);
+        };
+        utterance.onerror = () => {
+          releasePlayback(playbackId);
+          isSpeaking.value = false;
+          currentText.value = '';
+          resolve(false);
+        };
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
       };
 
-      window.speechSynthesis.speak(utterance);
+      void speakBrowser();
     });
   }
 
@@ -275,6 +336,7 @@ export function useEmber() {
         resolve(false);
         return;
       }
+
       const sources = [`/audio/phonemes/context/${key}.mp3`];
       playAudioSources(sources, playbackId).then((ok) => resolve(ok));
     });
@@ -288,7 +350,7 @@ export function useEmber() {
   }
 
   async function runNarration(steps, onPrompt) {
-    for (let i = 0; i < steps.length; i++) {
+    for (let i = 0; i < steps.length; i += 1) {
       const step = steps[i];
       if (step.action === 'speak') {
         await speak(step.text);
@@ -300,7 +362,7 @@ export function useEmber() {
           await onPrompt(step.phoneme);
         }
       } else if (step.action === 'pause') {
-        await new Promise(r => setTimeout(r, step.duration || 1000));
+        await new Promise((r) => setTimeout(r, step.duration || 1000));
       }
     }
   }
@@ -314,10 +376,6 @@ export function useEmber() {
   return { isSpeaking, currentText, speak, playPhoneme, teachPhoneme, runNarration, stopSpeaking };
 }
 
-/**
- * Global kill switch — stops ALL audio (TTS + phoneme playback + mic).
- * Call this on every page navigation to prevent audio bleeding between pages.
- */
 export function stopAllAudio() {
   stopAllPlaybackNow();
   isSpeaking.value = false;

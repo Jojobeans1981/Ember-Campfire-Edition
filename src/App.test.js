@@ -5,6 +5,10 @@ import { clearBootstrapState, store } from './store';
 
 vi.mock('./composables/useEmber.js', () => ({
   stopAllAudio: vi.fn(),
+  preloadEmberVoice: vi.fn(),
+  useEmber: () => ({
+    speak: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 vi.mock('./composables/useSpeechRecognition.js', () => ({
@@ -77,7 +81,7 @@ describe('App bootstrap', () => {
     vi.restoreAllMocks();
   });
 
-  it('boots authenticated users, auto-selects a single profile, and enters the main flow without a guardian choice', async () => {
+  it('boots authenticated users, auto-selects a single profile, and waits for a guardian choice before entering the campground', async () => {
     const fetchMock = vi.fn((input) => {
       const url = String(input);
 
@@ -120,8 +124,8 @@ describe('App bootstrap', () => {
     expect(store.currentUser).toMatchObject({ id: 'user-1', accountId: 'account-1' });
     expect(store.account).toMatchObject({ id: 'account-1' });
     expect(store.activeProfileId).toBe('profile-1');
-    expect(store.currentPage).toBe('campground');
-    expect(wrapper.find('[data-test="campground-map"]').exists()).toBe(true);
+    expect(store.currentPage).toBe('selection');
+    expect(wrapper.text()).toContain('Choose a Guardian');
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'http://127.0.0.1:3001/me',
       'http://127.0.0.1:3001/account',
@@ -225,11 +229,11 @@ describe('App bootstrap', () => {
 
     expect(store.activeProfileId).toBe('profile-2');
     expect(store.xp).toBe(100);
-    expect(store.currentPage).toBe('campground');
-    expect(wrapper.find('[data-test="campground-map"]').exists()).toBe(true);
+    expect(store.currentPage).toBe('selection');
+    expect(wrapper.text()).toContain('Choose a Guardian');
   });
 
-  it('shows profile creation when no profiles exist and enters the main flow after creating one', async () => {
+  it('shows profile creation when no profiles exist and returns to guardian selection after creating one', async () => {
     let profileCreated = false;
     const fetchMock = vi.fn((input, options = {}) => {
       const url = String(input);
@@ -283,7 +287,7 @@ describe('App bootstrap', () => {
 
     expect(store.bootstrapStatus).toBe('ready');
     expect(store.activeProfileId).toBe('profile-1');
-    expect(store.currentPage).toBe('campground');
-    expect(wrapper.find('[data-test="campground-map"]').exists()).toBe(true);
+    expect(store.currentPage).toBe('selection');
+    expect(wrapper.text()).toContain('Choose a Guardian');
   });
 });

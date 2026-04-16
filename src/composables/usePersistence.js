@@ -1,14 +1,25 @@
 import { skillState, store } from '../store';
 
 const STORAGE_KEY = 'ember-campground-save-v3';
+const memoryStorage = new Map();
 
 function cloneJsonSafe(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
-function readStorage() {
+function hasStorageMethod(name) {
+  return (
+    typeof globalThis.localStorage !== 'undefined'
+    && typeof globalThis.localStorage[name] === 'function'
+  );
+}
+
+function readState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = hasStorageMethod('getItem')
+      ? globalThis.localStorage.getItem(STORAGE_KEY)
+      : (memoryStorage.has(STORAGE_KEY) ? memoryStorage.get(STORAGE_KEY) : null);
+
     if (!raw) {
       return {};
     }
@@ -21,8 +32,23 @@ function readStorage() {
   }
 }
 
-function writeStorage(nextState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+function writeState(nextState) {
+  const raw = JSON.stringify(nextState);
+  if (hasStorageMethod('setItem')) {
+    globalThis.localStorage.setItem(STORAGE_KEY, raw);
+    return;
+  }
+
+  memoryStorage.set(STORAGE_KEY, raw);
+}
+
+function removeState() {
+  if (hasStorageMethod('removeItem')) {
+    globalThis.localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+
+  memoryStorage.delete(STORAGE_KEY);
 }
 
 function createProfileCacheKey(profileId) {
@@ -45,7 +71,7 @@ function createSnapshotCache(profileId = store.activeProfileId) {
 export function usePersistence() {
   function saveBootstrapState() {
     try {
-      const persisted = readStorage();
+      const persisted = readState();
       persisted.activeProfileId = store.activeProfileId ?? null;
       persisted.bootstrapCache = {
         currentUser: store.currentUser,
@@ -53,14 +79,14 @@ export function usePersistence() {
         profiles: Array.isArray(store.profiles) ? [...store.profiles] : [],
         savedAt: new Date().toISOString(),
       };
-      writeStorage(persisted);
+      writeState(persisted);
     } catch (err) {
       console.warn('Failed to save bootstrap state:', err);
     }
   }
 
   function loadBootstrapState() {
-    const persisted = readStorage();
+    const persisted = readState();
     return {
       activeProfileId: persisted.activeProfileId ?? null,
       bootstrapCache: persisted.bootstrapCache ?? null,
@@ -69,10 +95,10 @@ export function usePersistence() {
 
   function clearBootstrapState() {
     try {
-      const persisted = readStorage();
+      const persisted = readState();
       delete persisted.activeProfileId;
       delete persisted.bootstrapCache;
-      writeStorage(persisted);
+      writeState(persisted);
     } catch (err) {
       console.warn('Failed to clear bootstrap state:', err);
     }
@@ -84,7 +110,7 @@ export function usePersistence() {
         return;
       }
 
-      const persisted = readStorage();
+      const persisted = readState();
       const profileStates = persisted.profileStates ?? {};
       profileStates[createProfileCacheKey(profileId)] = {
         snapshot: cloneJsonSafe(overrides.snapshot) ?? createSnapshotCache(profileId),
@@ -92,34 +118,34 @@ export function usePersistence() {
         savedAt: new Date().toISOString(),
       };
       persisted.profileStates = profileStates;
-      writeStorage(persisted);
+      writeState(persisted);
     } catch (err) {
       console.warn('Failed to save profile state:', err);
     }
   }
 
   function loadProfileState(profileId) {
-    const persisted = readStorage();
+    const persisted = readState();
     const profileStates = persisted.profileStates ?? {};
     return profileStates[createProfileCacheKey(profileId)] ?? null;
   }
 
   function clearProfileState(profileId) {
     try {
-      const persisted = readStorage();
+      const persisted = readState();
       if (!persisted.profileStates) {
         return;
       }
 
       delete persisted.profileStates[createProfileCacheKey(profileId)];
-      writeStorage(persisted);
+      writeState(persisted);
     } catch (err) {
       console.warn('Failed to clear profile state:', err);
     }
   }
 
   function clearSave() {
-    localStorage.removeItem(STORAGE_KEY);
+    removeState();
   }
 
   return {

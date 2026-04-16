@@ -129,6 +129,11 @@ async function playAndListen() {
 
 onMounted(async () => {
   await requestMicPermission();
+  await ember.speak('Say it. Tap hear and say, listen to the sound, then say it clearly into the microphone.', {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.06,
+  });
   allPhonemes.value = await getCumulativeLetters(props.lessonId);
   // Focus phoneme(s) for this lesson — pulled from the manifest grapheme field
   const meta = getLessonMeta(props.lessonId);

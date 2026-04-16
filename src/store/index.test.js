@@ -2,13 +2,20 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { store, clearBootstrapState, hydrateBootstrapState } from './index';
 import { usePersistence } from '../composables/usePersistence';
 
+function resetStoreForTest() {
+  const { clearSave } = usePersistence();
+
+  clearBootstrapState();
+  store.currentPage = 'selection';
+  store.activeLessonId = null;
+  store.activeActivity = null;
+  clearSave();
+  localStorage.clear();
+}
+
 describe('Global Store', () => {
   beforeEach(() => {
-    clearBootstrapState();
-    store.currentPage = 'selection';
-    store.activeLessonId = null;
-    store.activeActivity = null;
-    localStorage.clear();
+    resetStoreForTest();
   });
 
   it('should initialize with 0 XP', () => {
@@ -38,8 +45,7 @@ describe('Global Store', () => {
 
 describe('Persistence — bootstrap state', () => {
   beforeEach(() => {
-    clearBootstrapState();
-    localStorage.clear();
+    resetStoreForTest();
   });
 
   it('saves only bootstrap-safe auth and profile state', () => {

@@ -7,8 +7,9 @@ export default defineConfig({
   resolve: {
     alias: {
       // Mock Node.js built-ins for the browser
-      fs: path.resolve(__dirname, 'mock-fs.js'),
+      fs: path.resolve(__dirname, 'mock-fs'),
       util: path.resolve(__dirname, 'mock-util.js'),
+      'kokoro-js': path.resolve(__dirname, 'node_modules/kokoro-js/dist/kokoro.web.js'),
       path: 'path-browserify', // You might need this too
     }
   },

@@ -93,6 +93,18 @@ watch(index, () => {
 
 onMounted(async () => {
   await requestMicPermission();
+  await ember.speak('Read the story. I will read each sentence first, then it is your turn.', {
+    priority: 'instruction',
+    rate: 0.9,
+    pitch: 1.05,
+  });
+  await speakCurrent();
+});
+
+watch(currentSentence, async (sentence, prevSentence) => {
+  if (!sentence || sentence === prevSentence) return;
+  if (micPhase.value === 'listening') return;
+  await speakCurrent();
 });
 
 onBeforeUnmount(() => {
