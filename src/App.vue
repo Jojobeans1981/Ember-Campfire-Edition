@@ -46,7 +46,7 @@
 
       <Transition name="page" mode="out-in">
         <div
-          v-if="store.bootstrapStatus === 'loading' || store.bootstrapStatus === 'idle'"
+          v-if="!entryPageResolved && store.bootstrapStatus !== 'unauthenticated' && store.bootstrapStatus !== 'error'"
           key="bootstrap-loading"
           class="status-card"
         >
@@ -227,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, onErrorCaptured, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, watchEffect, onErrorCaptured, nextTick } from 'vue';
 import { store } from './store';
 import { useAppBootstrap } from './composables/useAppBootstrap.js';
 import { useProfileProgress } from './composables/useProfileProgress.js';
@@ -310,6 +310,11 @@ const showLaunchSplash = ref(
 );
 const showAdventureIntro = ref(false);
 const hadRuntimeError = ref(false);
+// True only once bootstrap has finished AND syncEntryPage has set the
+// correct currentPage. Gates the content branches so we don't flash
+// "Choose a Guardian" (the default currentPage) between bootstrapStatus
+// becoming 'ready' and syncEntryPage running in the next microtask.
+const entryPageResolved = ref(false);
 const streakCount = ref(0);
 const streakBest = ref(0);
 const sparkBursts = ref([]);
@@ -676,6 +681,30 @@ watch(
   (page) => persistCurrentPage(page),
 );
 
+// Dismiss the pre-hydration #boot-splash from index.html only when Vue
+// has something meaningful to show underneath: either the launch splash
+// is about to play, or bootstrap + syncEntryPage have resolved. Hiding
+// earlier would reveal the "Waking the Campground" card for a frame,
+// producing a boot-splash → waking → content flash on refresh.
+let bootSplashDismissed = false;
+function dismissBootSplash() {
+  if (bootSplashDismissed || typeof document === 'undefined') return;
+  const el = document.getElementById('boot-splash');
+  if (!el) {
+    bootSplashDismissed = true;
+    return;
+  }
+  bootSplashDismissed = true;
+  el.classList.add('is-hidden');
+  window.setTimeout(() => el.remove(), 450);
+}
+
+watchEffect(() => {
+  if (showLaunchSplash.value || entryPageResolved.value) {
+    dismissBootSplash();
+  }
+});
+
 function syncEntryPage() {
   if (!store.activeProfileId) {
     store.currentPage = 'selection';
@@ -696,8 +725,15 @@ function syncEntryPage() {
 }
 
 async function runBootstrap() {
-  await bootstrapApp();
-  syncEntryPage();
+  // Reset so a retry shows the Waking card again instead of jumping
+  // straight from the error card to the resolved page.
+  entryPageResolved.value = false;
+  try {
+    await bootstrapApp();
+    syncEntryPage();
+  } finally {
+    entryPageResolved.value = true;
+  }
 }
 
 onMounted(() => {
