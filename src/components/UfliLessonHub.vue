@@ -1,5 +1,10 @@
 <template>
   <div class="unit-hub">
+    <div class="hub-badges" aria-hidden="true">
+      <span class="hub-badge">POP!</span>
+      <span class="hub-badge">YAY!</span>
+      <span class="hub-badge">ZAP!</span>
+    </div>
     <div class="hub-header">
       <h2 class="unit-title">Lesson {{ meta?.lessonNumber }}</h2>
       <div class="unit-phonemes">
@@ -246,6 +251,7 @@ function startConnectedText() {
 
 <style scoped>
 .unit-hub {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -253,6 +259,41 @@ function startConnectedText() {
   padding: 1.25rem;
   max-width: 380px;
   width: 100%;
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 130, 98, 0.16), transparent 36%),
+    radial-gradient(circle at 90% 0%, rgba(100, 255, 218, 0.16), transparent 40%),
+    rgba(12, 17, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.26);
+}
+
+.hub-badges {
+  position: absolute;
+  top: -0.7rem;
+  right: 0.8rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.hub-badge {
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #ffe08a, #ff9257);
+  color: #3a1400;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+  animation: hubBadgeHop 0.95s ease-in-out infinite alternate;
+}
+
+.hub-badge:nth-child(2) { animation-delay: 0.2s; }
+.hub-badge:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes hubBadgeHop {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-4px) rotate(2deg); }
 }
 
 .hub-header {
@@ -323,6 +364,13 @@ function startConnectedText() {
   background: linear-gradient(90deg, #FF8C00, #FFD93D);
   transition: width 0.4s ease;
   border-radius: 3px;
+  box-shadow: 0 0 12px rgba(255, 217, 61, 0.7);
+  animation: sparkFlow 1.1s linear infinite;
+}
+
+@keyframes sparkFlow {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(28deg); }
 }
 
 .spark-dots {
@@ -356,14 +404,16 @@ function startConnectedText() {
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.2s, transform 0.15s;
+  animation: hubCardFloat 2.6s ease-in-out infinite;
 }
 
 .lesson-card:hover, .story-card:hover:not(:disabled) {
   border-color: #FF8C00;
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.03);
 }
 
 .lesson-card.done { border-color: rgba(100, 255, 218, 0.3); }
+.lesson-card.done .card-icon { animation: doneDance 0.95s ease-in-out infinite; }
 
 .lesson-card .card-icon, .story-card .card-icon { font-size: 1.5rem; }
 
@@ -404,11 +454,17 @@ function startConnectedText() {
   font-family: inherit;
   font-size: 0.7rem;
   transition: border-color 0.2s, transform 0.15s, opacity 0.2s;
+  animation: actHop 2.1s ease-in-out infinite;
 }
+
+.activity-card:nth-child(2) { animation-delay: 0.13s; }
+.activity-card:nth-child(3) { animation-delay: 0.25s; }
+.activity-card:nth-child(4) { animation-delay: 0.38s; }
+.activity-card:nth-child(5) { animation-delay: 0.5s; }
 
 .activity-card:hover:not(:disabled) {
   border-color: #FF8C00;
-  transform: translateY(-1px);
+  transform: translateY(-4px) scale(1.05) rotate(-1deg);
 }
 
 .activity-card .card-icon { font-size: 1.3rem; }
@@ -424,4 +480,20 @@ function startConnectedText() {
 
 .story-card.done { border-color: rgba(100, 255, 218, 0.3); }
 .story-card.locked { opacity: 0.3; cursor: not-allowed; }
+
+@keyframes hubCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes doneDance {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.1); }
+  75% { transform: rotate(8deg) scale(1.1); }
+}
+
+@keyframes actHop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
 </style>

@@ -347,13 +347,20 @@ export function useEmber() {
     }
   }
 
+  function speakTeacher(text, options = {}) {
+    return speak(text, {
+      priority: 'instruction',
+      ...options,
+    });
+  }
+
   function stopSpeaking() {
     stopAllPlaybackNow();
     isSpeaking.value = false;
     currentText.value = '';
   }
 
-  return { isSpeaking, currentText, speak, playPhoneme, teachPhoneme, runNarration, stopSpeaking };
+  return { isSpeaking, currentText, speak, speakTeacher, playPhoneme, teachPhoneme, runNarration, stopSpeaking };
 }
 
 export function stopAllAudio() {

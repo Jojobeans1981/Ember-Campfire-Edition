@@ -2,7 +2,8 @@
   "name": "ember-campfire-edition",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host localhost --port 5188 --strictPort --open /",
+    "dev:ember": "vite --host localhost --port 5188 --strictPort --open /",
     "build": "vite build",
     "test": "vitest run",
     "setup:vosk-model": "node scripts/download-vosk-model.mjs"

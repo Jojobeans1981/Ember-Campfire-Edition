@@ -71,15 +71,19 @@ function handleClick() {
   border: 2px solid rgba(255, 255, 255, 0.05);
   transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
   min-width: 70px;
+  animation: stationFloat 2.3s ease-in-out infinite;
 }
 
 .station.clickable { cursor: pointer; }
-.station.clickable:hover { transform: scale(1.05); }
+.station.clickable:hover { transform: scale(1.1) rotate(-2deg); }
 .station.locked { opacity: 0.4; filter: grayscale(0.8); }
 .station.kindling { border-color: rgba(160, 82, 45, 0.5); }
 .station.sparks { border-color: rgba(255, 200, 0, 0.5); box-shadow: 0 0 8px rgba(255, 200, 0, 0.2); }
 .station.fire { border-color: rgba(255, 140, 0, 0.6); box-shadow: 0 0 12px rgba(255, 140, 0, 0.3); }
 .station.complete { border-color: rgba(100, 255, 218, 0.5); box-shadow: 0 0 12px rgba(100, 255, 218, 0.2); }
+.station.sparks { animation-duration: 1.4s; }
+.station.fire { animation-duration: 1s; }
+.station.complete { animation-duration: 1.8s; }
 
 .station-icon {
   font-size: 1.6rem;
@@ -121,6 +125,7 @@ function handleClick() {
 .dot.lit {
   background: #FF8C00;
   box-shadow: 0 0 4px rgba(255, 140, 0, 0.5);
+  animation: dotBlink 0.9s ease-in-out infinite alternate;
 }
 
 .dot.big {
@@ -131,5 +136,15 @@ function handleClick() {
 .dot.big.lit {
   background: #64FFDA;
   box-shadow: 0 0 6px rgba(100, 255, 218, 0.5);
+}
+
+@keyframes stationFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes dotBlink {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
 }
 </style>
