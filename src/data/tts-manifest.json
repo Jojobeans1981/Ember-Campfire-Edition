@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-15T21:43:36.796Z",
+  "generatedAt": "2026-04-16T17:17:07.827Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -235,6 +235,10 @@
     "857191668973": {
       "text": "Lesson 1. a Tap Lesson to learn sounds, then play the activity cards.",
       "file": "/audio/tts/857191668973.mp3"
+    },
+    "c3597b77c09e": {
+      "text": "Every campfire starts with an Ember. Let's make reading your fire.",
+      "file": "/audio/tts/c3597b77c09e.mp3"
     }
   }
 }

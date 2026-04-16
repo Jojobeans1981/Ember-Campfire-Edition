@@ -41,11 +41,15 @@
       </div>
     </header>
 
-    <main class="main">
+    <main v-if="!showLaunchSplash" class="main">
       <p v-if="showSyncBanner" class="sync-banner">{{ syncBannerText }}</p>
 
       <Transition name="page" mode="out-in">
-        <div v-if="store.bootstrapStatus === 'loading'" key="bootstrap-loading" class="status-card">
+        <div
+          v-if="!entryPageResolved && store.bootstrapStatus !== 'unauthenticated' && store.bootstrapStatus !== 'error'"
+          key="bootstrap-loading"
+          class="status-card"
+        >
           <h2>Waking the Campground</h2>
           <p>Loading your account and profiles...</p>
         </div>
@@ -223,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, onErrorCaptured, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, watchEffect, onErrorCaptured, nextTick } from 'vue';
 import { store } from './store';
 import { useAppBootstrap } from './composables/useAppBootstrap.js';
 import { useProfileProgress } from './composables/useProfileProgress.js';
@@ -300,9 +304,17 @@ function isConnectedTextUnlocked(lessonId) {
 
 const xpPop = ref(false);
 const showCelebration = ref(false);
-const showLaunchSplash = ref(true);
+const SPLASH_SEEN_KEY = 'ember-splash-seen';
+const showLaunchSplash = ref(
+  typeof sessionStorage !== 'undefined' ? !sessionStorage.getItem(SPLASH_SEEN_KEY) : true,
+);
 const showAdventureIntro = ref(false);
 const hadRuntimeError = ref(false);
+// True only once bootstrap has finished AND syncEntryPage has set the
+// correct currentPage. Gates the content branches so we don't flash
+// "Choose a Guardian" (the default currentPage) between bootstrapStatus
+// becoming 'ready' and syncEntryPage running in the next microtask.
+const entryPageResolved = ref(false);
 const streakCount = ref(0);
 const streakBest = ref(0);
 const sparkBursts = ref([]);
@@ -632,9 +644,80 @@ const selectedFriendClipSrc = computed(() => {
   return clipByFriend[name] || '';
 });
 
+const PAGE_PERSIST_KEY = 'ember-current-page';
+// Top-level pages we safely restore on refresh. Lesson/activity/story
+// pages depend on activeLessonId and activeActivity which aren't persisted
+// in the snapshot yet, so they're excluded to avoid restoring into a
+// broken state.
+const RESTORABLE_PAGES = new Set(['selection', 'campground', 'unit-hub', 'dashboard']);
+
+function loadPersistedPage() {
+  try {
+    const raw = sessionStorage.getItem(PAGE_PERSIST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.profileId !== store.activeProfileId) return null;
+    if (!RESTORABLE_PAGES.has(parsed.page)) return null;
+    return parsed.page;
+  } catch {
+    return null;
+  }
+}
+
+function persistCurrentPage(page) {
+  if (!RESTORABLE_PAGES.has(page) || !store.activeProfileId) return;
+  try {
+    sessionStorage.setItem(
+      PAGE_PERSIST_KEY,
+      JSON.stringify({ profileId: store.activeProfileId, page }),
+    );
+  } catch {
+    // sessionStorage may be blocked; silently degrade to default entry page
+  }
+}
+
+watch(
+  () => store.currentPage,
+  (page) => persistCurrentPage(page),
+);
+
+// Dismiss the pre-hydration #boot-splash from index.html only when Vue
+// has something meaningful to show underneath: either the launch splash
+// is about to play, or bootstrap + syncEntryPage have resolved. Hiding
+// earlier would reveal the "Waking the Campground" card for a frame,
+// producing a boot-splash → waking → content flash on refresh.
+let bootSplashDismissed = false;
+function dismissBootSplash() {
+  if (bootSplashDismissed || typeof document === 'undefined') return;
+  const el = document.getElementById('boot-splash');
+  if (!el) {
+    bootSplashDismissed = true;
+    return;
+  }
+  bootSplashDismissed = true;
+  el.classList.add('is-hidden');
+  window.setTimeout(() => el.remove(), 450);
+}
+
+watchEffect(() => {
+  if (showLaunchSplash.value || entryPageResolved.value) {
+    dismissBootSplash();
+  }
+});
+
 function syncEntryPage() {
   if (!store.activeProfileId) {
     store.currentPage = 'selection';
+    return;
+  }
+
+  const persisted = loadPersistedPage();
+  if (persisted === 'selection') {
+    store.currentPage = 'selection';
+    return;
+  }
+  if (persisted && store.selectedFriend) {
+    store.currentPage = persisted;
     return;
   }
 
@@ -642,8 +725,15 @@ function syncEntryPage() {
 }
 
 async function runBootstrap() {
-  await bootstrapApp();
-  syncEntryPage();
+  // Reset so a retry shows the Waking card again instead of jumping
+  // straight from the error card to the resolved page.
+  entryPageResolved.value = false;
+  try {
+    await bootstrapApp();
+    syncEntryPage();
+  } finally {
+    entryPageResolved.value = true;
+  }
 }
 
 onMounted(() => {
@@ -659,9 +749,16 @@ onMounted(() => {
     window.addEventListener('keydown', firstGestureWarmupHandler, { once: true });
   }
 
-  launchSplashTimer = window.setTimeout(() => {
-    showLaunchSplash.value = false;
-  }, 10000);
+  if (showLaunchSplash.value) {
+    launchSplashTimer = window.setTimeout(() => {
+      showLaunchSplash.value = false;
+      try {
+        sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+      } catch {
+        // sessionStorage may be blocked (private mode, etc.); splash just shows next refresh
+      }
+    }, 10000);
+  }
 
   streakResetTimer = window.setInterval(() => {
     if (!lastSparkAt) return;
@@ -699,6 +796,11 @@ onErrorCaptured((error, instance, info) => {
   hadRuntimeError.value = true;
   showAdventureIntro.value = false;
   showLaunchSplash.value = false;
+  try {
+    sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+  } catch {
+    // sessionStorage may be blocked; splash just shows next refresh
+  }
   if (!store.activeLessonId) {
     store.activeLessonId = '001';
   }

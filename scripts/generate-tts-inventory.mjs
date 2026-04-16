@@ -87,6 +87,10 @@ const STATIC_UI_PROMPTS = [
     source: 'App.vue:331',
   },
   { text: 'It says', source: 'useEmber.js:677 (teachPhoneme)' },
+  {
+    text: "Every campfire starts with an Ember. Let's make reading your fire.",
+    source: 'App.vue splash (launch-splash)',
+  },
 ];
 
 // ---- Friend hype lines + generic hype lines (App.vue:269-292) ----

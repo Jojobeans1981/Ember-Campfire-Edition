@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-15T21:43:13.453Z",
+  "generatedAt": "2026-04-16T17:15:19.685Z",
   "scope": {
     "lessonIds": [
       "001"
     ],
     "lessonsScanned": 1
   },
-  "entryCount": 58,
-  "totalCharacters": 3511,
+  "entryCount": 59,
+  "totalCharacters": 3577,
   "skippedIpa": [
     {
       "text": "The letter A says /ă/, like the start of apple.",
@@ -76,6 +76,12 @@
       "text": "Connected text. I will read this story with you. Listen first, then take your turn.",
       "sources": [
         "StoryReader.vue:22"
+      ]
+    },
+    {
+      "text": "Every campfire starts with an Ember. Let's make reading your fire.",
+      "sources": [
+        "App.vue splash (launch-splash)"
       ]
     },
     {

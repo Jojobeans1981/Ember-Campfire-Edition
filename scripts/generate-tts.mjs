@@ -43,7 +43,15 @@ const API_BASE = 'https://api.elevenlabs.io/v1/text-to-speech';
 const REQUEST_DELAY_MS = 250;
 
 function parseArgs(argv) {
-  const args = { dryRun: true, limit: Infinity, voice: null, model: null, match: [] };
+  const args = {
+    dryRun: true,
+    limit: Infinity,
+    voice: null,
+    model: null,
+    match: [],
+    style: null,
+    stability: null,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--run') args.dryRun = false;
@@ -52,9 +60,11 @@ function parseArgs(argv) {
     else if (a === '--voice') args.voice = argv[++i];
     else if (a === '--model') args.model = argv[++i];
     else if (a === '--match') args.match.push(argv[++i]);
+    else if (a === '--style') args.style = Number(argv[++i]);
+    else if (a === '--stability') args.stability = Number(argv[++i]);
     else if (a === '--help' || a === '-h') {
       console.log(
-        'Usage: node scripts/generate-tts.mjs [--run] [--limit N] [--match SUBSTR] [--voice ID] [--model ID]'
+        'Usage: node scripts/generate-tts.mjs [--run] [--limit N] [--match SUBSTR] [--voice ID] [--model ID] [--style 0..1] [--stability 0..1]'
       );
       process.exit(0);
     } else {
@@ -88,7 +98,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function callElevenLabs({ apiKey, voiceId, modelId, text }) {
+async function callElevenLabs({ apiKey, voiceId, modelId, text, style, stability }) {
   const url = `${API_BASE}/${voiceId}`;
   const res = await fetch(url, {
     method: 'POST',
@@ -101,9 +111,9 @@ async function callElevenLabs({ apiKey, voiceId, modelId, text }) {
       text,
       model_id: modelId,
       voice_settings: {
-        stability: 0.5,
+        stability: typeof stability === 'number' ? stability : 0.5,
         similarity_boost: 0.75,
-        style: 0.2,
+        style: typeof style === 'number' ? style : 0.2,
         use_speaker_boost: true,
       },
     }),
@@ -205,7 +215,14 @@ async function main() {
   for (const item of plan) {
     process.stdout.write(`  [${generated + failed + 1}/${plan.length}] ${item.hash} ${item.text.slice(0, 50).padEnd(50)} `);
     try {
-      const buf = await callElevenLabs({ apiKey, voiceId, modelId, text: item.text });
+      const buf = await callElevenLabs({
+        apiKey,
+        voiceId,
+        modelId,
+        text: item.text,
+        style: args.style,
+        stability: args.stability,
+      });
       await fs.writeFile(item.file, buf);
       manifest.entries[item.hash] = {
         text: item.text,
