@@ -68,23 +68,128 @@ export function getUfliLessonSync(lessonId) {
 }
 
 /**
- * Returns decodable word objects (`{word, phonemes}`) for use in games.
- * Splits each cumulative word into its letters as a phoneme proxy.
- * Sufficient for early single-letter lessons; digraph-aware splitting
- * is a Phase 2 concern (see TASK_LIST.md).
+ * Walk cumulative lesson JSON and collect the best-available
+ * decomposition for each word — both phoneme (sound) and grapheme
+ * (spelling unit) arrays.
+ *
+ * Sources (earliest definition wins):
+ *   - step1.blend[]   — phonemes only (graphemes fall back to letter-split)
+ *   - step1.segment[] — phonemes only
+ *   - step7.teach[]   — phonemes + graphemes (via breakdown[])
+ *   - step7.review[]  — phonemes + graphemes (via breakdown[])
+ *
+ * Keys are lowercase words. Values: { phonemes: string[], graphemes: string[] | null }.
+ * When graphemes is null, callers should fall back to letter-split.
+ */
+async function buildCumulativeWordDecompositionMap(targetIndex) {
+  const map = new Map();
+  const record = (word, phonemes, graphemes) => {
+    if (!word) return;
+    const key = String(word).toLowerCase();
+    if (map.has(key)) return;
+    const p = Array.isArray(phonemes) && phonemes.length ? phonemes.slice() : null;
+    const g = Array.isArray(graphemes) && graphemes.length ? graphemes.slice() : null;
+    if (!p && !g) return;
+    map.set(key, { phonemes: p, graphemes: g });
+  };
+
+  for (let i = 0; i <= targetIndex; i++) {
+    const id = ALL_UFLI_LESSON_IDS[i];
+    const lesson = await getUfliLesson(id);
+    if (!lesson) continue;
+
+    for (const item of lesson.step1?.blend ?? []) {
+      record(item?.word, item?.phonemes, null);
+    }
+    for (const item of lesson.step1?.segment ?? []) {
+      record(item?.word, item?.phonemes, null);
+    }
+    for (const bucket of ['teach', 'review']) {
+      for (const entry of lesson.step7?.[bucket] ?? []) {
+        const pieces = entry?.breakdown ?? [];
+        const phonemes = pieces.map((b) => b?.phoneme).filter(Boolean);
+        const graphemes = pieces.map((b) => b?.grapheme).filter(Boolean);
+        record(entry?.word, phonemes, graphemes);
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * Returns decodable word objects for use in games:
+ *   { word, phonemes: string[], graphemes: string[] }
+ *
+ * - `phonemes` are sound units (IPA slash notation when authored, e.g.
+ *   ["/ă/", "/t/"] for "at" or ["/ð/", "/ə/"] for "the"). Used by
+ *   blending/audio game logic.
+ * - `graphemes` are spelling units the child taps (e.g. ["th", "e"] for
+ *   "the", ["c", "a", "t"] for "cat"). Used by WordBuilder slot/letter-
+ *   bank rendering. Multi-char tiles like "th" render atomically.
+ *
+ * When curriculum JSON doesn't provide a decomposition, both arrays
+ * fall back to the letter-split of the word so early CVC lessons still
+ * work without authoring full breakdowns.
  */
 export async function getCumulativeDecodableWords(lessonId) {
-  const words = await getCumulativeWordList(lessonId);
-  return words.map((word) => ({
-    word,
-    phonemes: word.toLowerCase().split(''),
-  }));
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const words = await getCumulativeWordList(targetId);
+  const decomp = await buildCumulativeWordDecompositionMap(targetIndex);
+
+  return words.map((word) => {
+    const key = String(word).toLowerCase();
+    const entry = decomp.get(key) ?? null;
+    const letterSplit = key.split('');
+    return {
+      word,
+      phonemes: entry?.phonemes ?? letterSplit,
+      graphemes: entry?.graphemes ?? letterSplit,
+    };
+  });
+}
+
+/**
+ * Returns every `step8.readSentences` entry across lessons 1..lessonId,
+ * deduplicated, preserving curriculum order. Use this for reading-
+ * practice activities (SentenceReader) so the child reads authored
+ * decodable sentences rather than random word joins.
+ *
+ * Returns [] if no sentences are authored yet — callers should then
+ * auto-complete or hide the activity.
+ */
+export async function getCumulativeReadSentences(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i <= targetIndex; i++) {
+    const id = ALL_UFLI_LESSON_IDS[i];
+    const lesson = await getUfliLesson(id);
+    const list = lesson?.step8?.readSentences;
+    if (!Array.isArray(list)) continue;
+    for (const s of list) {
+      const text = String(s ?? '').trim();
+      if (!text || seen.has(text)) continue;
+      seen.add(text);
+      out.push(text);
+    }
+  }
+  return out;
 }
 
 /**
  * Returns the unique letter set decodable up to and including `lessonId`.
  * Drawn from the cumulative word list, not the manifest grapheme field,
  * so it stays accurate as new lesson JSON is authored.
+ *
+ * Prefer `getCumulativeIntroducedGraphemes` for UI that should reflect
+ * only pedagogically-introduced letters. This helper is kept for callers
+ * that genuinely want every letter present in the cumulative word list.
  */
 export async function getCumulativeLetters(lessonId) {
   const words = await getCumulativeWordList(lessonId);
@@ -95,6 +200,78 @@ export async function getCumulativeLetters(lessonId) {
     }
   }
   return Array.from(letters);
+}
+
+/**
+ * Parse a UFLI_LESSONS_META.grapheme field into its individual grapheme
+ * tokens. "a, i" → ["a","i"]; "ff, ll, ss, zz" → ["ff","ll","ss","zz"];
+ * "" → []. Case-normalized to lowercase.
+ */
+function splitGraphemeField(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(',')
+    .map((g) => g.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Returns the cumulative set of graphemes a child has been formally
+ * introduced to up to and including `lessonId`. Sourced from
+ * `UFLI_LESSONS_META[i].grapheme` (canonical "what this lesson teaches"),
+ * NOT from letters extracted out of cumulative word lists.
+ *
+ * Multi-grapheme entries like "a, i" or "ff, ll, ss, zz" are split on
+ * commas and trimmed. Empty entries (review/practice lessons) contribute
+ * nothing. Digraphs like "sh", "th", "ck" are preserved as multi-char
+ * entries so callers can render them atomically.
+ *
+ * Use this for `target` picks in drill activities so the child is only
+ * tested on sounds they've been taught. For DISTRACTOR variety early on,
+ * pair this with `getUpcomingGraphemes`.
+ */
+export function getCumulativeIntroducedGraphemes(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i <= targetIndex; i++) {
+    for (const g of splitGraphemeField(UFLI_LESSONS_META[i]?.grapheme)) {
+      if (seen.has(g)) continue;
+      seen.add(g);
+      out.push(g);
+    }
+  }
+  return out;
+}
+
+/**
+ * Returns graphemes from the next `limit` lessons AFTER `lessonId` —
+ * useful for padding match/drill distractor pools on early lessons
+ * where too few graphemes have been introduced to fill a round.
+ *
+ * Only returns graphemes that are NOT already in the introduced-through-
+ * `lessonId` set, so callers can safely mix with the introduced set
+ * without duplicates. Order follows curriculum sequence.
+ */
+export function getUpcomingGraphemes(lessonId, limit = 3) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const already = new Set(getCumulativeIntroducedGraphemes(targetId));
+  const out = [];
+  for (let i = targetIndex + 1; i < ALL_UFLI_LESSON_IDS.length && out.length < limit; i++) {
+    for (const g of splitGraphemeField(UFLI_LESSONS_META[i]?.grapheme)) {
+      if (already.has(g)) continue;
+      already.add(g);
+      out.push(g);
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
 }
 
 /**

@@ -105,7 +105,10 @@
 import { computed, ref, watchEffect, onMounted, watch, onBeforeUnmount } from 'vue';
 import { store } from '../store';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
-import { getUfliLesson } from '../data/ufli/ufliLessons.js';
+import {
+  getUfliLesson,
+  getCumulativeReadSentences,
+} from '../data/ufli/ufliLessons.js';
 import { useUfliProgression } from '../composables/useUfliProgression.js';
 import { useEmber } from '../composables/useEmber.js';
 
@@ -232,26 +235,34 @@ const activityList = [
   { type: 'sentence', label: 'Read', icon: '📝' },
 ];
 
-const learnedLetterCount = computed(() => {
-  const letters = new Set();
-  for (const word of lessonData.value?.wordList ?? []) {
-    for (const ch of String(word).toLowerCase()) {
-      if (/[a-z]/.test(ch)) letters.add(ch);
-    }
+// Any authored decodable sentence across lessons 1..this lesson. The
+// Read/Connected-Text UI is gated on this so we never show the card
+// with nothing real to read (lesson 1 status:"no_decodable" → hidden).
+const readSentenceCount = ref(0);
+watchEffect(async () => {
+  const id = store.activeLessonId;
+  if (!id) {
+    readSentenceCount.value = 0;
+    return;
   }
-  return letters.size;
+  const sentences = await getCumulativeReadSentences(id);
+  readSentenceCount.value = sentences.length;
 });
 
+// Show every activity card by default; individual games handle their
+// own "not enough content yet" logic (target always drawn from
+// introduced graphemes; distractors may preview upcoming lessons for
+// visual variety). Read is the one exception — it has nothing to show
+// until real sentences are authored, so we hide it rather than render
+// an empty auto-complete.
 const visibleActivities = computed(() => {
-  const count = learnedLetterCount.value;
   return activityList.filter((activity) => {
-    if (activity.type === 'sentence') return count >= 3;
-    if (activity.type === 'blend' || activity.type === 'build') return count >= 2;
+    if (activity.type === 'sentence') return readSentenceCount.value > 0;
     return true;
   });
 });
 
-const showConnectedText = computed(() => learnedLetterCount.value >= 3);
+const showConnectedText = computed(() => readSentenceCount.value > 0);
 
 function speakHubIntro() {
   const lessonNum = meta.value?.lessonNumber || '';

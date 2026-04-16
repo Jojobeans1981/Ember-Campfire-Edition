@@ -12,7 +12,7 @@
         v-for="(slot, idx) in slots"
         :key="idx"
         class="slot"
-        :class="{ filled: slot !== null, correct: showResult && slot === currentWord?.phonemes[idx], wrong: showResult && slot !== null && slot !== currentWord?.phonemes[idx] }"
+        :class="{ filled: slot !== null, correct: showResult && slot === currentWord?.graphemes[idx], wrong: showResult && slot !== null && slot !== currentWord?.graphemes[idx] }"
       >
         {{ slot ? slot : '_' }}
       </div>
@@ -41,7 +41,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { getCumulativeDecodableWords, getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import {
+  getCumulativeDecodableWords,
+  getCumulativeIntroducedGraphemes,
+  getUpcomingGraphemes,
+} from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
@@ -64,7 +68,7 @@ let cancelled = false;
 
 const allCorrect = computed(() => {
   if (!currentWord.value) return false;
-  return slots.value.every((s, i) => s === currentWord.value.phonemes[i]);
+  return slots.value.every((s, i) => s === currentWord.value.graphemes[i]);
 });
 
 function shuffle(arr) {
@@ -79,14 +83,16 @@ function shuffle(arr) {
 function pickWord() {
   const word = words.value[Math.floor(Math.random() * words.value.length)];
   currentWord.value = word;
-  slots.value = new Array(word.phonemes.length).fill(null);
+  slots.value = new Array(word.graphemes.length).fill(null);
 
-  // Create letter bank: word's phonemes + 2 distractors, shuffled
+  // Letter bank: the word's graphemes (so digraphs like "th" render as
+  // one tile) + up to 2 distractors pulled from already-introduced
+  // graphemes, so the child isn't offered letters they haven't learned.
   const distractors = allPhonemes.value
-    .filter((p) => !word.phonemes.includes(p))
+    .filter((g) => !word.graphemes.includes(g))
     .sort(() => Math.random() - 0.5)
     .slice(0, 2);
-  availableLetters.value = shuffle([...word.phonemes, ...distractors]);
+  availableLetters.value = shuffle([...word.graphemes, ...distractors]);
   usedIndices.value = new Set();
   showResult.value = false;
 }
@@ -119,7 +125,7 @@ function pickLetter(bankIdx) {
 }
 
 function resetWord() {
-  slots.value = new Array(currentWord.value.phonemes.length).fill(null);
+  slots.value = new Array(currentWord.value.graphemes.length).fill(null);
   usedIndices.value = new Set();
   showResult.value = false;
 }
@@ -130,8 +136,15 @@ async function hearWord() {
 
 onMounted(async () => {
   const all = await getCumulativeDecodableWords(props.lessonId);
-  words.value = all.filter((w) => w.phonemes.length >= 3);
-  allPhonemes.value = await getCumulativeLetters(props.lessonId);
+  // ≥2 graphemes so a 2-tile heart word like "the" (th + e) is buildable;
+  // single-grapheme "a" still auto-completes.
+  words.value = all.filter((w) => w.graphemes.length >= 2);
+  // Letter-bank pool: introduced graphemes + a couple of upcoming ones
+  // so early lessons still offer visible distractors. Target graphemes
+  // are always in the word itself, so the child is never asked to
+  // identify an unlearned sound.
+  const introduced = getCumulativeIntroducedGraphemes(props.lessonId);
+  allPhonemes.value = [...introduced, ...getUpcomingGraphemes(props.lessonId, 2)];
   if (words.value.length === 0) {
     emit('complete');
     return;

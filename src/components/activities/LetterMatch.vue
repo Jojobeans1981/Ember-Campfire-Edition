@@ -45,7 +45,10 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import {
+  getCumulativeIntroducedGraphemes,
+  getUpcomingGraphemes,
+} from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
@@ -54,7 +57,12 @@ const emit = defineEmits(['complete']);
 
 const ember = useEmber();
 
-const allPhonemes = ref([]);
+// Target pool: what the child has actually been taught. Match targets
+// are always drawn from here so the kid isn't tested on unlearned sounds.
+const targetPool = ref([]);
+// Distractor pool: introduced + a few upcoming graphemes, so early
+// lessons can still fill a real 4-button round with visual variety.
+const distractorPool = ref([]);
 
 const targetPhoneme = ref('');
 const choices = ref([]);
@@ -75,12 +83,12 @@ function shuffle(arr) {
 }
 
 function setupRound() {
-  const pool = allPhonemes.value;
-  if (pool.length === 0) return;
-  const target = pool[Math.floor(Math.random() * pool.length)];
+  const targets = targetPool.value;
+  if (targets.length === 0) return;
+  const target = targets[Math.floor(Math.random() * targets.length)];
   targetPhoneme.value = target;
 
-  const distractors = pool
+  const distractors = distractorPool.value
     .filter((p) => p !== target)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
@@ -126,11 +134,18 @@ function pick(choice) {
 }
 
 onMounted(async () => {
-  allPhonemes.value = await getCumulativeLetters(props.lessonId);
-  if (allPhonemes.value.length === 0) {
+  const introduced = getCumulativeIntroducedGraphemes(props.lessonId);
+  if (introduced.length === 0) {
     emit('complete');
     return;
   }
+  targetPool.value = introduced;
+  // Aim for at least 4 items (target + 3 distractors). If we don't have
+  // enough introduced graphemes yet, preview the next few upcoming
+  // lessons' graphemes so the round still has visual variety.
+  const upcomingNeeded = Math.max(0, 4 - introduced.length);
+  const upcoming = upcomingNeeded > 0 ? getUpcomingGraphemes(props.lessonId, upcomingNeeded) : [];
+  distractorPool.value = [...introduced, ...upcoming];
   playRound();
 });
 
