@@ -1,0 +1,19 @@
+{
+  "name": "ember-campfire-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "migrate": "bun run src/infrastructure/db/migrations/runMigrations.ts",
+    "typecheck": "bun x tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
+  }
+}

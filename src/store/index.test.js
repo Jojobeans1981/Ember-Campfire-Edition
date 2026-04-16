@@ -1,17 +1,21 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { store } from './index';
+import { store, clearBootstrapState, hydrateBootstrapState } from './index';
 import { usePersistence } from '../composables/usePersistence';
+
+function resetStoreForTest() {
+  const { clearSave } = usePersistence();
+
+  clearBootstrapState();
+  store.currentPage = 'selection';
+  store.activeLessonId = null;
+  store.activeActivity = null;
+  clearSave();
+  localStorage.clear();
+}
 
 describe('Global Store', () => {
   beforeEach(() => {
-    const { clearSave } = usePersistence();
-    store.xp = 0;
-    store.currentPage = 'selection';
-    store.activeLessonId = null;
-    for (const k of Object.keys(store.ufliProgress)) {
-      delete store.ufliProgress[k];
-    }
-    clearSave();
+    resetStoreForTest();
   });
 
   it('should initialize with 0 XP', () => {
@@ -39,60 +43,80 @@ describe('Global Store', () => {
   });
 });
 
-describe('Persistence — ufliProgress round-trip', () => {
+describe('Persistence — bootstrap state', () => {
   beforeEach(() => {
-    const { clearSave } = usePersistence();
-    store.xp = 0;
-    store.activeLessonId = null;
-    for (const k of Object.keys(store.ufliProgress)) {
-      delete store.ufliProgress[k];
-    }
-    clearSave();
+    resetStoreForTest();
   });
 
-  it('saves and reloads ufliProgress', () => {
-    const { save, load } = usePersistence();
+  it('saves only bootstrap-safe auth and profile state', () => {
+    const persistence = usePersistence();
 
+    hydrateBootstrapState({
+      currentUser: { id: 'user-1', accountId: 'account-1', displayName: 'Dev Owner' },
+      account: { id: 'account-1', name: 'Dev Household', type: 'family' },
+      profiles: [{ id: 'profile-1', name: 'Ember' }],
+      activeProfileId: 'profile-1',
+    });
+    store.currentPage = 'campground';
+    store.activeLessonId = '001';
+    store.activeActivity = 'speech';
+    store.xp = 275;
+    store.selectedFriend = { id: 'fox', name: 'Fox', file: 'fox.png' };
+
+    persistence.saveBootstrapState();
+
+    expect(persistence.loadBootstrapState()).toEqual({
+      activeProfileId: 'profile-1',
+      bootstrapCache: {
+        currentUser: { id: 'user-1', accountId: 'account-1', displayName: 'Dev Owner' },
+        account: { id: 'account-1', name: 'Dev Household', type: 'family' },
+        profiles: [{ id: 'profile-1', name: 'Ember' }],
+        savedAt: expect.any(String),
+      },
+    });
+
+    const raw = JSON.parse(localStorage.getItem('ember-campground-save-v3'));
+    expect(raw.currentPage).toBeUndefined();
+    expect(raw.activeLessonId).toBeUndefined();
+    expect(raw.activeActivity).toBeUndefined();
+    expect(raw.xp).toBeUndefined();
+    expect(raw.selectedFriend).toBeUndefined();
+  });
+
+  it('stores synced progress under profile-scoped caches instead of top-level app state', () => {
+    const persistence = usePersistence();
+
+    store.activeProfileId = 'profile-1';
+    store.version = 4;
+    store.xp = 275;
+    store.selectedFriend = { id: 'fox', name: 'Fox', file: 'fox.png' };
     store.ufliProgress['001'] = {
       lessonComplete: true,
-      activitiesComplete: {
-        speech: true,
-        match: true,
-        blend: false,
-        build: false,
-        sentence: false,
-      },
+      activitiesComplete: { speech: true },
       connectedTextRead: false,
     };
-    store.xp = 150;
-    save();
 
-    for (const k of Object.keys(store.ufliProgress)) {
-      delete store.ufliProgress[k];
-    }
-    store.xp = 0;
-    expect(store.ufliProgress['001']).toBeUndefined();
+    persistence.saveProfileState('profile-1');
 
-    load();
-    expect(store.ufliProgress['001']).toBeDefined();
-    expect(store.ufliProgress['001'].lessonComplete).toBe(true);
-    expect(store.ufliProgress['001'].activitiesComplete.speech).toBe(true);
-    expect(store.ufliProgress['001'].activitiesComplete.blend).toBe(false);
-    expect(store.ufliProgress['001'].connectedTextRead).toBe(false);
-    expect(store.xp).toBe(150);
-  });
-
-  it('preserves XP and selectedFriend across save/load (no regression)', () => {
-    const { save, load } = usePersistence();
-    store.xp = 275;
-    store.selectedFriend = { name: 'Ember' };
-    save();
-
-    store.xp = 0;
-    store.selectedFriend = null;
-    load();
-
-    expect(store.xp).toBe(275);
-    expect(store.selectedFriend).toEqual({ name: 'Ember' });
+    const raw = JSON.parse(localStorage.getItem('ember-campground-save-v3'));
+    expect(raw.xp).toBeUndefined();
+    expect(raw.ufliProgress).toBeUndefined();
+    expect(raw.selectedFriend).toBeUndefined();
+    expect(raw.profileStates['profile-1'].snapshot).toEqual({
+      profileId: 'profile-1',
+      version: 4,
+      ufliProgress: {
+        '001': {
+          lessonComplete: true,
+          activitiesComplete: { speech: true },
+          connectedTextRead: false,
+        },
+      },
+      xp: 275,
+      selectedFriend: { id: 'fox', name: 'Fox', file: 'fox.png' },
+      skillState: {},
+      skillStateSchemaVersion: 1,
+      updatedAt: null,
+    });
   });
 });
