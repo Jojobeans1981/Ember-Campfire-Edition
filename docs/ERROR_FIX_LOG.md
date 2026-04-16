@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-16 — [BUILD] Frontend Docker build failed because `package-lock.json` is out of sync for `happy-dom`
+
+**Error:** `npm ci` failed in the frontend Docker image build with `Invalid: lock file's happy-dom@20.8.9 does not satisfy happy-dom@20.9.0`.
+**Context:** First end-to-end `docker compose up --build` validation for the new frontend/backend container workflow.
+**Root Cause:** The repo's root `package.json` requires `happy-dom@^20.9.0`, but the committed `package-lock.json` still pins `20.8.9`, so strict clean installs inside Docker reject the lockfile.
+**Fix:** Switched the frontend container install step from `npm ci` to `npm install` so the compose-based local workflow can boot against the current manifest state.
+**Prevention:** Keep `package-lock.json` synchronized with `package.json` before relying on `npm ci` in reproducible container builds.
+
 ### 2026-04-15 — [BUILD] Backend integration tests could not reach the local Postgres container with default env
 
 **Error:** `ECONNREFUSED 127.0.0.1:5432` and then `ECONNREFUSED 127.0.0.1:54329` while running the backend Postgres integration tests in `backend/`.

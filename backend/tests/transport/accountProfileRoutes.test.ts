@@ -37,6 +37,24 @@ describe('account and profile routes', () => {
     });
   });
 
+  test('handles local dev CORS preflight requests', async () => {
+    const response = await harness.server.handle(
+      new Request('http://test/me', {
+        method: 'OPTIONS',
+        headers: {
+          origin: 'http://localhost:5173',
+          'access-control-request-method': 'GET',
+          'access-control-request-headers': 'authorization'
+        }
+      })
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect(response.headers.get('access-control-allow-methods')).toContain('GET');
+    expect(response.headers.get('access-control-allow-headers')).toContain('authorization');
+  });
+
   test('returns 401 for unknown dev bearer tokens', async () => {
     const response = await harness.server.handle(
       new Request('http://test/me', {

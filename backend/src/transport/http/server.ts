@@ -45,6 +45,47 @@ export const createHttpServer = (dependencies: {
   identityProvisioningService: IdentityProvisioningService;
 }): HttpServer => {
   let server: ReturnType<typeof Bun.serve> | null = null;
+
+  const getCorsOrigin = (request: Request): string | null => {
+    const requestOrigin = request.headers.get('origin');
+
+    if (!requestOrigin) {
+      return null;
+    }
+
+    if (dependencies.config.cors.allowedOrigins.includes('*')) {
+      return '*';
+    }
+
+    return dependencies.config.cors.allowedOrigins.includes(requestOrigin)
+      ? requestOrigin
+      : null;
+  };
+
+  const withCorsHeaders = (request: Request, response: Response): Response => {
+    const corsOrigin = getCorsOrigin(request);
+
+    if (!corsOrigin) {
+      return response;
+    }
+
+    const headers = new Headers(response.headers);
+    headers.set('Access-Control-Allow-Origin', corsOrigin);
+    headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'authorization,content-type');
+    headers.set('Access-Control-Max-Age', '86400');
+
+    if (corsOrigin !== '*') {
+      headers.set('Vary', 'Origin');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  };
+
   const healthHandlers = createHealthHandlers({
     getHealthCheckUseCase: dependencies.getHealthCheckUseCase
   });
@@ -64,7 +105,11 @@ export const createHttpServer = (dependencies: {
   });
 
   const handle = async (request: Request): Promise<Response> => {
-    return withErrorHandling(async () => {
+    if (request.method === 'OPTIONS') {
+      return withCorsHeaders(request, new Response(null, { status: 204 }));
+    }
+
+    const response = await withErrorHandling(async () => {
       const context = createRequestContext(request);
       const healthResponse = matchHealthRoute(context, healthHandlers);
 
@@ -100,6 +145,8 @@ export const createHttpServer = (dependencies: {
         status: 404
       });
     });
+
+    return withCorsHeaders(request, response);
   };
 
   return {

@@ -6,6 +6,7 @@ export interface AppConfig {
   port: number;
   db: DatabaseConfig;
   auth: AuthConfig;
+  cors: CorsConfig;
 }
 
 export interface DatabaseConfig {
@@ -20,6 +21,10 @@ export interface DatabaseConfig {
 
 export interface AuthConfig {
   devUsers: DevAuthUserConfig[];
+}
+
+export interface CorsConfig {
+  allowedOrigins: string[];
 }
 
 export interface DevAuthUserConfig {
@@ -37,6 +42,10 @@ const DEFAULT_DATABASE_HOST = '127.0.0.1';
 const DEFAULT_DATABASE_PORT = 5432;
 const DEFAULT_DATABASE_NAME = 'ember_campfire_backend';
 const DEFAULT_DATABASE_USER = 'postgres';
+const DEFAULT_CORS_ALLOWED_ORIGINS = [
+  'http://127.0.0.1:5173',
+  'http://localhost:5173'
+];
 
 export const loadConfig = (): AppConfig => {
   const env = process.env.NODE_ENV ?? 'development';
@@ -44,13 +53,29 @@ export const loadConfig = (): AppConfig => {
   const port = parsePort(process.env.PORT);
   const db = loadDatabaseConfig();
   const auth = loadAuthConfig(env);
+  const cors = loadCorsConfig();
 
-  return { env, host, port, db, auth };
+  return { env, host, port, db, auth, cors };
 };
 
 const loadAuthConfig = (env: string): AuthConfig => ({
   devUsers: loadDevAuthUsers(env, process.env.DEV_AUTH_USERS)
 });
+
+const loadCorsConfig = (): CorsConfig => ({
+  allowedOrigins: loadAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS)
+});
+
+const loadAllowedOrigins = (rawValue: string | undefined): string[] => {
+  if (rawValue === undefined || rawValue.trim().length === 0) {
+    return DEFAULT_CORS_ALLOWED_ORIGINS;
+  }
+
+  return rawValue
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin, index, allOrigins) => origin.length > 0 && allOrigins.indexOf(origin) === index);
+};
 
 const loadDevAuthUsers = (env: string, rawValue: string | undefined): DevAuthUserConfig[] => {
   if (rawValue === undefined || rawValue.trim().length === 0) {
