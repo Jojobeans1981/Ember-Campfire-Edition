@@ -27,6 +27,13 @@
           :style="{ '--pin-x': `${zone.mapX}%`, '--pin-y': `${zone.mapY}%` }"
           @click="openZoneFromMap(zone.id)"
         >
+          <span v-if="zone.id === guardianZoneId && selectedFriendImage" class="guardian-campsite" aria-hidden="true">
+            <span class="guardian-flag">{{ friendName }}</span>
+            <span class="guardian-mat"></span>
+            <span class="guardian-pack"></span>
+            <span class="guardian-lantern"></span>
+            <img :src="selectedFriendImage" alt="" class="stop-guardian-img" />
+          </span>
           <span class="stop-pin">{{ idx + 1 }}</span>
           <span class="stop-sign">
             <strong>{{ zone.short }}</strong>
@@ -148,6 +155,8 @@ const openZoneId = ref('');
 const viewMode = ref('map');
 
 const friendName = computed(() => store.selectedFriend?.name || 'Your Guardian');
+const selectedFriendImage = computed(() => store.selectedFriend?.file ? `/assets/friends/${store.selectedFriend.file}` : '');
+const guardianZoneId = computed(() => currentZoneId.value || visibleZones.value[0]?.id || '');
 const missionLine = computed(() => `${friendName.value} needs your sounds to light the campfire path. Follow the campground trail to the fire.`);
 
 function speakMapIntro() {
@@ -258,10 +267,137 @@ function selectLesson(lessonId) {
   border: 0;
   background: transparent;
   cursor: pointer;
+  z-index: 2;
 }
 
 .map-stop.locked {
   opacity: 0.45;
+}
+
+.guardian-campsite {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 1.2rem;
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  pointer-events: none;
+  z-index: 1;
+  animation: guardian-bob 2.8s ease-in-out infinite;
+}
+
+.guardian-flag {
+  position: relative;
+  z-index: 3;
+  padding: 0.18rem 0.56rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: #5b2d00;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff5d2 0%, #ffd585 100%);
+  border: 2px solid #ab6a29;
+  box-shadow: 0 5px 12px rgba(60, 25, 0, 0.2);
+}
+
+.guardian-flag::after {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  top: 100%;
+  width: 2px;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: #8d5420;
+}
+
+.guardian-mat {
+  position: absolute;
+  bottom: -0.05rem;
+  width: 3.7rem;
+  height: 1rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(151, 205, 110, 0.9) 0%, rgba(101, 160, 73, 0.82) 45%, rgba(64, 107, 45, 0.12) 78%, transparent 82%);
+}
+
+.guardian-pack {
+  position: absolute;
+  left: -0.2rem;
+  bottom: 0.55rem;
+  width: 0.82rem;
+  height: 0.98rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, #8c53d0 0%, #6732ad 100%);
+  border: 2px solid #4f1d88;
+  box-shadow: 0 4px 8px rgba(34, 15, 59, 0.22);
+}
+
+.guardian-pack::before {
+  content: '';
+  position: absolute;
+  inset: 0.15rem 0.18rem auto;
+  height: 0.18rem;
+  border-radius: 999px;
+  background: rgba(255, 235, 180, 0.9);
+}
+
+.guardian-lantern {
+  position: absolute;
+  right: -0.1rem;
+  bottom: 0.68rem;
+  width: 0.56rem;
+  height: 0.86rem;
+  border-radius: 0.28rem 0.28rem 0.22rem 0.22rem;
+  background: linear-gradient(180deg, #ffe796 0%, #ffbb50 65%, #9f5821 100%);
+  border: 2px solid #96521e;
+  box-shadow: 0 0 10px rgba(255, 202, 83, 0.45);
+}
+
+.guardian-lantern::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 0.38rem;
+  height: 0.22rem;
+  transform: translateX(-50%);
+  border: 2px solid #96521e;
+  border-bottom: 0;
+  border-radius: 0.4rem 0.4rem 0 0;
+}
+
+.stop-guardian-img {
+  position: relative;
+  z-index: 2;
+  width: 3.15rem;
+  height: 3.15rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0.16rem;
+  object-fit: contain;
+  background: linear-gradient(180deg, rgba(255, 245, 214, 0.98), rgba(255, 221, 142, 0.98));
+  border: 3px solid #b66a22;
+  box-shadow: 0 10px 18px rgba(53, 25, 0, 0.26);
+}
+
+.stop-guardian-img {
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(44, 19, 2, 0.25));
+}
+
+@keyframes guardian-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .stop-pin {
