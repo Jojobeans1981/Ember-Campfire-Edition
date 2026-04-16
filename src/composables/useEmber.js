@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { lookupTtsFile } from './useTts.js';
 
 const isSpeaking = ref(false);
 const currentText = ref('');
@@ -277,48 +278,27 @@ export function useEmber() {
         return;
       }
 
+      const ttsFile = lookupTtsFile(cleaned);
+
+      if (!ttsFile) {
+        if (import.meta.env?.DEV) {
+          console.warn(`[TTS] No manifest entry for: "${cleaned}"`);
+        }
+        releasePlayback(playbackId);
+        isSpeaking.value = false;
+        currentText.value = '';
+        resolve(false);
+        return;
+      }
+
       currentText.value = cleaned;
       isSpeaking.value = true;
 
-      const speakBrowser = async () => {
-        if (!window.speechSynthesis) {
-          releasePlayback(playbackId);
-          isSpeaking.value = false;
-          currentText.value = '';
-          resolve(false);
-          return;
-        }
-
-        await waitForVoices(1400);
-        const utterance = new SpeechSynthesisUtterance(cleaned);
-        preferredVoice = pickPreferredVoice(options.voiceName) || preferredVoice || pickPreferredVoice();
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
-          utterance.voiceURI = preferredVoice.voiceURI || '';
-        }
-        utterance.rate = options.rate ?? 0.88;
-        utterance.pitch = options.pitch ?? 1.08;
-        utterance.volume = options.volume ?? 1.0;
-        utterance.lang = 'en-US';
-
-        utterance.onend = () => {
-          releasePlayback(playbackId);
-          isSpeaking.value = false;
-          currentText.value = '';
-          resolve(true);
-        };
-        utterance.onerror = () => {
-          releasePlayback(playbackId);
-          isSpeaking.value = false;
-          currentText.value = '';
-          resolve(false);
-        };
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-      };
-
-      void speakBrowser();
+      playAudioSources([ttsFile], playbackId).then((ok) => {
+        isSpeaking.value = false;
+        currentText.value = '';
+        resolve(ok);
+      });
     });
   }
 
