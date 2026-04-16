@@ -27,6 +27,8 @@
       </div>
     </Transition>
 
+    <PlayfulBackdrop v-if="showPlayfulBackdrop" :variant="playfulBackdropVariant" />
+
     <!-- Top bar -->
     <header v-if="!showLaunchSplash && showTopBar" class="top-bar">
       <button class="nav-btn" @click="goBack">
@@ -41,7 +43,7 @@
       </div>
     </header>
 
-    <main v-if="!showLaunchSplash" class="main">
+    <main v-if="!showLaunchSplash" class="main" :class="{ 'playful-main': showPlayfulBackdrop }">
       <p v-if="showSyncBanner" class="sync-banner">{{ syncBannerText }}</p>
 
       <Transition name="page" mode="out-in">
@@ -106,6 +108,20 @@
 
         <div v-else-if="store.currentPage === 'selection'" key="selection" class="selection">
           <div class="selection-scene" aria-hidden="true">
+            <div class="scene-marquee">
+              <span class="scene-light light-1"></span>
+              <span class="scene-light light-2"></span>
+              <span class="scene-light light-3"></span>
+              <span class="scene-light light-4"></span>
+              <span class="scene-light light-5"></span>
+              <span class="scene-light light-6"></span>
+              <span class="scene-light light-7"></span>
+              <span class="scene-light light-8"></span>
+            </div>
+            <span class="scene-balloon balloon-left"></span>
+            <span class="scene-balloon balloon-right"></span>
+            <span class="scene-ribbon ribbon-left"></span>
+            <span class="scene-ribbon ribbon-right"></span>
             <img src="/assets/friends/fox_1984443.png" alt="" class="scene-animal fox" />
             <img src="/assets/friends/lion_1817275.png" alt="" class="scene-animal lion" />
             <img src="/assets/friends/panda_8493111.png" alt="" class="scene-animal panda" />
@@ -122,8 +138,14 @@
           <h2>Choose a Guardian</h2>
           <p class="selection-note">Profile: {{ activeProfileName }}</p>
           <div class="character-grid">
-            <div v-for="friend in friendList" :key="friend.id" class="char-card" @click="selectFriend(friend)">
-              <img :src="'/assets/friends/' + friend.file" class="friend-img" />
+            <div
+              v-for="friend in friendList"
+              :key="friend.id"
+              class="char-card"
+              :class="[`friend-${friend.id}`, { picked: friendSelectionFxId === friend.id }]"
+              @click="selectFriend(friend)"
+            >
+              <img :src="'/assets/friends/' + friend.file" :class="['friend-img', `friend-img-${friend.id}`]" />
               <div class="friend-name">{{ friend.name }}</div>
             </div>
           </div>
@@ -242,6 +264,7 @@ import LessonPlayer from './components/LessonPlayer.vue';
 import ActivityPlayer from './components/ActivityPlayer.vue';
 import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
+import PlayfulBackdrop from './components/PlayfulBackdrop.vue';
 
 const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
 const { submitOperation } = useProfileProgress();
@@ -267,6 +290,34 @@ const showTopBar = computed(() => {
   return store.bootstrapStatus === 'ready'
     && Boolean(store.activeProfileId)
     && store.currentPage !== 'selection';
+});
+
+const showPlayfulBackdrop = computed(() => {
+  return !showLaunchSplash.value && !['lesson', 'activity', 'story'].includes(store.currentPage);
+});
+
+const playfulBackdropVariant = computed(() => {
+  if (
+    !entryPageResolved.value
+    && store.bootstrapStatus !== 'unauthenticated'
+    && store.bootstrapStatus !== 'error'
+  ) {
+    return 'status';
+  }
+
+  if (store.bootstrapStatus === 'unauthenticated' || store.bootstrapStatus === 'error') {
+    return 'status';
+  }
+
+  if (store.profiles.length === 0 || requiresProfileSelection.value) {
+    return 'profiles';
+  }
+
+  if (store.currentPage === 'selection') return 'selection';
+  if (store.currentPage === 'campground') return 'campground';
+  if (store.currentPage === 'unit-hub') return 'trail';
+  if (store.currentPage === 'dashboard') return 'dashboard';
+  return 'default';
 });
 
 const showSyncBanner = computed(() => {
@@ -309,6 +360,7 @@ const showLaunchSplash = ref(
   typeof sessionStorage !== 'undefined' ? !sessionStorage.getItem(SPLASH_SEEN_KEY) : true,
 );
 const showAdventureIntro = ref(false);
+const friendSelectionFxId = ref('');
 const hadRuntimeError = ref(false);
 // True only once bootstrap has finished AND syncEntryPage has set the
 // correct currentPage. Gates the content branches so we don't flash
@@ -336,6 +388,7 @@ const newProfileName = ref('');
 const profileActionBusy = ref(false);
 let launchSplashTimer = null;
 let streakResetTimer = null;
+let friendSelectionFxTimer = null;
 let burstIdSeed = 0;
 let lastSparkAt = 0;
 let lastHypeAt = 0;
@@ -769,6 +822,10 @@ onUnmounted(() => {
   if (launchSplashTimer) {
     window.clearTimeout(launchSplashTimer);
   }
+  if (friendSelectionFxTimer) {
+    window.clearTimeout(friendSelectionFxTimer);
+    friendSelectionFxTimer = null;
+  }
   if (streakResetTimer) {
     window.clearInterval(streakResetTimer);
   }
@@ -803,7 +860,18 @@ onErrorCaptured((error, instance, info) => {
 });
 
 async function selectFriend(friend) {
+  friendSelectionFxId.value = friend.id;
+  if (friendSelectionFxTimer) {
+    window.clearTimeout(friendSelectionFxTimer);
+  }
+  friendSelectionFxTimer = window.setTimeout(() => {
+    friendSelectionFxId.value = '';
+    friendSelectionFxTimer = null;
+  }, 700);
   const syncPromise = submitOperation('set_selected_friend', { selectedFriend: friend });
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, 140);
+  });
   showAdventureIntro.value = true;
   void nextTick().then(() => {
     playAdventureClip();
@@ -942,6 +1010,8 @@ body {
 }
 
 .app {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -1052,6 +1122,8 @@ body {
 }
 
 .top-bar {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
@@ -1140,6 +1212,8 @@ body {
 }
 
 .main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow: auto;
   display: flex;
@@ -1147,6 +1221,48 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
+}
+
+.playful-main {
+  padding: 1rem;
+}
+
+.playful-main .status-card,
+.playful-main .profile-flow {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(255, 212, 97, 0.16), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(110, 223, 255, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(24, 30, 53, 0.86), rgba(14, 19, 35, 0.92));
+  box-shadow:
+    0 18px 34px rgba(6, 10, 20, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.playful-main .status-card::before,
+.playful-main .profile-flow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(255, 227, 150, 0.08) 72%, transparent 100%);
+  pointer-events: none;
+}
+
+.playful-main .profile-card,
+.playful-main .primary-btn {
+  box-shadow: 0 12px 22px rgba(10, 15, 28, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.playful-main .profile-card:hover,
+.playful-main .primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(16, 24, 44, 0.3);
+  border-color: rgba(255, 230, 150, 0.58);
 }
 
 .status-card,
@@ -1331,12 +1447,112 @@ body {
 .selection-scene {
   position: relative;
   width: min(94vw, 390px);
-  height: 92px;
+  height: 110px;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.35);
-  background: linear-gradient(140deg, rgba(255, 104, 166, 0.35), rgba(255, 177, 87, 0.34), rgba(88, 205, 255, 0.35));
+  background:
+    radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.16), transparent 20%),
+    linear-gradient(140deg, rgba(255, 104, 166, 0.35), rgba(255, 177, 87, 0.34), rgba(88, 205, 255, 0.35));
   overflow: hidden;
   z-index: 2;
+  box-shadow: 0 16px 28px rgba(21, 18, 36, 0.25);
+}
+
+.scene-marquee {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  top: 0.45rem;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+.scene-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, #fffef1 0%, #ffe07c 52%, #ff9b5a 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 233, 175, 0.08),
+    0 0 12px rgba(255, 201, 88, 0.5);
+  animation: sceneBulbGlow 1.1s ease-in-out infinite alternate;
+}
+
+.light-2,
+.light-5,
+.light-8 {
+  animation-delay: 0.2s;
+}
+
+.light-3,
+.light-6 {
+  animation-delay: 0.4s;
+}
+
+.scene-balloon {
+  position: absolute;
+  top: 1.1rem;
+  width: 24px;
+  height: 31px;
+  border-radius: 50% 50% 44% 44%;
+  box-shadow: inset -4px -6px 0 rgba(255, 255, 255, 0.2);
+}
+
+.scene-balloon::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 2px;
+  height: 26px;
+  transform: translateX(-50%);
+  background: rgba(255, 245, 209, 0.7);
+}
+
+.scene-balloon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 7px;
+  height: 7px;
+  transform: translateX(-50%) rotate(45deg);
+  background: inherit;
+}
+
+.scene-balloon.balloon-left {
+  left: 0.8rem;
+  background: linear-gradient(180deg, #ff8fb9 0%, #ff6c79 100%);
+  animation: sceneBalloonFloat 2.8s ease-in-out infinite;
+}
+
+.scene-balloon.balloon-right {
+  right: 0.8rem;
+  background: linear-gradient(180deg, #7bdcff 0%, #48b8ff 100%);
+  animation: sceneBalloonFloat 3.1s ease-in-out infinite reverse;
+}
+
+.scene-ribbon {
+  position: absolute;
+  top: 1.3rem;
+  width: 56px;
+  height: 34px;
+  border-top: 3px dashed rgba(255, 245, 178, 0.8);
+  border-left: 3px dashed rgba(255, 155, 198, 0.65);
+  border-radius: 50%;
+  opacity: 0.55;
+  animation: sceneRibbonSpin 6.5s linear infinite;
+}
+
+.scene-ribbon.ribbon-left {
+  left: 3rem;
+}
+
+.scene-ribbon.ribbon-right {
+  right: 3rem;
+  transform: scaleX(-1);
+  animation-duration: 5.8s;
 }
 
 .scene-animal {
@@ -1418,6 +1634,7 @@ body {
 }
 
 .char-card {
+  position: relative;
   width: 100%;
   aspect-ratio: 1;
   border: 2px solid rgba(255, 255, 255, 0.26);
@@ -1432,6 +1649,7 @@ body {
   gap: 0.3rem;
   animation: cardPulse 3.2s ease-in-out infinite, floatCard 1.7s ease-in-out infinite;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .char-card:nth-child(2) { animation-delay: 0.18s; }
@@ -1456,6 +1674,28 @@ body {
   box-shadow: 0 0 24px rgba(255, 144, 92, 0.45);
 }
 
+.char-card::after {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 244, 176, 0.82);
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.char-card.picked {
+  border-color: #fff0a7;
+  box-shadow:
+    0 0 0 4px rgba(255, 237, 158, 0.18),
+    0 0 28px rgba(255, 183, 84, 0.56);
+  animation: cardPickPop 0.48s ease-out forwards;
+}
+
+.char-card.picked::after {
+  animation: pickedRing 0.58s ease-out forwards;
+}
+
 @keyframes cardShine {
   0%, 100% { transform: translateX(-120%); opacity: 0; }
   30% { opacity: 0.8; }
@@ -1470,6 +1710,32 @@ body {
 @keyframes sceneBob {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-6px) rotate(-2deg); }
+}
+
+@keyframes sceneBulbGlow {
+  from {
+    transform: scale(0.95);
+    box-shadow:
+      0 0 0 4px rgba(255, 233, 175, 0.06),
+      0 0 8px rgba(255, 201, 88, 0.38);
+  }
+
+  to {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 5px rgba(255, 233, 175, 0.12),
+      0 0 16px rgba(255, 201, 88, 0.66);
+  }
+}
+
+@keyframes sceneBalloonFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes sceneRibbonSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes sceneTwinkle {
@@ -1492,13 +1758,107 @@ body {
   height: 60%;
   object-fit: contain;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
-  animation: buddyWiggle 1.1s ease-in-out infinite;
+}
+
+.char-card.friend-fox .friend-img {
+  animation: foxCurious 1.45s ease-in-out infinite;
+}
+
+.char-card.friend-lion .friend-img {
+  animation: lionProud 1.7s ease-in-out infinite;
+}
+
+.char-card.friend-panda .friend-img {
+  animation: pandaCozy 1.95s ease-in-out infinite;
+}
+
+.char-card.friend-kangaroo .friend-img {
+  animation: kangarooBoing 1.1s ease-in-out infinite;
+}
+
+.char-card.friend-fox.picked .friend-img {
+  animation: foxCheer 0.62s ease-out 2;
+}
+
+.char-card.friend-lion.picked .friend-img {
+  animation: lionCheer 0.7s ease-out 2;
+}
+
+.char-card.friend-panda.picked .friend-img {
+  animation: pandaCheer 0.82s ease-out 1;
+}
+
+.char-card.friend-kangaroo.picked .friend-img {
+  animation: kangarooCheer 0.6s ease-out 2;
 }
 
 @keyframes buddyWiggle {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-5deg); }
   75% { transform: rotate(5deg); }
+}
+
+@keyframes foxCurious {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  30% { transform: rotate(-5deg) translateY(-1px); }
+  65% { transform: rotate(5deg) translateY(-3px); }
+}
+
+@keyframes lionProud {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.04); }
+}
+
+@keyframes pandaCozy {
+  0%, 100% { transform: rotate(-2deg) translateY(0); }
+  50% { transform: rotate(2deg) translateY(-2px); }
+}
+
+@keyframes kangarooBoing {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  40% { transform: translateY(-7px) scaleY(1.04); }
+  60% { transform: translateY(0) scaleY(0.97); }
+}
+
+@keyframes foxCheer {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  35% { transform: rotate(-10deg) scale(1.08); }
+  70% { transform: rotate(10deg) scale(1.06); }
+}
+
+@keyframes lionCheer {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.12); }
+}
+
+@keyframes pandaCheer {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.05); }
+  50% { transform: rotate(8deg) scale(1.08); }
+  75% { transform: rotate(-5deg) scale(1.04); }
+}
+
+@keyframes kangarooCheer {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-10px) scale(1.08); }
+  70% { transform: translateY(0) scale(0.96); }
+}
+
+@keyframes cardPickPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+  100% { transform: scale(1.04); }
+}
+
+@keyframes pickedRing {
+  0% {
+    opacity: 0.92;
+    transform: scale(0.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
 }
 
 .friend-name {
