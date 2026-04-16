@@ -4,10 +4,30 @@
       <p class="hero-kicker">Campground Trail Map</p>
       <h2 class="map-title">{{ friendName }}'s Reading Adventure</h2>
       <p class="map-subtitle">{{ missionLine }}</p>
+      <div class="map-charms" aria-hidden="true">
+        <span class="map-charm charm-lantern"></span>
+        <span class="map-charm charm-moon"></span>
+        <span class="map-charm charm-tent"></span>
+      </div>
     </header>
 
     <section v-if="viewMode === 'map'" class="storybook-map">
       <div class="map-board">
+        <span class="board-spark spark-a"></span>
+        <span class="board-spark spark-b"></span>
+        <span class="board-spark spark-c"></span>
+        <span class="board-spark spark-d"></span>
+        <span
+          v-for="sparkle in revealSparkles"
+          :key="sparkle.id"
+          class="reveal-sparkle"
+          :style="{
+            '--sparkle-x': `${sparkle.x}%`,
+            '--sparkle-y': `${sparkle.y}%`,
+            '--sparkle-delay': `${sparkle.delay}ms`,
+            '--sparkle-scale': sparkle.scale,
+          }"
+        ></span>
         <img
           class="map-image"
           src="/assets/campground-map-reference.webp"
@@ -23,6 +43,7 @@
             current: currentZoneId === zone.id,
             done: zone.isCompleted,
             locked: !zone.hasUnlockedLessons,
+            revealed: recentlyRevealedZoneIds.includes(zone.id),
           }"
           :style="{ '--pin-x': `${zone.mapX}%`, '--pin-y': `${zone.mapY}%` }"
           @click="openZoneFromMap(zone.id)"
@@ -153,11 +174,16 @@ const visibleZones = computed(() => zones.value.filter((_, index) => index <= re
 const currentZoneId = computed(() => zones.value.find((zone) => !zone.isCompleted)?.id ?? zones.value.at(-1)?.id ?? '');
 const openZoneId = ref('');
 const viewMode = ref('map');
+const revealSparkles = ref([]);
+const recentlyRevealedZoneIds = ref([]);
 
 const friendName = computed(() => store.selectedFriend?.name || 'Your Guardian');
 const selectedFriendImage = computed(() => store.selectedFriend?.file ? `/assets/friends/${store.selectedFriend.file}` : '');
 const guardianZoneId = computed(() => currentZoneId.value || visibleZones.value[0]?.id || '');
 const missionLine = computed(() => `${friendName.value} needs your sounds to light the campfire path. Follow the campground trail to the fire.`);
+
+let revealSparkleSeed = 0;
+let revealTimers = [];
 
 function speakMapIntro() {
   void ember.speak(`${friendName.value}'s trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.`);
@@ -172,8 +198,19 @@ watch(friendName, () => {
   speakMapIntro();
 });
 
+watch(
+  () => visibleZones.value.map((zone) => zone.id),
+  (nextIds, prevIds) => {
+    if (!prevIds?.length) return;
+    const newZoneIds = nextIds.filter((zoneId) => !prevIds.includes(zoneId));
+    newZoneIds.forEach((zoneId) => triggerZoneReveal(zoneId));
+  },
+);
+
 onBeforeUnmount(() => {
   ember.stopSpeaking();
+  revealTimers.forEach((timerId) => window.clearTimeout(timerId));
+  revealTimers = [];
 });
 
 function getStatus(lessonId) {
@@ -188,6 +225,32 @@ function openZoneFromMap(zoneId) {
 
 function toggleZone(zoneId) {
   openZoneId.value = openZoneId.value === zoneId ? '' : zoneId;
+}
+
+function triggerZoneReveal(zoneId) {
+  const zone = visibleZones.value.find((item) => item.id === zoneId);
+  if (!zone) return;
+
+  recentlyRevealedZoneIds.value = [...new Set([...recentlyRevealedZoneIds.value, zoneId])];
+
+  const sparkles = Array.from({ length: 8 }, (_, index) => ({
+    id: `sparkle-${++revealSparkleSeed}`,
+    x: zone.mapX + (Math.random() * 7 - 3.5),
+    y: zone.mapY + (Math.random() * 7 - 3.5),
+    delay: index * 55,
+    scale: (0.85 + Math.random() * 0.5).toFixed(2),
+  }));
+
+  revealSparkles.value = [...revealSparkles.value, ...sparkles];
+
+  revealTimers.push(window.setTimeout(() => {
+    const sparkleIds = new Set(sparkles.map((sparkle) => sparkle.id));
+    revealSparkles.value = revealSparkles.value.filter((sparkle) => !sparkleIds.has(sparkle.id));
+  }, 1400));
+
+  revealTimers.push(window.setTimeout(() => {
+    recentlyRevealedZoneIds.value = recentlyRevealedZoneIds.value.filter((id) => id !== zoneId);
+  }, 1200));
 }
 
 function selectLesson(lessonId) {
@@ -209,12 +272,15 @@ function selectLesson(lessonId) {
   border-radius: 1.5rem;
   background:
     radial-gradient(circle at 20% 0%, rgba(255, 198, 110, 0.2), transparent 36%),
-    linear-gradient(180deg, #152334 0%, #0e1826 100%);
+    radial-gradient(circle at 82% 12%, rgba(120, 226, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(21, 35, 52, 0.96) 0%, rgba(9, 18, 31, 0.98) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 22px 36px rgba(6, 12, 24, 0.34);
 }
 
 .map-hero {
   text-align: center;
+  position: relative;
 }
 
 .hero-kicker {
@@ -229,12 +295,97 @@ function selectLesson(lessonId) {
   margin: 0.2rem 0 0;
   color: #ffe8be;
   font-size: clamp(1.45rem, 3.5vw, 2.1rem);
+  text-shadow: 0 0 18px rgba(255, 176, 96, 0.2);
 }
 
 .map-subtitle {
   margin: 0.45rem auto 0;
   max-width: 580px;
   color: #d9e7f5;
+}
+
+.map-charms {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.65rem;
+}
+
+.map-charm {
+  position: relative;
+  display: inline-block;
+  animation: charmFloat 2.8s ease-in-out infinite;
+}
+
+.map-charm.charm-moon {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.96) 0%, rgba(240, 249, 255, 0.92) 56%, rgba(191, 224, 255, 0.86) 100%);
+  box-shadow: 0 0 14px rgba(153, 225, 255, 0.34);
+}
+
+.map-charm.charm-moon::after {
+  content: '';
+  position: absolute;
+  right: -0.02rem;
+  top: 0.1rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: rgba(14, 24, 38, 0.98);
+}
+
+.map-charm.charm-lantern {
+  width: 0.95rem;
+  height: 1.3rem;
+  border-radius: 0.45rem 0.45rem 0.3rem 0.3rem;
+  background: linear-gradient(180deg, #fff2a6 0%, #ffbf57 70%, #9d5923 100%);
+  border: 2px solid #96521f;
+  box-shadow: 0 0 12px rgba(255, 198, 84, 0.38);
+}
+
+.map-charm.charm-lantern::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 0.44rem;
+  height: 0.25rem;
+  transform: translateX(-50%);
+  border: 2px solid #96521f;
+  border-bottom: 0;
+  border-radius: 0.4rem 0.4rem 0 0;
+}
+
+.map-charm.charm-tent {
+  width: 1.45rem;
+  height: 1.15rem;
+}
+
+.map-charm.charm-tent::before,
+.map-charm.charm-tent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+}
+
+.map-charm.charm-tent::before {
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 0.72rem solid transparent;
+  border-right: 0.72rem solid transparent;
+  border-bottom: 1.05rem solid #53bdfd;
+}
+
+.map-charm.charm-tent::after {
+  left: 0.6rem;
+  width: 0.22rem;
+  height: 0.48rem;
+  background: rgba(255, 247, 216, 0.9);
+  border-radius: 0.2rem 0.2rem 0 0;
 }
 
 .storybook-map {
@@ -246,6 +397,51 @@ function selectLesson(lessonId) {
   position: relative;
   width: min(100%, 900px);
   margin: 0 auto;
+  isolation: isolate;
+}
+
+.map-board::before {
+  content: '';
+  position: absolute;
+  inset: -0.8rem;
+  z-index: 0;
+  border-radius: 1.4rem;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(149, 229, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 8% 75%, rgba(255, 188, 117, 0.12), transparent 20%),
+    radial-gradient(circle at 88% 80%, rgba(126, 226, 170, 0.12), transparent 18%);
+  filter: blur(10px);
+}
+
+.board-spark {
+  position: absolute;
+  z-index: 1;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 251, 225, 0.98) 0%, rgba(255, 206, 108, 0.95) 62%, rgba(255, 161, 86, 0.1) 100%);
+  box-shadow: 0 0 10px rgba(255, 213, 111, 0.42);
+  animation: boardSparkFloat 3.2s ease-in-out infinite;
+}
+
+.spark-a { left: 10%; top: 18%; }
+.spark-b { left: 86%; top: 24%; animation-delay: 0.5s; }
+.spark-c { left: 18%; top: 76%; animation-delay: 0.9s; }
+.spark-d { left: 80%; top: 70%; animation-delay: 1.2s; }
+
+.reveal-sparkle {
+  position: absolute;
+  left: var(--sparkle-x);
+  top: var(--sparkle-y);
+  z-index: 2;
+  width: calc(0.7rem * var(--sparkle-scale));
+  height: calc(0.7rem * var(--sparkle-scale));
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0, 63% 34%, 100% 38%, 71% 59%, 80% 100%, 50% 76%, 20% 100%, 29% 59%, 0 38%, 37% 34%);
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 247, 0.98) 0%, rgba(255, 220, 115, 0.95) 52%, rgba(255, 173, 87, 0.08) 100%);
+  box-shadow: 0 0 12px rgba(255, 212, 105, 0.48);
+  animation: revealSparklePop 1.1s ease-out forwards;
+  animation-delay: var(--sparkle-delay);
 }
 
 .map-image {
@@ -253,7 +449,9 @@ function selectLesson(lessonId) {
   width: 100%;
   height: auto;
   border-radius: 0.8rem;
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.26);
+  position: relative;
+  z-index: 1;
 }
 
 .map-stop {
@@ -272,6 +470,14 @@ function selectLesson(lessonId) {
 
 .map-stop.locked {
   opacity: 0.45;
+}
+
+.map-stop.revealed .stop-pin {
+  animation: revealedStopPulse 0.95s ease-in-out 2;
+}
+
+.map-stop.revealed .stop-sign {
+  animation: revealedSignPop 0.9s ease-out 1;
 }
 
 .guardian-campsite {
@@ -397,6 +603,76 @@ function selectLesson(lessonId) {
 
   50% {
     transform: translateY(-5px);
+  }
+}
+
+@keyframes charmFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes boardSparkFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.94);
+    opacity: 0.72;
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes revealSparklePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.25) rotate(0deg);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08) rotate(18deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 20px)) scale(0.76) rotate(34deg);
+  }
+}
+
+@keyframes revealedStopPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  50% {
+    transform: scale(1.18);
+    box-shadow:
+      0 0 0 7px rgba(255, 221, 128, 0.28),
+      0 3px 12px rgba(0, 0, 0, 0.22);
+  }
+}
+
+@keyframes revealedSignPop {
+  0% {
+    transform: scale(0.9);
+  }
+
+  60% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }
 
