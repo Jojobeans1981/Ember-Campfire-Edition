@@ -29,11 +29,10 @@ config({ path: path.join(ROOT, '.env') });
 
 // ─── Paths ────────────────────────────────────────────────────
 const SOURCE_DIR  = path.join(ROOT, 'public', 'audio', 'phonemes', 'source');
-const OUTPUT_DIR  = path.join(ROOT, 'public', 'audio', 'phonemes');
-const CONTEXT_DIR = path.join(OUTPUT_DIR, 'context');
+const DEFAULT_OUTPUT_DIR = path.join(ROOT, 'public', 'audio', 'phonemes');
 const VIDEO_URL   = 'https://www.youtube.com/watch?v=wBuA589kfMg';
 const AUDIO_WAV   = path.join(SOURCE_DIR, 'phonemes-video.wav');
-const VOCALS_WAV  = path.join(SOURCE_DIR, 'separated', 'htdemucs', 'phonemes-video', 'vocals.wav');
+const DEFAULT_VOCALS_WAV = path.join(SOURCE_DIR, 'separated', 'htdemucs', 'phonemes-video', 'vocals.wav');
 const WHISPER_CACHE = path.join(SOURCE_DIR, 'whisper-words.json');
 
 // ─── Sequence of phonemes IN THE ORDER the video presents them ──
@@ -113,6 +112,17 @@ const forceWhisper  = args.includes('--force-whisper');
 const forceDemucs   = args.includes('--force-demucs');
 const phonemeIdx    = args.indexOf('--phoneme');
 const singlePhoneme = phonemeIdx !== -1 ? args[phonemeIdx + 1] : null;
+// Allow overriding the source audio (e.g. an STS-converted copy of vocals.wav)
+// and the output directory (e.g. public/audio/phonemes/jasmine). Defaults
+// reproduce the original pipeline exactly.
+const sourceIdx     = args.indexOf('--source-audio');
+const SOURCE_AUDIO  = sourceIdx !== -1 ? path.resolve(ROOT, args[sourceIdx + 1]) : DEFAULT_VOCALS_WAV;
+const outputIdx     = args.indexOf('--output-dir');
+const OUTPUT_DIR    = outputIdx !== -1 ? path.resolve(ROOT, args[outputIdx + 1]) : DEFAULT_OUTPUT_DIR;
+const CONTEXT_DIR   = path.join(OUTPUT_DIR, 'context');
+// When a custom source audio is provided, skip the download/demucs stages —
+// they're only needed to produce the default vocals.wav from YouTube.
+const SKIP_AUDIO_SETUP = sourceIdx !== -1;
 
 // ─── Helpers ──────────────────────────────────────────────────
 function sh(cmd, opts = {}) {
@@ -138,8 +148,8 @@ function ensureAudio() {
 
 // ─── Step 2: demucs vocal isolation ───────────────────────────
 function ensureVocals() {
-  if (exists(VOCALS_WAV) && !forceDemucs) {
-    console.log(`✓ Vocal track already exists: ${path.relative(ROOT, VOCALS_WAV)}`);
+  if (exists(DEFAULT_VOCALS_WAV) && !forceDemucs) {
+    console.log(`✓ Vocal track already exists: ${path.relative(ROOT, DEFAULT_VOCALS_WAV)}`);
     return;
   }
   console.log('🎤 Running Demucs to isolate vocals (this takes ~90 s)…');
@@ -148,8 +158,8 @@ function ensureVocals() {
     `python3 -m demucs --two-stems=vocals -o '${separatedDir}' '${AUDIO_WAV}'`,
     { cwd: SOURCE_DIR }
   );
-  if (!exists(VOCALS_WAV)) {
-    throw new Error(`Demucs did not produce expected output at ${VOCALS_WAV}`);
+  if (!exists(DEFAULT_VOCALS_WAV)) {
+    throw new Error(`Demucs did not produce expected output at ${DEFAULT_VOCALS_WAV}`);
   }
 }
 
@@ -167,7 +177,7 @@ async function ensureWhisperTranscript() {
 
   // Whisper API has a 25 MB upload limit — re-encode as 128kbps MP3 for upload
   const tmpMp3 = path.join(SOURCE_DIR, 'vocals-for-whisper.mp3');
-  sh(`ffmpeg -y -i '${VOCALS_WAV}' -c:a libmp3lame -b:a 128k '${tmpMp3}' 2>/dev/null`);
+  sh(`ffmpeg -y -i '${DEFAULT_VOCALS_WAV}' -c:a libmp3lame -b:a 128k '${tmpMp3}' 2>/dev/null`);
 
   const form = new FormData();
   form.append('file', new Blob([fs.readFileSync(tmpMp3)]), 'vocals.mp3');
@@ -240,7 +250,7 @@ function extractClip(outPath, startSec, endSec, label) {
     'ffmpeg', '-y',
     '-ss', startSec.toFixed(3),
     '-to', endSec.toFixed(3),
-    '-i', `'${VOCALS_WAV}'`,
+    '-i', `'${SOURCE_AUDIO}'`,
     '-af', `'${filter}'`,
     '-c:a', 'libmp3lame', '-b:a', '192k',
     `'${outPath}'`,
@@ -258,8 +268,16 @@ async function main() {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.mkdirSync(CONTEXT_DIR, { recursive: true });
 
-  ensureAudio();
-  ensureVocals();
+  if (SKIP_AUDIO_SETUP) {
+    if (!exists(SOURCE_AUDIO)) {
+      throw new Error(`--source-audio not found: ${SOURCE_AUDIO}`);
+    }
+    console.log(`✓ using custom source audio: ${path.relative(ROOT, SOURCE_AUDIO)}`);
+    console.log(`✓ writing to output dir:     ${path.relative(ROOT, OUTPUT_DIR)}`);
+  } else {
+    ensureAudio();
+    ensureVocals();
+  }
   const whisper = await ensureWhisperTranscript();
 
   console.log('\n🔍 Matching phoneme utterances to video sequence…');
