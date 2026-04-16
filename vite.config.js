@@ -4,6 +4,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [vue()],
+  server: {
+    host: 'localhost',
+    port: 5188,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       // Mock Node.js built-ins for the browser

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app app-mayhem">
     <Transition name="launch-splash">
       <div v-if="showLaunchSplash" class="launch-splash" aria-live="polite">
@@ -37,7 +37,7 @@
         <span class="guardian-pill-text">{{ guardianLabel }}</span>
       </div>
       <div class="xp-display" :class="{ pop: xpPop }">
-        <span class="spark-emoji">✨</span> {{ store.xp }} Sparks
+        <span class="spark-emoji">&#10024;</span> {{ store.xp }} Sparks
       </div>
     </header>
 
@@ -106,9 +106,9 @@
             <img src="/assets/friends/lion_1817275.png" alt="" class="scene-animal lion" />
             <img src="/assets/friends/panda_8493111.png" alt="" class="scene-animal panda" />
             <img src="/assets/friends/kangaroo_1018379.png" alt="" class="scene-animal kangaroo" />
-            <span class="scene-spark s1">✨</span>
-            <span class="scene-spark s2">🔥</span>
-            <span class="scene-spark s3">⭐</span>
+            <span class="scene-spark s1">&#10024;</span>
+            <span class="scene-spark s2">&#128293;</span>
+            <span class="scene-spark s3">&#11088;</span>
           </div>
           <div class="logo-area">
             <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
@@ -135,7 +135,7 @@
         <div v-else key="page-fallback" class="selection">
           <h2>Loading your trail...</h2>
           <p class="app-subtitle">Getting things ready. Tap below if needed.</p>
-          <button class="adventure-btn" @click="store.currentPage = 'unit-hub'">
+          <button class="adventure-btn" @click="store.currentPage = 'campground'">
             Continue
           </button>
         </div>
@@ -702,7 +702,8 @@ onErrorCaptured((error, instance, info) => {
   if (!store.activeLessonId) {
     store.activeLessonId = '001';
   }
-  store.currentPage = 'unit-hub';
+  // Fallback to map first. Unit hub should only be entered from map stop select.
+  store.currentPage = store.selectedFriend ? 'campground' : 'selection';
   return false;
 });
 
@@ -745,6 +746,9 @@ async function submitCreateProfile() {
 
 function beginAdventure() {
   showAdventureIntro.value = false;
+  if (!store.activeLessonId) {
+    store.activeLessonId = '001';
+  }
   store.currentPage = 'campground';
 }
 
@@ -767,6 +771,7 @@ async function onLessonComplete() {
   try {
     const syncPromise = completeUfliLesson(store.activeLessonId);
     celebrateComplete();
+    await showCelebrationScreen('ðŸ“–', 'Lesson Complete!', 'You learned new sounds!', 100);
     await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
     await syncPromise.catch(() => null);
     await showStoryBeatCard('Lesson Session');
@@ -788,7 +793,7 @@ async function onActivityComplete() {
 
     if (wasLocked && nowUnlocked) {
       celebrateFireLit();
-      await showCelebrationScreen('🔥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
+      await showCelebrationScreen('ðŸ”¥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
       await showStoryBeatCard('Game Session');
     } else {
       celebrateComplete();
@@ -813,11 +818,11 @@ async function onStoryComplete() {
 
     if (prevStatus !== 'complete') {
       celebrateUnitComplete();
-      await showCelebrationScreen('🏕️', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
+      await showCelebrationScreen('ðŸ•ï¸', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
       await showStoryBeatCard('Story Session');
     } else {
       celebrateStory();
-      await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);
+      await showCelebrationScreen('ðŸ“•', 'Story Finished!', 'Great reading!', 0);
       await showStoryBeatCard('Story Session');
     }
 
@@ -1246,7 +1251,7 @@ body {
   height: 66px;
   object-fit: contain;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
-  animation: none;
+  animation: sceneBob 1.35s ease-in-out infinite;
 }
 
 .scene-animal.fox { left: 8%; animation-delay: 0s; }
@@ -1258,13 +1263,14 @@ body {
   position: absolute;
   font-size: 1.1rem;
   opacity: 0.78;
-  animation: none;
+  animation: sceneTwinkle 1.2s ease-in-out infinite, sceneDrift 3.1s ease-in-out infinite;
   pointer-events: none;
 }
 
 .scene-spark.s1 { top: 10px; left: 16%; }
 .scene-spark.s2 { top: 18px; left: 48%; animation-delay: 0.3s; }
 .scene-spark.s3 { top: 9px; left: 79%; animation-delay: 0.5s; }
+
 
 .logo-area {
   display: flex;
@@ -1329,9 +1335,13 @@ body {
   cursor: pointer;
   transition: border-color 0.2s, transform 0.2s, box-shadow 0.3s, filter 0.2s;
   gap: 0.3rem;
-  animation: cardPulse 3.2s ease-in-out infinite;
+  animation: cardPulse 3.2s ease-in-out infinite, floatCard 1.7s ease-in-out infinite;
   isolation: isolate;
 }
+
+.char-card:nth-child(2) { animation-delay: 0.18s; }
+.char-card:nth-child(3) { animation-delay: 0.34s; }
+.char-card:nth-child(4) { animation-delay: 0.52s; }
 
 .char-card::before {
   content: "";
@@ -1362,12 +1372,38 @@ body {
   50% { box-shadow: 0 0 16px rgba(255, 167, 101, 0.24); }
 }
 
+@keyframes sceneBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-2deg); }
+}
+
+@keyframes sceneTwinkle {
+  0%, 100% { opacity: 0.5; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes sceneDrift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 .friend-img {
   width: 60%;
   height: 60%;
   object-fit: contain;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
-  animation: none;
+  animation: buddyWiggle 1.1s ease-in-out infinite;
+}
+
+@keyframes buddyWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
 }
 
 .friend-name {
@@ -1658,3 +1694,7 @@ body {
   font-size: 0.82rem;
 }
 </style>
+
+
+
+

@@ -78,6 +78,7 @@ let cancelled = false;
 
 const phase = ref('intro');
 const scriptIndex = ref(0);
+const playedAnchorSound = ref(false);
 
 const script = computed(() => props.step?.introductionScript ?? []);
 const articulation = computed(() => props.step?.articulatoryGesture ?? '');
@@ -125,10 +126,11 @@ const nextDisabled = computed(() => showMicPrompt.value && micPhase.value !== 'm
 async function speakCurrentLine() {
   const line = currentScriptLine.value;
   if (!line) return;
-  await ember.speak(displayScriptLine.value || line.text);
+  await ember.speakTeacher(displayScriptLine.value || line.text);
   if (cancelled) return;
-  // After speaking each script line, play the grapheme's sound to anchor it
-  if (grapheme.value) {
+  // Play the anchor sound once at intro start, not on every Next click.
+  if (!playedAnchorSound.value && scriptIndex.value === 0 && grapheme.value) {
+    playedAnchorSound.value = true;
     await ember.playPhoneme(grapheme.value);
   }
 }
@@ -143,7 +145,7 @@ async function startMicPractice() {
   if (cancelled) return;
   micPhase.value = result?.matched ? 'matched' : 'missed';
   if (result?.matched) {
-    await ember.speak('Nice job!');
+    await ember.speakTeacher('Nice job!');
   }
 }
 
@@ -165,11 +167,11 @@ onBeforeUnmount(() => {
 
 const readWords = computed(() => {
   const r = props.step?.readWords ?? {};
-  return [...(r.iDo ?? []), ...(r.weDo ?? []), ...(r.youDo ?? [])];
+  return Array.from(new Set([...(r.iDo ?? []), ...(r.weDo ?? []), ...(r.youDo ?? [])]));
 });
 const spellWords = computed(() => {
   const s = props.step?.spellWords ?? {};
-  return [...(s.iDo ?? []), ...(s.weDo ?? []), ...(s.youDo ?? [])];
+  return Array.from(new Set([...(s.iDo ?? []), ...(s.weDo ?? []), ...(s.youDo ?? [])]));
 });
 
 const readDone = ref([]);
@@ -196,13 +198,13 @@ function advanceScript() {
 async function markRead(i) {
   readDone.value[i] = true;
   const word = readWords.value[i];
-  if (word) await ember.speak(word);
+  if (word) await ember.speakTeacher(word);
 }
 
 async function markSpell(i) {
   spellDone.value[i] = true;
   const word = spellWords.value[i];
-  if (word) await ember.speak(word);
+  if (word) await ember.speakTeacher(word);
 }
 
 function finish() {

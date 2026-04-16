@@ -1,71 +1,138 @@
-{
-  "lessonNumber": 1,
-  "title": "a /ă/",
-  "grapheme": "a",
-  "phoneme": "/ă/",
-  "step1": {
-    "blend": [
-      { "phonemes": ["/ă/"], "word": "a" }
-    ],
-    "segment": [
-      { "word": "a", "phonemes": ["/ă/"] }
-    ]
-  },
-  "step2": {
-    "items": [
-      { "grapheme": "a", "phonemes": ["/ă/"] }
-    ]
-  },
-  "step3": {
-    "items": [
-      { "phoneme": "/ă/", "graphemes": ["a"] }
-    ]
-  },
-  "step4": {
-    "wordChain": ["a"],
-    "tiles": {
-      "initial": [],
-      "medial": ["a"],
-      "final": []
-    }
-  },
-  "step5": {
-    "instructionalNotes": "Introduce the short A sound. The mouth is open and relaxed. Show the letter A and say its sound /ă/. This is our very first letter — there are no full words yet, just the sound itself.",
-    "introductionScript": [
-      { "line": "1", "text": "This is the letter A." },
-      { "line": "2", "text": "The letter A says /ă/, like the start of apple." },
-      { "line": "3", "text": "Watch my mouth. Open and relaxed. /ă/." },
-      { "line": "4", "text": "Now you try. Say /ă/." }
-    ],
-    "articulatoryGesture": "Mouth open, jaw dropped, tongue relaxed and low. Voice on. Short, crisp sound.",
-    "graphemePlacements": [
-      { "grapheme": "a", "position": "initial", "examples": ["a"] }
-    ],
-    "readWords": {
-      "iDo": ["a"],
-      "weDo": ["a"],
-      "youDo": ["a"]
-    },
-    "spellWords": {
-      "iDo": ["a"],
-      "weDo": [],
-      "youDo": []
-    }
-  },
-  "step6": {
-    "wordChain": ["a"]
-  },
-  "step7": {
-    "review": [],
-    "teach": []
-  },
-  "step8": {
-    "readSentences": ["a."],
-    "spellSentences": ["a."]
-  },
-  "wordList": ["a"],
-  "highFrequencyWords": {
-    "dolch": ["a"],
-    "fry": ["a"]
-  }
+﻿{
+    "lessonNumber":  1,
+    "title":  "a /Äƒ/",
+    "grapheme":  "a",
+    "phoneme":  "/Äƒ/",
+    "step1":  {
+                  "blend":  [
+                                {
+                                    "phonemes":  [
+                                                     "/Äƒ/"
+                                                 ],
+                                    "word":  "a"
+                                }
+                            ],
+                  "segment":  [
+                                  {
+                                      "word":  "a",
+                                      "phonemes":  [
+                                                       "/Äƒ/"
+                                                   ]
+                                  }
+                              ]
+              },
+    "step2":  {
+                  "items":  [
+                                {
+                                    "grapheme":  "a",
+                                    "phonemes":  [
+                                                     "/Äƒ/"
+                                                 ]
+                                }
+                            ]
+              },
+    "step3":  {
+                  "items":  [
+                                {
+                                    "phoneme":  "/Äƒ/",
+                                    "graphemes":  [
+                                                      "a"
+                                                  ]
+                                }
+                            ]
+              },
+    "step4":  {
+                  "wordChain":  [
+                                    "a"
+                                ],
+                  "tiles":  {
+                                "initial":  [
+
+                                            ],
+                                "medial":  [
+                                               "a"
+                                           ],
+                                "final":  [
+
+                                          ]
+                            }
+              },
+    "step5":  {
+                  "instructionalNotes":  "Introduce the short A sound. The mouth is open and relaxed. Show the letter A and say its sound /Äƒ/. This is our very first letter â€” there are no full words yet, just the sound itself.",
+                  "introductionScript":  [
+                                             {
+                                                 "line":  "1",
+                                                 "text":  "The letter A says /ă/, like the start of apple."
+                                             },
+                                             {
+                                                 "line":  "2",
+                                                 "text":  "Now you try. Say /ă/."
+                                             }
+                                         ],
+                  "articulatoryGesture":  "Mouth open, jaw dropped, tongue relaxed and low. Voice on. Short, crisp sound.",
+                  "graphemePlacements":  [
+                                             {
+                                                 "grapheme":  "a",
+                                                 "position":  "initial",
+                                                 "examples":  [
+                                                                  "a"
+                                                              ]
+                                             }
+                                         ],
+                  "readWords":  {
+                                    "iDo":  [
+                                                "a"
+                                            ],
+                                    "weDo":  [
+                                                 "a"
+                                             ],
+                                    "youDo":  [
+                                                  "a"
+                                              ]
+                                },
+                  "spellWords":  {
+                                     "iDo":  [
+                                                 "a"
+                                             ],
+                                     "weDo":  [
+
+                                              ],
+                                     "youDo":  [
+
+                                               ]
+                                 }
+              },
+    "step6":  {
+                  "wordChain":  [
+
+                                ]
+              },
+    "step7":  {
+                  "review":  [
+
+                             ],
+                  "teach":  [
+
+                            ]
+              },
+    "step8":  {
+                  "readSentences":  [
+
+                                    ],
+                  "spellSentences":  [
+
+                                     ]
+              },
+    "wordList":  [
+                     "a"
+                 ],
+    "highFrequencyWords":  {
+                               "dolch":  [
+                                             "a"
+                                         ],
+                               "fry":  [
+                                           "a"
+                                       ]
+                           }
 }
+
