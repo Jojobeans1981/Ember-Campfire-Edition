@@ -18,6 +18,22 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-15 — [BUILD] Backend integration tests could not reach the local Postgres container with default env
+
+**Error:** `ECONNREFUSED 127.0.0.1:5432` and then `ECONNREFUSED 127.0.0.1:54329` while running the backend Postgres integration tests in `backend/`.
+**Context:** Phase 12 backend event-ingestion validation using the existing Postgres-backed Bun test suite.
+**Root Cause:** In this workspace, the shared Postgres container was reachable only via its Docker network IP and required an explicit password, so the backend's default localhost/no-password connection settings did not match the active test environment.
+**Fix:** Used the container's runtime connection details (`DATABASE_HOST=<container-ip>`, `DATABASE_PASSWORD=postgres`) to reach the existing database for targeted validation.
+**Prevention:** When running backend integration tests in this environment, verify the live container host, port, and credentials first instead of assuming the default local config.
+
+### 2026-04-15 — [BUILD] Backend migration runner fails with `ERR_POSTGRES_CONNECTION_CLOSED`
+
+**Error:** `PostgresError: Connection closed` with code `ERR_POSTGRES_CONNECTION_CLOSED` while running `DATABASE_URL=... bun run src/infrastructure/db/migrations/runMigrations.ts`.
+**Context:** Phase 3 backend foundation validation against the local Postgres Docker container in `backend/`.
+**Root Cause:** The backend DB adapter used Bun's built-in Postgres client. In this Linux arm64 environment, that client closed the connection immediately before even a trivial query could complete, so the migration runner never reached `001_init.sql`.
+**Fix:** Replaced the Bun-specific DB wrapper with a minimal `postgres`-based adapter, kept the migration runner plain SQL, and verified the live migration run against the container.
+**Prevention:** Validate the DB adapter with a real `select 1` against the target runtime before treating migration wiring as complete.
+
 ### 2026-04-13 — [AUDIO] Phoneme audio silent in UFLI step components
 
 **Error:** `Uncaught (in promise) TypeError: can't access property Symbol.iterator, item.distractors is undefined` in `AuditoryDrillStep.vue:73`. Plus broader silence: no phoneme audio playing in any of the new UFLI step components.

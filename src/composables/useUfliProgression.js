@@ -1,11 +1,8 @@
 import { store } from '../store';
 import { ALL_UFLI_LESSON_IDS, lessonIdFromNumber } from '../data/ufli/ufliLessons.js';
+import { useProfileProgress } from './useProfileProgress.js';
 
 const ACTIVITY_TYPES = ['speech', 'match', 'blend', 'build', 'sentence'];
-
-const XP_LESSON = 100;
-const XP_ACTIVITY = 50;
-const XP_CONNECTED_TEXT = 75;
 
 function makeEmptyProgress() {
   const activitiesComplete = {};
@@ -29,6 +26,8 @@ function activitiesAllComplete(progress) {
 }
 
 export function useUfliProgression() {
+  const { submitOperation } = useProfileProgress();
+
   function isUfliLessonUnlocked(lessonId) {
     const id = lessonIdFromNumber(lessonId);
     const idx = ALL_UFLI_LESSON_IDS.indexOf(id);
@@ -48,32 +47,29 @@ export function useUfliProgression() {
     return 'complete';
   }
 
-  function completeUfliLesson(lessonId) {
+  async function completeUfliLesson(lessonId) {
     const id = lessonIdFromNumber(lessonId);
     const p = ensureProgress(id);
     if (p.lessonComplete) return;
-    p.lessonComplete = true;
-    store.xp += XP_LESSON;
+    await submitOperation('complete_lesson', { lessonId: id });
   }
 
-  function completeUfliActivity(lessonId, activityType) {
+  async function completeUfliActivity(lessonId, activityType) {
     const id = lessonIdFromNumber(lessonId);
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return;
     if (!ACTIVITY_TYPES.includes(activityType)) return;
     if (p.activitiesComplete[activityType]) return;
-    p.activitiesComplete[activityType] = true;
-    store.xp += XP_ACTIVITY;
+    await submitOperation('complete_activity', { lessonId: id, activityType });
   }
 
-  function completeUfliConnectedText(lessonId) {
+  async function completeUfliConnectedText(lessonId) {
     const id = lessonIdFromNumber(lessonId);
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return;
     if (!activitiesAllComplete(p)) return;
     if (p.connectedTextRead) return;
-    p.connectedTextRead = true;
-    store.xp += XP_CONNECTED_TEXT;
+    await submitOperation('complete_connected_text', { lessonId: id });
   }
 
   function getCumulativeLearnedLessonIds() {

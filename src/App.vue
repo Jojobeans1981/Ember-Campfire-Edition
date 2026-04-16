@@ -1,7 +1,6 @@
 <template>
   <div class="app">
-    <!-- Top bar -->
-    <header v-if="store.currentPage !== 'selection'" class="top-bar">
+    <header v-if="showTopBar" class="top-bar">
       <button class="nav-btn" @click="goBack">
         <span class="back-arrow">&#8592;</span> Back
       </button>
@@ -10,46 +9,90 @@
       </div>
     </header>
 
-    <!-- Main area -->
     <main class="main">
+      <p v-if="showSyncBanner" class="sync-banner">{{ syncBannerText }}</p>
+
       <Transition name="page" mode="out-in">
-        <!-- Selection screen -->
-        <div v-if="store.currentPage === 'selection'" key="selection" class="selection">
+        <div v-if="store.bootstrapStatus === 'loading'" key="bootstrap-loading" class="status-card">
+          <h2>Waking the Campground</h2>
+          <p>Loading your account and profiles...</p>
+        </div>
+
+        <div v-else-if="store.bootstrapStatus === 'unauthenticated'" key="bootstrap-unauthenticated" class="status-card">
+          <h2>Sign-In Needed</h2>
+          <p>Add a valid dev auth token so the frontend can call the backend.</p>
+        </div>
+
+        <div v-else-if="store.bootstrapStatus === 'error'" key="bootstrap-error" class="status-card">
+          <h2>Campground Boot Failed</h2>
+          <p>{{ store.bootstrapError }}</p>
+          <button class="primary-btn" type="button" @click="runBootstrap">Try Again</button>
+        </div>
+
+        <form
+          v-else-if="store.profiles.length === 0"
+          key="create-profile"
+          class="selection profile-flow"
+          @submit.prevent="submitCreateProfile"
+        >
+          <div class="logo-area">
+            <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
+            <h1 class="app-title">Ember Campground</h1>
+            <p class="app-subtitle">Create the first reader profile for this household.</p>
+          </div>
+
+          <label class="field-label" for="profile-name">Reader Name</label>
+          <input id="profile-name" v-model.trim="newProfileName" class="text-input" type="text" maxlength="60" />
+          <button class="primary-btn" type="submit" :disabled="!newProfileName || profileActionBusy">
+            {{ profileActionBusy ? 'Creating...' : 'Create Profile' }}
+          </button>
+        </form>
+
+        <div v-else-if="requiresProfileSelection" key="profile-selection" class="selection profile-flow">
+          <div class="logo-area">
+            <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
+            <h1 class="app-title">Choose a Reader</h1>
+            <p class="app-subtitle">Pick which profile should own this session's progress.</p>
+          </div>
+
+          <div class="profile-grid">
+            <button
+              v-for="profile in store.profiles"
+              :key="profile.id"
+              class="profile-card"
+              type="button"
+              @click="handleProfileSelection(profile.id)"
+            >
+              <span class="profile-name">{{ profile.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-else-if="store.currentPage === 'selection'" key="selection" class="selection">
           <div class="logo-area">
             <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
             <h1 class="app-title">Ember Campground</h1>
             <p class="app-subtitle">Learn to Read, One Spark at a Time</p>
           </div>
           <h2>Choose a Guardian</h2>
+          <p class="selection-note">Profile: {{ activeProfileName }}</p>
           <div class="character-grid">
-            <div v-for="friend in friendList" :key="friend.name" class="char-card" @click="selectFriend(friend)">
+            <div v-for="friend in friendList" :key="friend.id" class="char-card" @click="selectFriend(friend)">
               <img :src="'/assets/friends/' + friend.file" class="friend-img" />
               <div class="friend-name">{{ friend.name }}</div>
             </div>
           </div>
         </div>
 
-        <!-- Campground map -->
         <CampgroundMap v-else-if="store.currentPage === 'campground'" key="campground" />
-
-        <!-- Unit hub -->
         <UfliLessonHub v-else-if="store.currentPage === 'unit-hub'" key="unit-hub" />
-
-        <!-- Lesson player -->
         <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeLessonId" @complete="onLessonComplete" />
-
-        <!-- Activity player -->
         <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :lessonId="store.activeLessonId" :activityType="store.activeActivity" @complete="onActivityComplete" />
-
-        <!-- Story reader -->
         <StoryReader v-else-if="store.currentPage === 'story'" key="story" :unitId="store.activeLessonId" @complete="onStoryComplete" />
-
-        <!-- Dashboard -->
         <Dashboard v-else-if="store.currentPage === 'dashboard'" key="dashboard" />
       </Transition>
     </main>
 
-    <!-- Celebration overlay -->
     <Transition name="celebration">
       <div v-if="showCelebration" class="celebration-overlay" @click="dismissCelebration">
         <div class="celebration-card">
@@ -65,9 +108,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { store } from './store';
-import { usePersistence } from './composables/usePersistence.js';
+import { useAppBootstrap } from './composables/useAppBootstrap.js';
+import { useProfileProgress } from './composables/useProfileProgress.js';
 import { useUfliProgression } from './composables/useUfliProgression.js';
 import { stopAllAudio } from './composables/useEmber.js';
 import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
@@ -79,7 +123,8 @@ import ActivityPlayer from './components/ActivityPlayer.vue';
 import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
 
-const { save, load } = usePersistence();
+const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
+const { submitOperation } = useProfileProgress();
 const {
   completeUfliLesson,
   completeUfliActivity,
@@ -88,6 +133,47 @@ const {
   ACTIVITY_TYPES,
 } = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
+
+const activeProfileName = computed(() => {
+  return store.profiles.find((profile) => profile.id === store.activeProfileId)?.name ?? 'Unknown reader';
+});
+
+const requiresProfileSelection = computed(() => {
+  return store.bootstrapStatus === 'ready' && store.profiles.length > 1 && !store.activeProfileId;
+});
+
+const showTopBar = computed(() => {
+  return store.bootstrapStatus === 'ready'
+    && Boolean(store.activeProfileId)
+    && store.currentPage !== 'selection';
+});
+
+const showSyncBanner = computed(() => {
+  return store.bootstrapStatus === 'ready'
+    && Boolean(store.activeProfileId)
+    && (
+      store.syncStatus === 'pending'
+      || store.syncStatus === 'syncing'
+      || Boolean(store.lastSyncError)
+      || Boolean(store.lastRecoveryError)
+    );
+});
+
+const syncBannerText = computed(() => {
+  if (store.syncStatus === 'syncing') {
+    return 'Saving progress...';
+  }
+
+  if (store.lastSyncError) {
+    return `Progress saved locally and will retry. ${store.lastSyncError}`;
+  }
+
+  if (store.lastRecoveryError) {
+    return `Recovery skipped. ${store.lastRecoveryError}`;
+  }
+
+  return 'Progress is queued locally.';
+});
 
 function isConnectedTextUnlocked(lessonId) {
   const p = store.ufliProgress[lessonId];
@@ -100,13 +186,14 @@ const showCelebration = ref(false);
 const celebrationData = ref({ icon: '', title: '', message: '', sparks: 0 });
 let celebrationResolve = null;
 let completionFlowBusy = false;
+const newProfileName = ref('');
+const profileActionBusy = ref(false);
 
 function killAudio() {
   stopAllAudio();
   cancelListening();
 }
 
-// Animate XP counter on change
 watch(() => store.xp, () => {
   xpPop.value = true;
   setTimeout(() => { xpPop.value = false; }, 500);
@@ -129,23 +216,65 @@ function dismissCelebration() {
 }
 
 const friendList = [
-  { name: 'Fox', file: 'fox_1984443.png' },
-  { name: 'Lion', file: 'lion_1817275.png' },
-  { name: 'Panda', file: 'panda_8493111.png' },
-  { name: 'Guardian', file: 'fox_1984443.png' },
+  { id: 'fox', name: 'Fox', file: 'fox_1984443.png' },
+  { id: 'lion', name: 'Lion', file: 'lion_1817275.png' },
+  { id: 'panda', name: 'Panda', file: 'panda_8493111.png' },
+  { id: 'guardian', name: 'Guardian', file: 'fox_1984443.png' },
 ];
 
-onMounted(() => {
-  const loaded = load();
-  if (loaded && store.selectedFriend) {
-    store.currentPage = 'campground';
+function syncEntryPage() {
+  if (!store.activeProfileId) {
+    store.currentPage = 'selection';
+    return;
   }
+
+  store.currentPage = 'campground';
+}
+
+async function runBootstrap() {
+  await bootstrapApp();
+  syncEntryPage();
+}
+
+onMounted(() => {
+  runBootstrap().catch(() => {
+    // bootstrapApp stores the error state for retryable failures.
+  });
 });
 
-function selectFriend(friend) {
-  store.selectedFriend = friend;
+async function selectFriend(friend) {
+  const syncPromise = submitOperation('set_selected_friend', { selectedFriend: friend });
   store.currentPage = 'campground';
-  save();
+  try {
+    await syncPromise;
+  } catch (_) {
+    // Keep the local choice active while the queued operation retries.
+  }
+}
+
+async function handleProfileSelection(profileId) {
+  profileActionBusy.value = true;
+  try {
+    await selectProfile(profileId);
+    syncEntryPage();
+  } finally {
+    profileActionBusy.value = false;
+  }
+}
+
+async function submitCreateProfile() {
+  if (!newProfileName.value || profileActionBusy.value) {
+    return;
+  }
+
+  profileActionBusy.value = true;
+  try {
+    await createProfile(newProfileName.value);
+    newProfileName.value = '';
+    syncEntryPage();
+  } finally {
+    profileActionBusy.value = false;
+  }
 }
 
 function goBack() {
@@ -165,10 +294,10 @@ async function onLessonComplete() {
   completionFlowBusy = true;
   killAudio();
   try {
-    completeUfliLesson(store.activeLessonId);
-    save();
+    const syncPromise = completeUfliLesson(store.activeLessonId);
     celebrateComplete();
     await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
+    await syncPromise.catch(() => null);
     store.currentPage = 'unit-hub';
   } finally {
     completionFlowBusy = false;
@@ -181,8 +310,7 @@ async function onActivityComplete() {
   killAudio();
   try {
     const wasLocked = !isConnectedTextUnlocked(store.activeLessonId);
-    completeUfliActivity(store.activeLessonId, store.activeActivity);
-    save();
+    const syncPromise = completeUfliActivity(store.activeLessonId, store.activeActivity);
 
     const nowUnlocked = isConnectedTextUnlocked(store.activeLessonId);
 
@@ -194,6 +322,7 @@ async function onActivityComplete() {
       await showCelebrationScreen('✨', 'Activity Complete!', 'You earned a spark!', 50);
     }
 
+    await syncPromise.catch(() => null);
     store.currentPage = 'unit-hub';
   } finally {
     completionFlowBusy = false;
@@ -206,8 +335,7 @@ async function onStoryComplete() {
   killAudio();
   try {
     const prevStatus = getUfliLessonStatus(store.activeLessonId);
-    completeUfliConnectedText(store.activeLessonId);
-    save();
+    const syncPromise = completeUfliConnectedText(store.activeLessonId);
 
     if (prevStatus !== 'complete') {
       celebrateUnitComplete();
@@ -217,6 +345,7 @@ async function onStoryComplete() {
       await showCelebrationScreen('📕', 'Story Finished!', 'Great reading!', 0);
     }
 
+    await syncPromise.catch(() => null);
     store.currentPage = 'unit-hub';
   } finally {
     completionFlowBusy = false;
@@ -305,9 +434,87 @@ body {
   flex: 1;
   overflow: auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
+}
+
+.status-card,
+.profile-flow {
+  width: min(92vw, 420px);
+}
+
+.status-card {
+  padding: 1.5rem;
+  border: 1px solid rgba(100, 255, 218, 0.18);
+  border-radius: 1rem;
+  background: rgba(17, 17, 17, 0.82);
+  text-align: center;
+}
+
+.sync-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 140, 0, 0.12);
+  border: 1px solid rgba(255, 140, 0, 0.28);
+  color: #ffd7a1;
+  font-size: 0.9rem;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.profile-card,
+.primary-btn {
+  border: 1px solid rgba(100, 255, 218, 0.35);
+  border-radius: 0.9rem;
+  background: rgba(17, 17, 17, 0.82);
+  color: #64FFDA;
+  cursor: pointer;
+  font: inherit;
+}
+
+.profile-card {
+  padding: 1rem;
+}
+
+.primary-btn {
+  padding: 0.8rem 1rem;
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.profile-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.field-label {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+.text-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(17, 17, 17, 0.82);
+  color: #E0E0E0;
+  font: inherit;
+}
+
+.selection-note {
+  margin: 0;
+  color: #888;
 }
 
 /* Page transitions */
@@ -497,4 +704,3 @@ body {
   to { opacity: 0; }
 }
 </style>
-
