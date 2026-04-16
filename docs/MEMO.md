@@ -101,9 +101,19 @@ Lesson "complete" status set
   → Next lesson station unlocks on the map
 ```
 
-**Persistence flow:** `usePersistence.save()` is called after every progress mutation. It serializes `ufliProgress`, `xp`, `selectedFriend`, and `skillState` to a single localStorage key. `load()` runs on app boot and rehydrates the reactive store.
+**Persistence flow:** frontend bootstrap persists only `activeProfileId` plus a session-safe cache of `currentUser`, `account`, and `profiles`. Profile-scoped progress (`ufliProgress`, `xp`, `selectedFriend`, `skillState`, pending operations) is cached per active profile. App UI state like `currentPage`, `activeLessonId`, and `activeActivity` stays local-only and is not part of auth/profile bootstrap.
 
 **Data-loading discipline:** No lesson is loaded eagerly. `getUfliLesson(id)` uses Vite dynamic import; the loader caches by ID so repeated calls within a session are O(1). `getCumulativeWordList` walks `ALL_UFLI_LESSON_IDS` up to and including the requested ID, ensuring sub-lessons (`035a`, `067b`) are ordered correctly via the canonical ID array.
+
+**Telemetry boundary:** frontend response events are uploaded to `POST /profiles/:profileId/events` as append-only telemetry only. They may still be processed locally for short-lived evidence handling, but they do not mutate canonical synced progress by themselves. Canonical `ufliProgress`, `xp`, `selectedFriend`, and `skillState` remain owned by the profile progress snapshot plus queued progress operations.
+
+### 7. Backend Postgres client uses `postgres` (rejected: Bun's built-in SQL client)
+
+The Phase 3 backend foundation needs to run plain SQL migrations against a live local Postgres container reliably.
+
+**Decision:** Use the small `postgres` driver in `backend/` for connection management and SQL execution.
+
+**Why over the alternative:** On this project's Linux arm64 setup, Bun's built-in Postgres client closes the connection immediately even for `select 1`, which blocks migration validation entirely. `postgres` keeps the code plain-SQL and adds only the minimal stable client needed to talk to the database.
 
 ## Known Failure Modes
 

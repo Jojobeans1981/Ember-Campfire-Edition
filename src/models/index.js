@@ -33,6 +33,14 @@
  * @property {number} attemptNumber
  * @property {boolean} wasRetryAfterPrompt
  *
+ * @typedef {Object} QueuedEventEnvelope
+ * @property {string} profileId
+ * @property {string} clientEventId
+ * @property {string} eventType
+ * @property {string} occurredAt
+ * @property {number} schemaVersion
+ * @property {Record<string, any>} payload
+ *
  * @typedef {Object} LessonRun
  * @property {string} id
  * @property {string} lessonId

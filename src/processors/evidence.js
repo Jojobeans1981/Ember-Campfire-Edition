@@ -1,7 +1,10 @@
 import { eventQueue, clearQueue } from '../store/events';
 import { skillState } from '../store';
+import { useEventUpload } from '../composables/useEventUpload.js';
 
 export function processSessionEnd(sessionId) {
+  const { flushPendingEvents } = useEventUpload();
+
   /** @type {Record<string, {correct: number, total: number}>} */
   const counts = {};
 
@@ -27,5 +30,8 @@ export function processSessionEnd(sessionId) {
     }
   });
 
+  // Local evidence processing can inform local skillState, but the upload is
+  // telemetry-only and does not author canonical progress on its own.
   clearQueue();
+  void flushPendingEvents().catch(() => undefined);
 }
