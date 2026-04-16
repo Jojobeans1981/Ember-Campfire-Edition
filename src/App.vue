@@ -711,17 +711,10 @@ function syncEntryPage() {
     return;
   }
 
-  const persisted = loadPersistedPage();
-  if (persisted === 'selection') {
-    store.currentPage = 'selection';
-    return;
-  }
-  if (persisted && store.selectedFriend) {
-    store.currentPage = persisted;
-    return;
-  }
-
-  store.currentPage = store.selectedFriend ? 'campground' : 'selection';
+  // Always return to guardian selection on boot so the demo flow
+  // consistently starts from the chooser instead of restoring
+  // directly into the map from a previous session.
+  store.currentPage = 'selection';
 }
 
 async function runBootstrap() {
