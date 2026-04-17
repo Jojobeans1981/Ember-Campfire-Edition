@@ -60,6 +60,44 @@ function claimPlayback(type, priority) {
   return id;
 }
 
+/**
+ * Emergency fallback using browser SpeechSynthesis.
+ * Matches the duration of the audio to the promise lifecycle.
+ */
+function speakWithBrowserFallback(text, playbackId) {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) {
+      releasePlayback(playbackId);
+      resolve(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1.1;
+
+    utterance.onend = () => {
+      releasePlayback(playbackId);
+      resolve(true);
+    };
+    utterance.onerror = () => {
+      releasePlayback(playbackId);
+      resolve(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+
+    // If for some reason playback changes while speaking, cancel synthesis
+    const checkInterval = setInterval(() => {
+      if (!isPlaybackCurrent(playbackId)) {
+        window.speechSynthesis.cancel();
+        clearInterval(checkInterval);
+        resolve(false);
+      }
+    }, 100);
+  });
+}
+
 function playAudioSources(sources, playbackId) {
   return new Promise((resolve) => {
     let settled = false;
@@ -155,12 +193,15 @@ export function useEmber() {
 
       if (!ttsFile) {
         if (import.meta.env?.DEV) {
-          console.warn(`[TTS] No manifest entry for: "${cleaned}"`);
+          console.warn(`[TTS] No manifest entry for: "${cleaned}". Falling back to browser SpeechSynthesis.`);
         }
-        releasePlayback(playbackId);
-        isSpeaking.value = false;
-        currentText.value = '';
-        resolve(false);
+        currentText.value = cleaned;
+        isSpeaking.value = true;
+        speakWithBrowserFallback(cleaned, playbackId).then(() => {
+          isSpeaking.value = false;
+          currentText.value = '';
+          resolve(true);
+        });
         return;
       }
 

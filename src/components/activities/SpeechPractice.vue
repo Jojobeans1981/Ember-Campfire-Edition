@@ -2,12 +2,13 @@
   <div class="speech-practice">
     <h3>Say It!</h3>
 
-    <div class="current-phoneme">{{ currentPhoneme }}</div>
+    <div v-if="currentPhoneme" class="current-phoneme">{{ currentPhoneme }}</div>
 
-    <button v-if="phase === 'ready'" class="listen-btn" @click="playAndListen">
+    <button v-if="phase === 'ready' && currentPhoneme" class="listen-btn" @click="playAndListen">
       🎤 Hear & Say '{{ currentPhoneme }}'
     </button>
 
+    <div v-if="phase === 'booting'" class="status">Getting the next sound ready...</div>
     <div v-if="phase === 'playing'" class="status">Playing sound...</div>
 
     <div v-if="phase === 'listening'" class="listening-area">
@@ -29,18 +30,6 @@
 
     <div class="debug-card">
       <div class="debug-title">Recognition Debug</div>
-      <div class="debug-line"><strong>Target:</strong> {{ debugState.target || currentPhoneme }}</div>
-      <div class="debug-line"><strong>Transcript:</strong> {{ debugState.transcript || 'none' }}</div>
-      <div class="debug-line"><strong>Recognizer:</strong> {{ debugState.recognizer }}</div>
-      <div class="debug-line"><strong>Matched By:</strong> {{ debugState.matchedBy }}</div>
-      <div class="debug-line"><strong>Vosk Error:</strong> {{ debugState.voskError || 'none' }}</div>
-      <div class="debug-line"><strong>Speech Detected:</strong> {{ debugState.speechDetected ? 'yes' : 'no' }}</div>
-      <div class="debug-line"><strong>Sustain Frames:</strong> {{ debugState.sustainFrames }}</div>
-      <div class="debug-line"><strong>Avg Centroid:</strong> {{ debugState.avgCentroid }}</div>
-      <div class="debug-line"><strong>High Energy:</strong> {{ debugState.avgHighEnergyRatio }}</div>
-      <div class="debug-line"><strong>Low Energy:</strong> {{ debugState.avgLowEnergyRatio }}</div>
-      <div class="debug-line"><strong>Zero Cross:</strong> {{ debugState.avgZeroCrossingRate }}</div>
-      <div class="debug-line"><strong>Result:</strong> {{ debugState.result }}</div>
     </div>
   </div>
 </template>
@@ -68,7 +57,7 @@ const allPhonemes = ref([]);
 const focusPhonemes = ref([]);
 
 const currentPhoneme = ref('');
-const phase = ref('ready');
+const phase = ref('booting');
 const correct = ref(0);
 const targetCount = 5;
 let cancelled = false;
@@ -94,7 +83,7 @@ function pickPhoneme() {
 }
 
 async function playAndListen() {
-  if (cancelled) return;
+  if (cancelled || !currentPhoneme.value) return;
   phase.value = 'playing';
   await ember.playPhoneme(currentPhoneme.value);
 
@@ -149,6 +138,7 @@ onMounted(async () => {
     return;
   }
   pickPhoneme();
+  phase.value = 'ready';
 });
 
 onBeforeUnmount(() => {

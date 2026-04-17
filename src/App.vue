@@ -250,7 +250,7 @@ const {
   completeUfliActivity,
   completeUfliConnectedText,
   getUfliLessonStatus,
-  ACTIVITY_TYPES,
+  isUfliConnectedTextUnlocked,
 } = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
 const ember = useEmber();
@@ -325,9 +325,7 @@ const syncBannerText = computed(() => {
 });
 
 function isConnectedTextUnlocked(lessonId) {
-  const p = store.ufliProgress[lessonId];
-  if (!p || !p.lessonComplete) return false;
-  return ACTIVITY_TYPES.every((t) => p.activitiesComplete[t]);
+  return isUfliConnectedTextUnlocked(lessonId);
 }
 
 const xpPop = ref(false);
@@ -364,6 +362,7 @@ let completionFlowBusy = false;
 const newProfileName = ref('');
 const profileActionBusy = ref(false);
 let launchSplashTimer = null;
+let splashStartTime = 0;
 let streakResetTimer = null;
 let friendSelectionFxTimer = null;
 let burstIdSeed = 0;
@@ -374,6 +373,22 @@ let userGestureWarmupAttached = false;
 let firstGestureWarmupHandler = null;
 let introSpeakInFlight = false;
 let storyBeatAutoDismissTimer = null;
+
+watch(() => store.bootstrapStatus, (status) => {
+  if (status !== 'idle' && status !== 'loading') {
+    if (launchSplashTimer) {
+      window.clearTimeout(launchSplashTimer);
+
+      const elapsed = Date.now() - splashStartTime;
+      const MIN_SPLASH_TIME = 7500; // All letters finish lighting at ~6s, plus time to read
+      const remaining = Math.max(800, MIN_SPLASH_TIME - elapsed);
+
+      launchSplashTimer = window.setTimeout(() => {
+        showLaunchSplash.value = false;
+      }, remaining);
+    }
+  }
+});
 
 function splashLetterIndex(lineIndex, wordIndex, charIndex) {
   let offset = 0;
@@ -773,6 +788,7 @@ onMounted(() => {
   }
 
   if (showLaunchSplash.value) {
+    splashStartTime = Date.now();
     launchSplashTimer = window.setTimeout(() => {
       showLaunchSplash.value = false;
       try {

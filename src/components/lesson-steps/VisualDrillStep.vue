@@ -38,6 +38,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 import FocusStage from './FocusStage.vue';
 
@@ -51,6 +52,7 @@ const {
   requestMicPermission,
   sustainProgress: micProgress,
 } = useSpeechRecognition();
+const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 
 const items = computed(() => props.step?.items ?? []);
 const index = ref(0);
@@ -89,18 +91,21 @@ async function startMic() {
   if (!item) return;
   busy.value = true;
   micPhase.value = 'listening';
-  await ember.speak('Listening. Say the sound.');
-  const target = item.phonemes?.[0] ?? item.grapheme;
-  const result = await startListening(target, 7000);
-  if (cancelled) return;
-  if (result?.matched) {
-    micPhase.value = 'matched';
-    await ember.speak('Great! You said it!');
-  } else {
-    micPhase.value = 'missed';
-    await ember.speak('Try again. Tap the microphone and say the sound.');
+  try {
+    await prepareMicTurn();
+    const target = item.phonemes?.[0] ?? item.grapheme;
+    const result = await startListening(target, 9000);
+    if (cancelled) return;
+    if (result?.matched) {
+      micPhase.value = 'matched';
+      await ember.speak('Great! You said it!');
+    } else {
+      micPhase.value = 'missed';
+      await ember.speak('Try again. Tap the microphone and say the sound.');
+    }
+  } finally {
+    busy.value = false;
   }
-  busy.value = false;
 }
 
 function next() {

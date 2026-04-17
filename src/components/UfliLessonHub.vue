@@ -22,21 +22,13 @@
       </div>
     </div>
 
-    <div class="spark-tracker" :class="trackerMood">
-      <div class="tracker-stars" aria-hidden="true">
-        <span
-          v-for="star in trackerStars"
-          :key="star.id"
-          class="tracker-star"
-          :class="[star.id, { earned: star.earned, super: star.super }]"
-        ></span>
-      </div>
+    <div class="spark-tracker">
       <div class="spark-bar">
-        <div class="spark-fill" :class="{ full: sparksEarned === 7 }" :style="{ width: sparkPercent + '%' }"></div>
+        <div class="spark-fill" :class="{ full: sparksEarned === sparkTotal }" :style="{ width: sparkPercent + '%' }"></div>
       </div>
       <div class="spark-dots">
         <span
-          v-for="i in 7"
+          v-for="i in sparkTotal"
           :key="i"
           class="spark-dot"
           :class="{ earned: i <= sparksEarned }"
@@ -70,15 +62,6 @@
       </button>
     </div>
 
-    <div class="hub-coin-trail" aria-hidden="true">
-      <span
-        v-for="coin in trailCoins"
-        :key="coin.id"
-        class="trail-coin"
-        :class="[coin.id, { earned: coin.earned, current: coin.current }]"
-      ></span>
-    </div>
-
     <button
       v-if="showConnectedText"
       class="story-card"
@@ -102,13 +85,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watchEffect, onMounted, watch, onBeforeUnmount } from 'vue';
+import { computed, watchEffect, onMounted, watch, onBeforeUnmount } from 'vue';
 import { store } from '../store';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
-import {
-  getUfliLesson,
-  getCumulativeReadSentences,
-} from '../data/ufli/ufliLessons.js';
 import { useUfliProgression } from '../composables/useUfliProgression.js';
 import { useEmber } from '../composables/useEmber.js';
 
@@ -116,22 +95,13 @@ const {
   getUfliLessonStatus,
   completeUfliLesson, // eslint-disable-line no-unused-vars
   ACTIVITY_TYPES,
+  getUfliLessonSparkProgress,
+  isUfliConnectedTextUnlocked,
+  lessonActivityTypes: getLessonActivityTypes,
 } = useUfliProgression();
 const ember = useEmber();
 
 const meta = computed(() => getLessonMeta(store.activeLessonId));
-const lessonData = ref(null);
-
-async function loadLessonData() {
-  if (!store.activeLessonId) {
-    lessonData.value = null;
-    return;
-  }
-  lessonData.value = await getUfliLesson(store.activeLessonId);
-}
-
-onMounted(loadLessonData);
-watch(() => store.activeLessonId, loadLessonData);
 
 function stripIpa(text) {
   if (!text) return '';
@@ -192,39 +162,14 @@ const statusLabel = computed(() => {
 });
 
 const sparksEarned = computed(() => {
-  const p = progress.value;
-  let count = 0;
-  if (p.lessonComplete) count++;
-  count += Object.values(p.activitiesComplete || {}).filter(Boolean).length;
-  if (p.connectedTextRead) count++;
-  return count;
+  return getUfliLessonSparkProgress(store.activeLessonId).earned;
 });
 
-const sparkPercent = computed(() => Math.round((sparksEarned.value / 7) * 100));
-const trackerMood = computed(() => {
-  if (sparksEarned.value >= 7) return 'champion';
-  if (sparksEarned.value >= 4) return 'glowing';
-  if (sparksEarned.value > 0) return 'warming';
-  return 'waiting';
-});
-
-const trackerStars = computed(() => ([
-  { id: 'star-1', earned: sparksEarned.value >= 1, super: sparksEarned.value >= 2 },
-  { id: 'star-2', earned: sparksEarned.value >= 3, super: sparksEarned.value >= 5 },
-  { id: 'star-3', earned: sparksEarned.value >= 6, super: sparksEarned.value >= 7 },
-]));
-
-const trailCoins = computed(() => ([
-  { id: 'coin-1', earned: sparksEarned.value >= 2, current: sparksEarned.value === 1 },
-  { id: 'coin-2', earned: sparksEarned.value >= 4, current: sparksEarned.value === 3 },
-  { id: 'coin-3', earned: sparksEarned.value >= 6, current: sparksEarned.value === 5 },
-  { id: 'coin-4', earned: sparksEarned.value >= 7, current: sparksEarned.value === 6 },
-]));
+const sparkTotal = computed(() => Math.max(1, getUfliLessonSparkProgress(store.activeLessonId).total));
+const sparkPercent = computed(() => Math.round((sparksEarned.value / sparkTotal.value) * 100));
 
 const connectedTextUnlocked = computed(() => {
-  const p = progress.value;
-  if (!p.lessonComplete) return false;
-  return ACTIVITY_TYPES.every((t) => p.activitiesComplete[t]);
+  return isUfliConnectedTextUnlocked(store.activeLessonId);
 });
 
 const activityList = [
@@ -235,34 +180,13 @@ const activityList = [
   { type: 'sentence', label: 'Read', icon: '📝' },
 ];
 
-// Any authored decodable sentence across lessons 1..this lesson. The
-// Read/Connected-Text UI is gated on this so we never show the card
-// with nothing real to read (lesson 1 status:"no_decodable" → hidden).
-const readSentenceCount = ref(0);
-watchEffect(async () => {
-  const id = store.activeLessonId;
-  if (!id) {
-    readSentenceCount.value = 0;
-    return;
-  }
-  const sentences = await getCumulativeReadSentences(id);
-  readSentenceCount.value = sentences.length;
-});
+const visibleActivityTypes = computed(() => new Set(getLessonActivityTypes(store.activeLessonId)));
 
-// Show every activity card by default; individual games handle their
-// own "not enough content yet" logic (target always drawn from
-// introduced graphemes; distractors may preview upcoming lessons for
-// visual variety). Read is the one exception — it has nothing to show
-// until real sentences are authored, so we hide it rather than render
-// an empty auto-complete.
 const visibleActivities = computed(() => {
-  return activityList.filter((activity) => {
-    if (activity.type === 'sentence') return readSentenceCount.value > 0;
-    return true;
-  });
+  return activityList.filter((activity) => visibleActivityTypes.value.has(activity.type));
 });
 
-const showConnectedText = computed(() => readSentenceCount.value > 0);
+const showConnectedText = computed(() => visibleActivityTypes.value.has('sentence'));
 
 function speakHubIntro() {
   const lessonNum = meta.value?.lessonNumber || '';
@@ -442,7 +366,6 @@ function startConnectedText() {
 .status-icon { font-size: 1.2rem; }
 
 .spark-tracker {
-  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -450,57 +373,13 @@ function startConnectedText() {
   gap: 0.4rem;
 }
 
-.spark-tracker.warming .spark-bar {
-  box-shadow: 0 0 0 1px rgba(255, 205, 105, 0.16);
-}
-
-.spark-tracker.glowing .spark-bar {
-  box-shadow: 0 0 0 1px rgba(255, 221, 126, 0.18), 0 0 16px rgba(255, 186, 89, 0.12);
-}
-
-.spark-tracker.champion .spark-bar {
-  box-shadow:
-    0 0 0 1px rgba(255, 237, 157, 0.26),
-    0 0 20px rgba(255, 214, 112, 0.22);
-}
-
-.tracker-stars {
-  position: absolute;
-  top: -0.7rem;
-  right: 0;
-  display: flex;
-  gap: 0.3rem;
-}
-
-.tracker-star {
-  width: 0.6rem;
-  height: 0.6rem;
-  clip-path: polygon(50% 0, 63% 34%, 100% 38%, 71% 59%, 80% 100%, 50% 76%, 20% 100%, 29% 59%, 0 38%, 37% 34%);
-  background: linear-gradient(180deg, rgba(255, 244, 173, 0.3) 0%, rgba(255, 204, 87, 0.24) 100%);
-  box-shadow: 0 0 0 rgba(255, 210, 88, 0);
-  opacity: 0.36;
-}
-
-.tracker-star.earned {
-  opacity: 1;
-  background: linear-gradient(180deg, #fff4ad 0%, #ffcc57 100%);
-  box-shadow: 0 0 8px rgba(255, 210, 88, 0.45);
-  animation: trackerTwinkle 1.4s ease-in-out infinite alternate;
-}
-
-.tracker-star.super {
-  animation: trackerTwinkle 1.15s ease-in-out infinite alternate, starVictorySpin 3.8s linear infinite;
-}
-
-.star-2 { animation-delay: 0.25s; }
-.star-3 { animation-delay: 0.5s; }
-
 .spark-bar {
   width: 100%;
   height: 6px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 221, 126, 0.18), 0 0 16px rgba(255, 186, 89, 0.12);
 }
 
 .spark-fill {
@@ -653,41 +532,6 @@ function startConnectedText() {
 .story-card.done { border-color: rgba(100, 255, 218, 0.3); }
 .story-card.locked { opacity: 0.3; cursor: not-allowed; }
 
-.hub-coin-trail {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: -0.2rem;
-}
-
-.trail-coin {
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 246, 183, 0.28) 0%, rgba(255, 216, 100, 0.18) 56%, rgba(231, 162, 44, 0.12) 100%);
-  border: 2px solid rgba(147, 91, 10, 0.82);
-  box-shadow: 0 0 0 rgba(255, 206, 93, 0);
-  opacity: 0.42;
-}
-
-.trail-coin.current {
-  opacity: 1;
-  background: radial-gradient(circle at 35% 35%, #fff4c3 0%, #ffd968 58%, #ec9f33 100%);
-  box-shadow: 0 0 12px rgba(255, 206, 93, 0.42);
-  animation: coinCurrentPulse 1s ease-in-out infinite;
-}
-
-.trail-coin.earned {
-  opacity: 1;
-  background: radial-gradient(circle at 35% 35%, #fff6b7 0%, #ffd864 56%, #e7a22c 100%);
-  box-shadow: 0 0 8px rgba(255, 206, 93, 0.28);
-  animation: coinWiggle 1.9s ease-in-out infinite;
-}
-
-.coin-2 { animation-delay: 0.15s; }
-.coin-3 { animation-delay: 0.3s; }
-.coin-4 { animation-delay: 0.45s; }
-
 @keyframes hubCardFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
@@ -696,28 +540,6 @@ function startConnectedText() {
 @keyframes medalBounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px) scale(1.04); }
-}
-
-@keyframes trackerTwinkle {
-  from {
-    transform: scale(0.9);
-    box-shadow: 0 0 6px rgba(255, 210, 88, 0.28);
-  }
-
-  to {
-    transform: scale(1.08);
-    box-shadow: 0 0 12px rgba(255, 210, 88, 0.5);
-  }
-}
-
-@keyframes starVictorySpin {
-  0%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-
-  50% {
-    transform: rotate(180deg) scale(1.12);
-  }
 }
 
 @keyframes doneDance {
@@ -731,20 +553,4 @@ function startConnectedText() {
   50% { transform: translateY(-2px); }
 }
 
-@keyframes coinWiggle {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-2px) rotate(8deg); }
-}
-
-@keyframes coinCurrentPulse {
-  0%, 100% {
-    transform: translateY(0) scale(0.96);
-    box-shadow: 0 0 8px rgba(255, 206, 93, 0.26);
-  }
-
-  50% {
-    transform: translateY(-4px) scale(1.1);
-    box-shadow: 0 0 16px rgba(255, 216, 112, 0.58);
-  }
-}
 </style>

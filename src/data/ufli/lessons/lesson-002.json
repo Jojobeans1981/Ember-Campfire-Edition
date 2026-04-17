@@ -5,7 +5,6 @@
   "phoneme": "/m/",
   "step1": {
     "blend": [
-      { "phonemes": ["/m/"], "word": "m" },
       { "phonemes": ["/ă/", "/m/"], "word": "am" }
     ],
     "segment": [
@@ -43,7 +42,7 @@
     ],
     "articulatoryGesture": "Lips pressed together. Voice on. The sound is held and hums through the nose.",
     "graphemePlacements": [
-      { "grapheme": "m", "position": "initial", "examples": ["m"] },
+      { "grapheme": "m", "position": "initial", "examples": ["mom"] },
       { "grapheme": "m", "position": "final", "examples": ["am"] }
     ],
     "readWords": {
@@ -54,14 +53,21 @@
     "spellWords": {
       "iDo": ["am"],
       "weDo": ["am"],
-      "youDo": []
+      "youDo": ["am"]
     }
   },
   "step6": {
     "wordChain": ["am"]
   },
   "step7": {
-    "review": [],
+    "review": [
+      {
+        "word": "a",
+        "breakdown": [
+          { "grapheme": "a", "phoneme": "/ă/" }
+        ]
+      }
+    ],
     "teach": [
       {
         "word": "I",
@@ -75,7 +81,7 @@
     "readSentences": ["I am."],
     "spellSentences": ["I am."]
   },
-  "wordList": ["am"],
+  "wordList": ["am", "I"],
   "highFrequencyWords": {
     "dolch": ["I", "a", "am"],
     "fry": ["I", "a"]

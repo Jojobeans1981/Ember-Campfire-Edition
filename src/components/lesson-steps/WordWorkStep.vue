@@ -91,7 +91,29 @@ const allChainDone = computed(() =>
 const phase = ref('chain');
 
 const sortIndex = ref(0);
-const currentSortWord = computed(() => sort.value?.words?.[sortIndex.value]);
+function normalizeCategoryToken(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+const sortEntries = computed(() => {
+  const words = Array.isArray(sort.value?.words) ? sort.value.words : [];
+  return words
+    .map((entry) => {
+      if (typeof entry === 'string') {
+        return {
+          word: entry,
+          category: sort.value?.answers?.[entry] ?? sort.value?.expected?.[entry] ?? sort.value?.map?.[entry] ?? '',
+        };
+      }
+      return {
+        word: entry?.word ?? entry?.text ?? '',
+        category: entry?.category ?? entry?.expectedCategory ?? entry?.answer ?? '',
+      };
+    })
+    .filter((entry) => String(entry.word ?? '').trim().length > 0);
+});
+const currentSortEntry = computed(() => sortEntries.value[sortIndex.value] ?? null);
+const currentSortWord = computed(() => currentSortEntry.value?.word ?? '');
 
 const meaningIndex = ref(0);
 const currentMeaningItem = computed(() => meaning.value?.items?.[meaningIndex.value]);
@@ -143,8 +165,16 @@ function advancePhase() {
   }
 }
 
-function pickCategory(_cat) {
-  if (sortIndex.value >= (sort.value?.words?.length ?? 0) - 1) {
+async function pickCategory(cat) {
+  const expectedCategory = normalizeCategoryToken(currentSortEntry.value?.category);
+  const chosenCategory = normalizeCategoryToken(cat);
+
+  if (expectedCategory && expectedCategory !== chosenCategory) {
+    await ember.speak('Try a different group.');
+    return;
+  }
+
+  if (sortIndex.value >= sortEntries.value.length - 1) {
     sortIndex.value++;
     return;
   }

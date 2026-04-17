@@ -24,7 +24,14 @@ async function ensureMicAccess() {
     return null;
   }
   try {
-    sharedStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    sharedStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
+    });
     return sharedStream;
   } catch (err) {
     console.error('Microphone access denied:', err);
@@ -48,13 +55,14 @@ const SUSTAIN_FRAMES = 30;
 // Plosive/short consonant target: very brief burst (~0.1-0.15s)
 const PLOSIVE_FRAMES = 8;
 // Minimum speech frames before we consider it "real speech" (not noise)
-// ~0.5s at 60fps — filters out coughs, bumps, background spikes
-const SPEECH_MIN_FRAMES = 30;
-// Silence after real speech: ~1.2s of quiet means they stopped talking
-const SILENCE_CUTOFF_FRAMES = 72;
-// Grace period at start: ignore audio for first ~1s to avoid picking up
-// the TTS "Your turn!" prompt through the speakers
-const GRACE_PERIOD_FRAMES = 60;
+const SPEECH_MIN_FRAMES_SUSTAIN = 18;
+const SPEECH_MIN_FRAMES_PLOSIVE = 6;
+
+// Silence after real speech: ~0.7s of quiet means they stopped talking
+const SILENCE_CUTOFF_FRAMES = 42;
+// Grace period at start: ignore only the first ~0.3-0.4s so we avoid
+// speaker bleed without missing a child who responds right away.
+const GRACE_PERIOD_FRAMES = 24;
 const EARLY_PHONEME_FALLBACKS = new Set(['a', 'm', 's', 't']);
 
 /**
@@ -63,11 +71,11 @@ const EARLY_PHONEME_FALLBACKS = new Set(['a', 'm', 's', 't']);
  * Tracks three phases:
  *   idle → speaking → silence_after_speech → fires onSpeechEnded
  *
- * The child must produce at least SPEECH_MIN_FRAMES of sound before
+ * The child must produce at least speechMinFrames of sound before
  * the silence cutoff is armed. This prevents background noise from
  * triggering an early evaluation.
  */
-function setupVolumeAnalysis(stream, audioContext, sustainProgress, sustainTarget, onSustained, onSpeechEnded) {
+function setupVolumeAnalysis(stream, audioContext, sustainProgress, sustainTarget, speechMinFrames, onSustained, onSpeechEnded) {
   const micSource = audioContext.createMediaStreamSource(stream);
   const analyser = audioContext.createAnalyser();
   analyser.fftSize = 256;
@@ -148,7 +156,7 @@ function setupVolumeAnalysis(stream, audioContext, sustainProgress, sustainTarge
       sustainedFrames = Math.max(0, sustainedFrames - 1);
 
       // Only start counting silence once we've confirmed real speech
-      if (totalSpeechFrames >= SPEECH_MIN_FRAMES) {
+      if (totalSpeechFrames >= speechMinFrames) {
         silenceFrames++;
       }
     }
@@ -162,7 +170,7 @@ function setupVolumeAnalysis(stream, audioContext, sustainProgress, sustainTarge
     }
 
     // Real speech happened and then stopped — cut to evaluation
-    if (totalSpeechFrames >= SPEECH_MIN_FRAMES && silenceFrames >= SILENCE_CUTOFF_FRAMES && onSpeechEnded) {
+    if (totalSpeechFrames >= speechMinFrames && silenceFrames >= SILENCE_CUTOFF_FRAMES && onSpeechEnded) {
       onSpeechEnded();
       return;
     }
@@ -174,7 +182,7 @@ function setupVolumeAnalysis(stream, audioContext, sustainProgress, sustainTarge
 
   return {
     micSource,
-    get speechDetected() { return totalSpeechFrames >= SPEECH_MIN_FRAMES; },
+    get speechDetected() { return totalSpeechFrames >= speechMinFrames; },
     getSustainedFrames: () => sustainedFrames,
     getStats: () => ({
       speechSampleCount,
@@ -211,10 +219,24 @@ function matchesEarlyPhonemeByAudio(target, volumeHandle) {
         && avgHighEnergyRatio <= 0.28
         && avgZeroCrossingRate <= 0.24;
     case 'm':
-      return avgCentroid <= 1200
-        && avgLowEnergyRatio >= 0.46
-        && avgHighEnergyRatio <= 0.16
-        && avgZeroCrossingRate <= 0.16;
+      // M often comes through two different ways on kid/laptop mics:
+      // a classic low nasal hum, or a buzzy voiced hum with stronger
+      // upper harmonics but still very low zero-crossing. Accept both.
+      return (
+        (
+          avgCentroid <= 2200
+          && avgLowEnergyRatio >= 0.32
+          && avgHighEnergyRatio <= 0.24
+          && avgZeroCrossingRate <= 0.18
+        ) || (
+          avgCentroid >= 2200
+          && avgCentroid <= 4600
+          && avgLowEnergyRatio >= 0.18
+          && avgHighEnergyRatio >= 0.25
+          && avgHighEnergyRatio <= 0.62
+          && avgZeroCrossingRate <= 0.05
+        )
+      );
     case 's':
       return avgCentroid >= 2200
         && avgHighEnergyRatio >= 0.22
@@ -230,11 +252,36 @@ function matchesEarlyPhonemeByAudio(target, volumeHandle) {
   }
 }
 
+async function createListeningAudioContext() {
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) {
+    throw new Error('AudioContext is not available in this browser');
+  }
+
+  const context = new AudioContextCtor();
+  if (context.state === 'suspended') {
+    try {
+      await context.resume();
+    } catch (err) {
+      console.warn('AudioContext resume failed:', err);
+    }
+  }
+
+  return context;
+}
+
+function createSilentDestination(audioContext) {
+  const silentGain = audioContext.createGain();
+  silentGain.gain.value = 0;
+  silentGain.connect(audioContext.destination);
+  return silentGain;
+}
+
 /**
  * Connect the mic stream to a Vosk recognizer via ScriptProcessorNode.
  * Returns a cleanup function.
  */
-function pipeAudioToVosk(audioContext, stream, recognizer) {
+function pipeAudioToVosk(audioContext, stream, recognizer, sinkNode) {
   const source = audioContext.createMediaStreamSource(stream);
   const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
@@ -244,7 +291,7 @@ function pipeAudioToVosk(audioContext, stream, recognizer) {
   };
 
   source.connect(processor);
-  processor.connect(audioContext.destination);
+  processor.connect(sinkNode || audioContext.destination);
 
   return () => {
     processor.onaudioprocess = null;
@@ -253,7 +300,7 @@ function pipeAudioToVosk(audioContext, stream, recognizer) {
   };
 }
 
-function startBrowserPhonemeRecognition(targetPhoneme, onMatch, onText) {
+function startBrowserPhonemeRecognition(targetPhoneme, onUpdate) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return null;
 
@@ -266,15 +313,20 @@ function startBrowserPhonemeRecognition(targetPhoneme, onMatch, onText) {
   const handleResults = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const result = event.results[i];
+      let bestText = '';
+      let matchedText = '';
       for (let j = 0; j < result.length; j++) {
         const text = result[j].transcript?.toLowerCase().trim();
         if (!text) continue;
-        onText(text);
+        if (!bestText) bestText = text;
         if (isPhonemeMatch(targetPhoneme, text)) {
-          onMatch(text);
-          return;
+          matchedText = text;
+          break;
         }
       }
+      const textToReport = matchedText || bestText;
+      if (!textToReport) continue;
+      onUpdate(textToReport, Boolean(matchedText), result.isFinal);
     }
   };
 
@@ -294,6 +346,24 @@ function startBrowserPhonemeRecognition(targetPhoneme, onMatch, onText) {
   };
 }
 
+function normalizeRecognitionText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isRecognitionTextMatch(normalizedTarget, spokenText) {
+  if (!normalizedTarget || !spokenText) return false;
+
+  if (normalizedTarget.includes(' ')) {
+    return spokenText === normalizedTarget || spokenText.includes(normalizedTarget);
+  }
+
+  return spokenText.split(/\s+/).includes(normalizedTarget);
+}
+
 function startBrowserWordRecognition(targetWord, onMatch, onText) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return null;
@@ -304,7 +374,7 @@ function startBrowserWordRecognition(targetWord, onMatch, onText) {
   recognition.lang = 'en-US';
   recognition.maxAlternatives = 5;
 
-  const normalizedTarget = String(targetWord || '').toLowerCase().replace(/[^a-z]/g, '');
+  const normalizedTarget = normalizeRecognitionText(targetWord);
 
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -312,15 +382,10 @@ function startBrowserWordRecognition(targetWord, onMatch, onText) {
       for (let j = 0; j < result.length; j++) {
         const text = result[j].transcript?.toLowerCase().trim();
         if (!text) continue;
-        onText(text);
+        const normalizedText = normalizeRecognitionText(text);
+        onText(normalizedText);
 
-        const words = text
-          .replace(/[^a-z\s]/g, ' ')
-          .split(/\s+/)
-          .map((word) => word.trim())
-          .filter(Boolean);
-
-        if (words.some((word) => word === normalizedTarget)) {
+        if (isRecognitionTextMatch(normalizedTarget, normalizedText)) {
           onMatch(text);
           return;
         }
@@ -381,6 +446,7 @@ export function useSpeechRecognition() {
     return new Promise(async (resolve) => {
       let resolved = false;
       let audioContext = null;
+      let silentDestination = null;
       let volumeHandle = null;
       let voskCleanup = null;
       let browserCleanup = null;
@@ -397,11 +463,13 @@ export function useSpeechRecognition() {
         if (voskCleanup) voskCleanup();
         if (browserCleanup) browserCleanup();
         if (recognizer) { try { recognizer.remove(); } catch (_) {} }
+        if (silentDestination) silentDestination.disconnect();
         if (audioContext) audioContext.close().catch(() => {});
         volumeHandle = null;
         voskCleanup = null;
         browserCleanup = null;
         recognizer = null;
+        silentDestination = null;
         audioContext = null;
         activeCleanup = null;
       };
@@ -431,20 +499,28 @@ export function useSpeechRecognition() {
 
       const stream = await ensureMicAccess();
       if (!stream) { finish(false); return; }
-      // Start model loading as early as possible so first attempts don't run browser-only.
-      warmupVoskModel().catch((err) => {
+      // Start model loading right away, but do not block live listening on it.
+      const preloadedModelPromise = warmupVoskModel().catch((err) => {
         console.warn('Vosk model warmup failed:', err);
+        throw err;
       });
 
       const normalizedTarget = normalizePhonemeKey(targetPhoneme);
       const params = getPhonemeParams(normalizedTarget);
       const isPlosive = params.type === 'plosive';
       const sustainTarget = isPlosive ? PLOSIVE_FRAMES : SUSTAIN_FRAMES;
+      const speechMinFrames = isPlosive ? SPEECH_MIN_FRAMES_PLOSIVE : SPEECH_MIN_FRAMES_SUSTAIN;
       const allowEarlyFallback = EARLY_PHONEME_FALLBACKS.has(normalizedTarget);
       let voskMatched = false;
       let browserMatched = false;
       let voskReady = false;
       let browserReady = false;
+
+      const getMatchedBy = () => {
+        if (voskMatched) return 'vosk';
+        if (browserMatched) return 'browser';
+        return 'none';
+      };
 
       debugState.value = {
         mode: 'phoneme',
@@ -465,16 +541,18 @@ export function useSpeechRecognition() {
 
       const shouldAllowEarlySpeechFallback = () => {
         if (!allowEarlyFallback || !volumeHandle) return false;
-        // Only allow audio-shape fallback when no recognizer is available.
-        // If Vosk/browser is running, require an actual recognition match.
-        const noRecognizerAvailable = !voskReady && !browserReady;
-        if (!noRecognizerAvailable) return false;
         const enoughSpeech = volumeHandle.speechDetected;
         const enoughSustain = volumeHandle.getSustainedFrames() >= Math.max(12, Math.floor(sustainTarget * 0.7));
         const noTranscript = !transcript.value || transcript.value === '[unk]';
+        // Browser recognition often stays "available" for an isolated /m/
+        // while still failing to produce a usable transcript. Let a strong
+        // nasal audio profile rescue that case instead of marking it wrong.
+        const targetAllowsTranscriptBypass = normalizedTarget === 'm';
+        const recognizerHasNotMatched = !voskMatched && !browserMatched;
         return enoughSpeech
           && enoughSustain
-          && noTranscript
+          && recognizerHasNotMatched
+          && (noTranscript || targetAllowsTranscriptBypass)
           && matchesEarlyPhonemeByAudio(normalizedTarget, volumeHandle);
       };
 
@@ -498,22 +576,12 @@ export function useSpeechRecognition() {
         return true;
       };
 
-      let preloadedModel = null;
       try {
-        preloadedModel = await warmupVoskModel();
-      } catch (err) {
-        console.warn('Vosk setup failed before listening, using browser speech fallback if available:', err);
-        debugState.value = {
-          ...debugState.value,
-          voskError: String(err?.message || err || 'unknown Vosk error'),
-        };
-      }
-
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext = await createListeningAudioContext();
+        silentDestination = createSilentDestination(audioContext);
 
         volumeHandle = setupVolumeAnalysis(
-          stream, audioContext, sustainProgress, sustainTarget,
+          stream, audioContext, sustainProgress, sustainTarget, speechMinFrames,
           // onSustained: sustained sound goal reached — only pass if Vosk confirmed
           () => {
             debugState.value = {
@@ -525,10 +593,6 @@ export function useSpeechRecognition() {
               avgLowEnergyRatio: Number((volumeHandle?.getStats?.().avgLowEnergyRatio ?? 0).toFixed(3)),
               avgZeroCrossingRate: Number((volumeHandle?.getStats?.().avgZeroCrossingRate ?? 0).toFixed(3)),
             };
-            if (voskMatched || browserMatched) {
-              finish(true);
-              return;
-            }
             if (useEarlySpeechFallback()) {
               return;
             }
@@ -562,24 +626,16 @@ export function useSpeechRecognition() {
 
         browserCleanup = startBrowserPhonemeRecognition(
           normalizedTarget,
-          (text) => {
-            browserMatched = true;
+          (text, didMatch, isFinal) => {
+            browserMatched = didMatch;
             transcript.value = text;
             debugState.value = {
               ...debugState.value,
               transcript: text,
               recognizer: voskReady ? 'vosk+browser' : 'browser',
-              matchedBy: 'browser',
+              matchedBy: getMatchedBy(),
             };
-            if (isPlosive && !resolved) finish(true);
-          },
-          (text) => {
-            transcript.value = text;
-            debugState.value = {
-              ...debugState.value,
-              transcript: text,
-              recognizer: voskReady ? 'vosk+browser' : 'browser',
-            };
+            if (isPlosive && isFinal && didMatch && !resolved) finish(true);
           },
         );
         browserReady = Boolean(browserCleanup);
@@ -588,45 +644,60 @@ export function useSpeechRecognition() {
           recognizer: browserReady ? 'browser' : 'none',
         };
 
-        if (preloadedModel) {
+        if (!browserReady) {
+          voskReady = false;
+          debugState.value = {
+            ...debugState.value,
+            recognizer: 'none',
+          };
+        }
+
+        void preloadedModelPromise.then((preloadedModel) => {
+          if (resolved || !audioContext || audioContext.state === 'closed') return;
+
           const grammar = getGrammarForPhoneme(targetPhoneme);
           recognizer = createRecognizer(preloadedModel, audioContext.sampleRate, grammar);
           voskReady = true;
           debugState.value = {
             ...debugState.value,
             recognizer: browserReady ? 'vosk+browser' : 'vosk',
+            fallbackUsed: browserReady && !voskMatched,
+            voskError: '',
           };
 
-          const handleVoskText = (text) => {
+          const handleVoskText = (text, isFinal = false) => {
             if (resolved || !text || text === '[unk]') return;
+            const didMatch = isPhonemeMatch(normalizedTarget, text);
+            voskMatched = didMatch;
             transcript.value = text;
             debugState.value = {
               ...debugState.value,
               transcript: text,
+              matchedBy: getMatchedBy(),
             };
-            if (isPhonemeMatch(normalizedTarget, text)) {
-              voskMatched = true;
+            if (didMatch) {
               debugState.value = {
                 ...debugState.value,
-                matchedBy: 'vosk',
+                fallbackUsed: false,
               };
-              // Plosives: Vosk match alone is enough (can't sustain them)
-              // Sustain: Vosk match + sustained volume will trigger via onSustained
-              if (isPlosive) finish(true);
+              if (isPlosive && isFinal) finish(true);
             }
           };
 
-          recognizer.on('result', (message) => handleVoskText(message.result?.text));
-          recognizer.on('partialresult', (message) => handleVoskText(message.result?.partial));
-          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer);
-        } else {
+          recognizer.on('result', (message) => handleVoskText(message.result?.text, true));
+          recognizer.on('partialresult', (message) => handleVoskText(message.result?.partial, false));
+          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer, silentDestination);
+        }).catch((err) => {
+          if (resolved) return;
+          console.warn('Vosk setup failed during listening, using browser speech fallback if available:', err);
           voskReady = false;
           debugState.value = {
             ...debugState.value,
             recognizer: browserReady ? 'browser' : 'none',
             fallbackUsed: browserReady,
+            voskError: String(err?.message || err || 'unknown Vosk error'),
           };
-        }
+        });
       } catch (err) {
         console.error('Audio analysis setup failed:', err);
         debugState.value = {
@@ -669,6 +740,7 @@ export function useSpeechRecognition() {
       let resolved = false;
       let wordMatch = false;
       let audioContext = null;
+      let silentDestination = null;
       let volumeHandle = null;
       let voskCleanup = null;
       let browserCleanup = null;
@@ -685,11 +757,13 @@ export function useSpeechRecognition() {
         if (voskCleanup) voskCleanup();
         if (browserCleanup) browserCleanup();
         if (recognizer) { try { recognizer.remove(); } catch (_) {} }
+        if (silentDestination) silentDestination.disconnect();
         if (audioContext) audioContext.close().catch(() => {});
         volumeHandle = null;
         voskCleanup = null;
         browserCleanup = null;
         recognizer = null;
+        silentDestination = null;
         audioContext = null;
         activeCleanup = null;
       };
@@ -715,8 +789,9 @@ export function useSpeechRecognition() {
 
       const stream = await ensureMicAccess();
       if (!stream) { finish(false); return; }
-      warmupVoskModel().catch((err) => {
+      const preloadedModelPromise = warmupVoskModel().catch((err) => {
         console.warn('Vosk model warmup failed:', err);
+        throw err;
       });
 
       let voskReady = false;
@@ -725,7 +800,7 @@ export function useSpeechRecognition() {
 
       debugState.value = {
         mode: 'word',
-        target: targetWord,
+        target: normalizeRecognitionText(targetWord),
         transcript: '',
         speechDetected: false,
         sustainFrames: 0,
@@ -736,19 +811,9 @@ export function useSpeechRecognition() {
         result: 'listening',
       };
 
-      let preloadedModel = null;
       try {
-        preloadedModel = await warmupVoskModel();
-      } catch (err) {
-        console.warn('Vosk setup failed before listening, using browser speech fallback if available:', err);
-        debugState.value = {
-          ...debugState.value,
-          voskError: String(err?.message || err || 'unknown Vosk error'),
-        };
-      }
-
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext = await createListeningAudioContext();
+        silentDestination = createSilentDestination(audioContext);
 
         volumeHandle = setupVolumeAnalysis(
           stream, audioContext, sustainProgress, WORD_SUSTAIN,
@@ -767,7 +832,7 @@ export function useSpeechRecognition() {
           },
         );
 
-        const target = targetWord.toLowerCase().trim();
+        const target = normalizeRecognitionText(targetWord);
         const grammarWords = [...new Set([
           target,
           ...target.split(/\s+/),
@@ -777,20 +842,20 @@ export function useSpeechRecognition() {
           target,
           (text) => {
             wordMatch = true;
-            transcript.value = text;
+            transcript.value = normalizeRecognitionText(text);
             debugState.value = {
               ...debugState.value,
-              transcript: text,
+              transcript: normalizeRecognitionText(text),
               recognizer: voskReady ? 'vosk+browser' : 'browser',
               matchedBy: 'browser-word',
             };
             if (!resolved) finish(true);
           },
           (text) => {
-            transcript.value = text;
+            transcript.value = normalizeRecognitionText(text);
             debugState.value = {
               ...debugState.value,
-              transcript: text,
+              transcript: normalizeRecognitionText(text),
               recognizer: voskReady ? 'vosk+browser' : 'browser',
             };
           },
@@ -801,33 +866,36 @@ export function useSpeechRecognition() {
           recognizer: browserReady ? 'browser' : 'none',
         };
 
-        if (preloadedModel) {
+        if (!browserReady) {
+          voskReady = false;
+          debugState.value = {
+            ...debugState.value,
+            recognizer: 'none',
+          };
+        }
+
+        void preloadedModelPromise.then((preloadedModel) => {
+          if (resolved || !audioContext || audioContext.state === 'closed') return;
+
           recognizer = createRecognizer(preloadedModel, audioContext.sampleRate, grammarWords);
           voskReady = true;
           debugState.value = {
             ...debugState.value,
             recognizer: browserReady ? 'vosk+browser' : 'vosk',
+            fallbackUsed: browserReady && !wordMatch,
+            voskError: '',
           };
 
           const checkMatch = (text) => {
             if (!text || text === '[unk]') return;
-            transcript.value = text;
+            const normalizedText = normalizeRecognitionText(text);
+            transcript.value = normalizedText;
             debugState.value = {
               ...debugState.value,
-              transcript: text,
+              transcript: normalizedText,
             };
 
-            const spokenWords = text.toLowerCase().split(/\s+/);
-            for (const spoken of spokenWords) {
-              const clean = spoken.replace(/[^a-z]/g, '');
-              if (clean === target) {
-                wordMatch = true;
-                break;
-              }
-            }
-
-            const cleanFull = text.toLowerCase().replace(/[^a-z\s]/g, '').trim();
-            if (cleanFull === target) {
+            if (isRecognitionTextMatch(target, normalizedText)) {
               wordMatch = true;
             }
 
@@ -835,6 +903,7 @@ export function useSpeechRecognition() {
               debugState.value = {
                 ...debugState.value,
                 matchedBy: 'vosk-word',
+                fallbackUsed: false,
               };
               finish(true);
             }
@@ -850,15 +919,18 @@ export function useSpeechRecognition() {
             checkMatch(message.result?.partial);
           });
 
-          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer);
-        } else {
+          voskCleanup = pipeAudioToVosk(audioContext, stream, recognizer, silentDestination);
+        }).catch((err) => {
+          if (resolved) return;
+          console.warn('Vosk setup failed during word listening, using browser speech fallback if available:', err);
           voskReady = false;
           debugState.value = {
             ...debugState.value,
             recognizer: browserReady ? 'browser' : 'none',
             fallbackUsed: browserReady,
+            voskError: String(err?.message || err || 'unknown Vosk error'),
           };
-        }
+        });
       } catch (err) {
         console.error('Audio analysis setup failed:', err);
         debugState.value = {
@@ -873,7 +945,7 @@ export function useSpeechRecognition() {
         if (voskReady || browserReady) {
           finish(wordMatch);
         } else {
-          finish(volumeHandle?.getSustainedFrames() >= WORD_SUSTAIN);
+          finish(false);
         }
       }, duration);
     });

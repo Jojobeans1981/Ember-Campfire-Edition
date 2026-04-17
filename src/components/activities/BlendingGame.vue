@@ -27,8 +27,9 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { getCumulativeDecodableWords } from '../../data/ufli/ufliLessons.js';
+import { getCumulativeDecodableWords, getCumulativeIntroducedGraphemes } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
 
@@ -37,6 +38,7 @@ const emit = defineEmits(['complete']);
 
 const ember = useEmber();
 const { startWordListening, requestMicPermission, cancelListening } = useSpeechRecognition();
+const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 
 const words = ref([]);
 
@@ -95,6 +97,7 @@ async function runRound() {
   let matched = false;
   while (!cancelled && attempts < MAX_BLEND_ATTEMPTS && !matched) {
     attempts++;
+    await prepareMicTurn();
     const result = await startWordListening(word.word, 7000);
     matched = Boolean(result?.matched);
     if (!matched && attempts < MAX_BLEND_ATTEMPTS) {
@@ -103,12 +106,14 @@ async function runRound() {
   }
 
   phase.value = 'reveal';
-  if (!matched) {
-    await ember.speak(`The word is ${word.word}.`);
+  if (matched) {
+    correct.value++;
+    celebrateCorrect();
+    await ember.speak(word.word);
+  } else {
+    await ember.speak(`Let us listen. The word is ${word.word}.`);
+    await ember.speak(word.word);
   }
-  await ember.speak(word.word);
-  correct.value++;
-  celebrateCorrect();
 
   await new Promise(r => setTimeout(r, 800));
 }
@@ -141,7 +146,14 @@ onMounted(async () => {
     pitch: 1.06,
   });
   const all = await getCumulativeDecodableWords(props.lessonId);
-  words.value = all.filter((w) => w.phonemes.length >= 3);
+  const introduced = new Set(
+    getCumulativeIntroducedGraphemes(props.lessonId).map((grapheme) => String(grapheme).toLowerCase()),
+  );
+  words.value = all.filter((word) => {
+    return (word.phonemes?.length ?? 0) >= 2
+      && (word.graphemes?.length ?? 0) >= 2
+      && word.graphemes.every((grapheme) => introduced.has(String(grapheme).toLowerCase()));
+  });
   if (words.value.length === 0) {
     completionEmitted = true;
     emit('complete');

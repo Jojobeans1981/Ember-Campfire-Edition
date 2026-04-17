@@ -2,113 +2,461 @@
   "lessonNumber": 10,
   "title": "CVC practice short a, short i",
   "grapheme": "a, i",
-  "phoneme": "/ă/, /ĭ/",
+  "phoneme": "/æ/, /ɪ/",
   "step1": {
     "blend": [
-      { "phonemes": ["/m/", "/ă/", "/n/"], "word": "man" },
-      { "phonemes": ["/p/", "/ĭ/", "/n/"], "word": "pin" },
-      { "phonemes": ["/f/", "/ă/", "/n/"], "word": "fan" }
+      {
+        "phonemes": [
+          "f",
+          "ɪ",
+          "t"
+        ],
+        "word": "fit"
+      },
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ],
+        "word": "mat"
+      },
+      {
+        "phonemes": [
+          "n",
+          "æ",
+          "p"
+        ],
+        "word": "nap"
+      },
+      {
+        "phonemes": [
+          "t",
+          "ɪ",
+          "n"
+        ],
+        "word": "tin"
+      }
     ],
     "segment": [
-      { "word": "man", "phonemes": ["/m/", "/ă/", "/n/"] },
-      { "word": "pin", "phonemes": ["/p/", "/ĭ/", "/n/"] },
-      { "word": "tap", "phonemes": ["/t/", "/ă/", "/p/"] }
+      {
+        "word": "if",
+        "phonemes": [
+          "ɪ",
+          "f"
+        ]
+      },
+      {
+        "word": "tap",
+        "phonemes": [
+          "t",
+          "æ",
+          "p"
+        ]
+      },
+      {
+        "word": "sat",
+        "phonemes": [
+          "s",
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "pin",
+        "phonemes": [
+          "p",
+          "ɪ",
+          "n"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "a", "phonemes": ["/ă/"] },
-      { "grapheme": "i", "phonemes": ["/ĭ/"] },
-      { "grapheme": "n", "phonemes": ["/n/"] },
-      { "grapheme": "f", "phonemes": ["/f/"] },
-      { "grapheme": "p", "phonemes": ["/p/"] },
-      { "grapheme": "t", "phonemes": ["/t/"] },
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] }
+      {
+        "grapheme": "n",
+        "phonemes": [
+          "n"
+        ]
+      },
+      {
+        "grapheme": "i",
+        "phonemes": [
+          "ɪ"
+        ]
+      },
+      {
+        "grapheme": "f",
+        "phonemes": [
+          "f"
+        ]
+      },
+      {
+        "grapheme": "p",
+        "phonemes": [
+          "p"
+        ]
+      },
+      {
+        "grapheme": "t",
+        "phonemes": [
+          "t"
+        ]
+      },
+      {
+        "grapheme": "s",
+        "phonemes": [
+          "s"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/ă/", "graphemes": ["a"] },
-      { "phoneme": "/ĭ/", "graphemes": ["i"] },
-      { "phoneme": "/n/", "graphemes": ["n"] },
-      { "phoneme": "/f/", "graphemes": ["f"] },
-      { "phoneme": "/p/", "graphemes": ["p"] },
-      { "phoneme": "/t/", "graphemes": ["t"] },
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] }
+      {
+        "phoneme": "n",
+        "graphemes": [
+          "n"
+        ]
+      },
+      {
+        "phoneme": "ɪ",
+        "graphemes": [
+          "i"
+        ]
+      },
+      {
+        "phoneme": "f",
+        "graphemes": [
+          "f"
+        ]
+      },
+      {
+        "phoneme": "p",
+        "graphemes": [
+          "p"
+        ]
+      },
+      {
+        "phoneme": "t",
+        "graphemes": [
+          "t"
+        ]
+      },
+      {
+        "phoneme": "s",
+        "graphemes": [
+          "s"
+        ]
+      },
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["man", "pan", "pin", "fin", "fan", "tan", "tin", "tip", "sip", "sap", "map", "mat", "fat", "fit"],
+    "wordChain": [
+      "in",
+      "fin",
+      "pin",
+      "tin",
+      "tip",
+      "tap",
+      "nap",
+      "nip",
+      "sip",
+      "sit",
+      "it",
+      "at",
+      "Nat"
+    ],
     "tiles": {
-      "initial": ["s", "m", "t", "p", "f", "n"],
-      "medial": ["a", "i"],
-      "final": ["t", "s", "m", "p", "f", "n"]
+      "initial": [
+        "f",
+        "s",
+        "n",
+        "t",
+        "p"
+      ],
+      "medial": [
+        "a",
+        "i"
+      ],
+      "final": [
+        "n",
+        "p",
+        "t"
+      ]
     }
   },
   "step5": {
-    "instructionalNotes": "Practice contrasting short A and short I in CVC words. No new grapheme — focus on hearing and producing the difference between /ă/ and /ĭ/.",
+    "instructionalNotes": "Syllables can be segmented into their body and coda. The body consists of the vowel and any consonants before it, and the coda is everything after the vowel: ca-t, pi-n. Body-coda blending can be a helpful scaffold for students struggling with blending initial stop phonemes.",
     "introductionScript": [
-      { "line": "1", "text": "We've learned two vowel sounds: /ă/ and /ĭ/." },
-      { "line": "2", "text": "/ă/ is in cat. /ĭ/ is in sit." },
-      { "line": "3", "text": "Listen carefully and pick the right vowel." }
+      {
+        "line": "We have been learning new letters and sounds! Today we will practice reading and spelling words using the letters and sounds we know.",
+        "text": ""
+      },
+      {
+        "line": "When we read words, we look at every letter, say each sound, then blend the sounds together to read the word.",
+        "text": ""
+      },
+      {
+        "line": "When we spell words, first we say the whole word, next we say each sound we hear in the word, and then we write a letter for each sound.",
+        "text": ""
+      }
     ],
-    "articulatoryGesture": "Contrast: /ă/ has the mouth open and the jaw lower. /ĭ/ has the mouth slightly open and tongue forward and high.",
-    "graphemePlacements": [
-      { "grapheme": "a", "position": "medial", "examples": ["pan", "man", "fan"] },
-      { "grapheme": "i", "position": "medial", "examples": ["pin", "fin", "sit"] }
-    ],
+    "articulatoryGesture": "",
+    "graphemePlacements": [],
     "readWords": {
-      "iDo": ["man", "pin"],
-      "weDo": ["fan", "fit"],
-      "youDo": ["man", "pin", "tan", "tin"]
+      "iDo": [
+        "tip"
+      ],
+      "weDo": [
+        "nap",
+        "fit",
+        "sit",
+        "pat",
+        "sat",
+        "if",
+        "tin",
+        "in",
+        "tap"
+      ],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["man"],
-      "weDo": ["pin"],
-      "youDo": ["fan", "fit"]
+      "iDo": [
+        "nap"
+      ],
+      "weDo": [
+        "if",
+        "it",
+        "sat",
+        "tap"
+      ],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["man", "pan", "pin", "fin", "fan", "tan", "tin", "tip", "tap", "map", "mat", "fat", "fit", "sit", "sip", "sap"]
+    "wordChain": [
+      "if",
+      "in",
+      "fin",
+      "tin",
+      "pin",
+      "pit",
+      "it",
+      "sit",
+      "sat",
+      "at",
+      "mat",
+      "map",
+      "sap",
+      "tap"
+    ],
+    "additionalChains": [
+      {
+        "label": "Onset-Rime Level: -at",
+        "words": [
+          "at",
+          "sat",
+          "mat",
+          "pat",
+          "fat"
+        ]
+      },
+      {
+        "label": "Onset-Rime Level: -it",
+        "words": [
+          "it",
+          "fit",
+          "pit",
+          "sit"
+        ]
+      },
+      {
+        "label": "Phoneme Level",
+        "words": [
+          "sat",
+          "mat",
+          "pat",
+          "pit",
+          "fit",
+          "sit"
+        ]
+      },
+      {
+        "label": "Phoneme Level: Mixed Review",
+        "words": [
+          "if",
+          "in",
+          "fin",
+          "tin",
+          "pin",
+          "pit",
+          "it",
+          "sit",
+          "sat",
+          "at",
+          "mat",
+          "map",
+          "sap",
+          "tap"
+        ]
+      }
+    ]
   },
   "step7": {
     "review": [
       {
-        "word": "and",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "a", "phoneme": "/ă/", "regular": true },
-          { "grapheme": "n", "phoneme": "/n/", "regular": true },
-          { "grapheme": "d", "phoneme": "/d/", "regular": true }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
         ]
       },
       {
-        "word": "his",
+        "word": "I",
         "breakdown": [
-          { "grapheme": "h", "phoneme": "/h/", "regular": true },
-          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
-          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "and",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "æ",
+            "regular": true
+          },
+          {
+            "grapheme": "n",
+            "phoneme": "n",
+            "regular": true
+          },
+          {
+            "grapheme": "d",
+            "phoneme": "d",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "a",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "ə",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "is",
+        "breakdown": [
+          {
+            "grapheme": "i",
+            "phoneme": "ɪ",
+            "regular": true
+          },
+          {
+            "grapheme": "s",
+            "phoneme": "z",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": [
-      {
-        "word": "in",
-        "breakdown": [
-          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
-          { "grapheme": "n", "phoneme": "/n/", "regular": true }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
-    "readSentences": ["the man has a fan and a pin.", "sam sat in the tan map."],
-    "spellSentences": ["the man sat.", "I sit in the tan pit."]
+    "readSentences": [
+      "I tap it in.",
+      "Tim is in the pit.",
+      "The pin is in the tin."
+    ],
+    "spellSentences": [
+      "The pin fit.",
+      "I sat in sap!",
+      "Tim and I nap."
+    ]
   },
-  "wordList": ["man", "pan", "pin", "tin", "tan", "fan", "fin", "in", "an", "it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "nap", "sam", "am", "as", "at"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "his", "it", "in", "the", "to", "of", "and", "a"],
-    "fry": ["I", "is", "his", "it", "in", "the", "to", "of", "and", "a"]
-  }
+    "dolch": [],
+    "fry": []
+  },
+  "decodableTexts": [
+    {
+      "title": "The Pit",
+      "text": "A pit. Min is in the pit. Nat is in the pit. Min and Nat fit. Min and Nat sit in the pit. Sap is in the pit. Min and Nat sat in sap!",
+      "sentences": [
+        "A pit.",
+        "Min is in the pit.",
+        "Nat is in the pit.",
+        "Min and Nat fit.",
+        "Min and Nat sit in the pit.",
+        "Sap is in the pit.",
+        "Min and Nat sat in sap!"
+      ],
+      "wordCount": 34,
+      "source": "UFLI Foundations Decodable"
+    }
+  ],
+  "wordList": [
+    "at",
+    "fat",
+    "map",
+    "mat",
+    "nap",
+    "pat",
+    "sap",
+    "sat",
+    "tap",
+    "fin",
+    "fit",
+    "if",
+    "in",
+    "it",
+    "its",
+    "pin",
+    "pit",
+    "sip",
+    "sit",
+    "tin",
+    "tip"
+  ]
 }

@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import {
   getCumulativeIntroducedGraphemes,
   getUpcomingGraphemes,
@@ -70,7 +70,7 @@ const selected = ref(null);
 const showResult = ref(false);
 const phase = ref('listen');
 const correct = ref(0);
-const targetCount = 5;
+const targetCount = computed(() => (props.lessonId === '001' ? 1 : 5));
 let cancelled = false;
 
 function shuffle(arr) {
@@ -105,6 +105,9 @@ async function playRound() {
   if (cancelled) return;
   setupRound();
   phase.value = 'listen';
+  if (correct.value === 0) {
+    await ember.speak('Match the sound.', { priority: 'instruction' });
+  }
   await ember.playPhoneme(targetPhoneme.value);
   if (cancelled) return;
   phase.value = 'pick';
@@ -119,8 +122,10 @@ function pick(choice) {
     correct.value++;
     phase.value = 'correct';
     celebrateCorrect();
+    void ember.speak('Correct!', { priority: 'feedback' });
   } else {
     phase.value = 'wrong';
+    void ember.speak(`Not quite. That was ${targetPhoneme.value}.`, { priority: 'feedback' });
   }
 
   setTimeout(async () => {

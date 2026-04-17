@@ -11,7 +11,8 @@ vi.mock('../../composables/useEmber.js', () => ({
 }));
 
 vi.mock('../../data/ufli/ufliLessons.js', () => ({
-  getCumulativeLetters: vi.fn().mockResolvedValue(['a', 'm', 's']),
+  getCumulativeIntroducedGraphemes: vi.fn().mockReturnValue(['a', 'm', 's']),
+  getUpcomingGraphemes: vi.fn().mockReturnValue(['t']),
 }));
 
 const fixtureStep = {

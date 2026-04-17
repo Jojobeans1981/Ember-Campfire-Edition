@@ -1,9 +1,9 @@
 /**
  * UFLI lesson loader.
  *
- * Lessons live as JSON files at ./lessons/lesson-{id}.json and are loaded
- * on demand via Vite's dynamic import. Loaded lessons are cached for sync
- * access by hub/player components after the initial async fetch.
+ * Lessons live as JSON files at ./lessons/lesson-{id}.json and are bundled
+ * into a lookup map so both async callers and sync progression helpers can
+ * read the same authored lesson data consistently.
  */
 
 import { UFLI_LESSONS_META } from './ufliCurriculum.js';
@@ -33,6 +33,21 @@ export function lessonIdFromNumber(n) {
 export const ALL_UFLI_LESSON_IDS = buildAllLessonIds();
 
 const lessonCache = new Map();
+const bundledLessonModules = import.meta.glob('./lessons/lesson-*.json', { eager: true });
+const bundledLessons = new Map(
+  Object.entries(bundledLessonModules)
+    .map(([path, mod]) => {
+      const match = path.match(/lesson-(.+)\.json$/);
+      if (!match) return null;
+      return [match[1], mod.default ?? mod];
+    })
+    .filter(Boolean),
+);
+
+function getBundledLessonData(lessonId) {
+  const id = lessonIdFromNumber(lessonId);
+  return lessonCache.get(id) ?? bundledLessons.get(id);
+}
 
 /** Test helper — clears the in-memory lesson cache between tests. */
 export function _clearLessonCache() {
@@ -40,7 +55,7 @@ export function _clearLessonCache() {
 }
 
 /**
- * Dynamically load a lesson by id (number or string).
+ * Load a lesson by id (number or string).
  * Returns undefined if the lesson JSON file does not exist.
  */
 export async function getUfliLesson(lessonId) {
@@ -48,14 +63,12 @@ export async function getUfliLesson(lessonId) {
   if (lessonCache.has(id)) {
     return lessonCache.get(id);
   }
-  try {
-    const mod = await import(`./lessons/lesson-${id}.json`);
-    const lesson = mod.default ?? mod;
-    lessonCache.set(id, lesson);
-    return lesson;
-  } catch {
-    return undefined;
+  const bundled = bundledLessons.get(id);
+  if (bundled) {
+    lessonCache.set(id, bundled);
+    return bundled;
   }
+  return undefined;
 }
 
 /**
@@ -96,6 +109,41 @@ async function buildCumulativeWordDecompositionMap(targetIndex) {
   for (let i = 0; i <= targetIndex; i++) {
     const id = ALL_UFLI_LESSON_IDS[i];
     const lesson = await getUfliLesson(id);
+    if (!lesson) continue;
+
+    for (const item of lesson.step1?.blend ?? []) {
+      record(item?.word, item?.phonemes, null);
+    }
+    for (const item of lesson.step1?.segment ?? []) {
+      record(item?.word, item?.phonemes, null);
+    }
+    for (const bucket of ['teach', 'review']) {
+      for (const entry of lesson.step7?.[bucket] ?? []) {
+        const pieces = entry?.breakdown ?? [];
+        const phonemes = pieces.map((b) => b?.phoneme).filter(Boolean);
+        const graphemes = pieces.map((b) => b?.grapheme).filter(Boolean);
+        record(entry?.word, phonemes, graphemes);
+      }
+    }
+  }
+  return map;
+}
+
+function buildCumulativeWordDecompositionMapSync(targetIndex) {
+  const map = new Map();
+  const record = (word, phonemes, graphemes) => {
+    if (!word) return;
+    const key = String(word).toLowerCase();
+    if (map.has(key)) return;
+    const p = Array.isArray(phonemes) && phonemes.length ? phonemes.slice() : null;
+    const g = Array.isArray(graphemes) && graphemes.length ? graphemes.slice() : null;
+    if (!p && !g) return;
+    map.set(key, { phonemes: p, graphemes: g });
+  };
+
+  for (let i = 0; i <= targetIndex; i++) {
+    const id = ALL_UFLI_LESSON_IDS[i];
+    const lesson = getBundledLessonData(id);
     if (!lesson) continue;
 
     for (const item of lesson.step1?.blend ?? []) {
@@ -170,6 +218,28 @@ export async function getCumulativeReadSentences(lessonId) {
   for (let i = 0; i <= targetIndex; i++) {
     const id = ALL_UFLI_LESSON_IDS[i];
     const lesson = await getUfliLesson(id);
+    const list = lesson?.step8?.readSentences;
+    if (!Array.isArray(list)) continue;
+    for (const s of list) {
+      const text = String(s ?? '').trim();
+      if (!text || seen.has(text)) continue;
+      seen.add(text);
+      out.push(text);
+    }
+  }
+  return out;
+}
+
+export function getCumulativeReadSentencesSync(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i <= targetIndex; i++) {
+    const id = ALL_UFLI_LESSON_IDS[i];
+    const lesson = getBundledLessonData(id);
     const list = lesson?.step8?.readSentences;
     if (!Array.isArray(list)) continue;
     for (const s of list) {
@@ -300,4 +370,99 @@ export async function getCumulativeWordList(lessonId) {
     }
   }
   return out;
+}
+
+export function getCumulativeWordListSync(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i <= targetIndex; i++) {
+    const id = ALL_UFLI_LESSON_IDS[i];
+    const lesson = getBundledLessonData(id);
+    if (!lesson || !Array.isArray(lesson.wordList)) continue;
+    for (const word of lesson.wordList) {
+      if (seen.has(word)) continue;
+      seen.add(word);
+      out.push(word);
+    }
+  }
+  return out;
+}
+
+export function getCumulativeDecodableWordsSync(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  const targetIndex = ALL_UFLI_LESSON_IDS.indexOf(targetId);
+  if (targetIndex < 0) return [];
+
+  const words = getCumulativeWordListSync(targetId);
+  const decomp = buildCumulativeWordDecompositionMapSync(targetIndex);
+
+  return words.map((word) => {
+    const key = String(word).toLowerCase();
+    const entry = decomp.get(key) ?? null;
+    const letterSplit = key.split('');
+    return {
+      word,
+      phonemes: entry?.phonemes ?? letterSplit,
+      graphemes: entry?.graphemes ?? letterSplit,
+    };
+  });
+}
+
+function normalizeGraphemeToken(token) {
+  return String(token ?? '').trim().toLowerCase();
+}
+
+function usesOnlyIntroducedGraphemes(word, introducedSet) {
+  const graphemes = Array.isArray(word?.graphemes) ? word.graphemes : [];
+  if (graphemes.length === 0) return false;
+  // Special case: Single-letter words like 'a' and 'I' are decodable as soon as
+  // their letter is introduced.
+  if (graphemes.length === 1) {
+    const single = normalizeGraphemeToken(graphemes[0]);
+    return single === 'a' || single === 'i';
+  }
+  return graphemes.every((grapheme) => introducedSet.has(normalizeGraphemeToken(grapheme)));
+}
+
+export function hasUfliConnectedText(lessonId) {
+  return getCumulativeReadSentencesSync(lessonId).length > 0;
+}
+
+export function getAvailableUfliActivityTypes(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  if (!ALL_UFLI_LESSON_IDS.includes(targetId)) return [];
+
+  const introduced = new Set(
+    getCumulativeIntroducedGraphemes(targetId).map((grapheme) => normalizeGraphemeToken(grapheme)),
+  );
+  const words = getCumulativeDecodableWordsSync(targetId);
+
+  const activityTypes = ['speech', 'match'];
+
+  const hasBlendableWord = words.some((word) => {
+    return (word.phonemes?.length ?? 0) >= 2 && usesOnlyIntroducedGraphemes(word, introduced);
+  });
+  if (hasBlendableWord) activityTypes.push('blend');
+
+  const hasBuildableWord = words.some((word) => usesOnlyIntroducedGraphemes(word, introduced));
+  if (hasBuildableWord) activityTypes.push('build');
+
+  if (hasUfliConnectedText(targetId)) {
+    activityTypes.push('sentence');
+  }
+
+  return activityTypes;
+}
+
+export function getUfliLessonSparkTotal(lessonId) {
+  const targetId = lessonIdFromNumber(lessonId);
+  if (!ALL_UFLI_LESSON_IDS.includes(targetId)) return 0;
+
+  const activityCount = getAvailableUfliActivityTypes(targetId).length;
+  const connectedTextCount = hasUfliConnectedText(targetId) ? 1 : 0;
+  return 1 + activityCount + connectedTextCount;
 }

@@ -83,6 +83,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 import FocusStage from './FocusStage.vue';
 
@@ -96,6 +97,7 @@ const {
   requestMicPermission,
   sustainProgress: micProgress,
 } = useSpeechRecognition();
+const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 let cancelled = false;
 
 const phase = ref('intro');
@@ -138,16 +140,7 @@ function lineNeedsResponse(text) {
 const showMicPrompt = computed(() => lineNeedsResponse(currentScriptLine.value?.text));
 
 function spokenLineFor(text) {
-  const line = stripIpa(text ?? '');
-  if (!line) return '';
-  const normalized = line.toLowerCase();
-  if (normalized.includes('watch my mouth')) {
-    return 'Listen closely to the sound, then try it too.';
-  }
-  if (normalized.includes('your turn') || normalized.includes('now you try')) {
-    return 'Tap my turn and say the sound.';
-  }
-  return line;
+  return stripIpa(text ?? '');
 }
 
 const nextDisabled = computed(() => showMicPrompt.value && micPhase.value !== 'matched');
@@ -158,8 +151,11 @@ async function speakCurrentLine() {
   const spoken = spokenLineFor(line.text);
   if (spoken) await ember.speakTeacher(spoken);
   if (cancelled) return;
-  if (!playedAnchorSound.value && scriptIndex.value === 0 && grapheme.value) {
-    playedAnchorSound.value = true;
+  
+  // Only play the raw phoneme sound if the line is purely introductory 
+  // and DOES NOT already contain an explanation of the sound (to avoid "A says /a/ ... /a/").
+  const isIntroOnly = scriptIndex.value === 0;
+  if (grapheme.value && isIntroOnly) {
     await ember.playPhoneme(grapheme.value);
   }
 }
@@ -170,16 +166,15 @@ async function startMicPractice() {
     return;
   }
   micPhase.value = 'listening';
-  await ember.speak('Say the sound when you are ready.');
-  await ember.speak('Listening.');
-  const result = await startListening(grapheme.value, 7000);
+  await prepareMicTurn();
+  const result = await startListening(grapheme.value, 9000);
   if (cancelled) return;
   if (result?.matched) {
     micPhase.value = 'matched';
     await ember.speak('Nice job! You said it.');
   } else {
     micPhase.value = 'missed';
-    await ember.speak('Try again, then tap my turn.');
+    await ember.speak(grapheme.value === 'm' ? 'Try again. Hold the sound like mmm.' : 'Try again, then tap my turn.');
   }
 }
 

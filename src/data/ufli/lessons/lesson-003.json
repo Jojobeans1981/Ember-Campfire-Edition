@@ -10,7 +10,6 @@
     ],
     "segment": [
       { "word": "as", "phonemes": ["/ă/", "/s/"] },
-      { "word": "am", "phonemes": ["/ă/", "/m/"] },
       { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] }
     ]
   },
@@ -51,14 +50,14 @@
       { "grapheme": "s", "position": "final", "examples": ["as"] }
     ],
     "readWords": {
-      "iDo": ["am"],
-      "weDo": ["as"],
-      "youDo": ["sam"]
+      "iDo": ["as"],
+      "weDo": ["sam"],
+      "youDo": ["am"]
     },
     "spellWords": {
-      "iDo": ["am"],
-      "weDo": ["as"],
-      "youDo": ["sam"]
+      "iDo": ["as"],
+      "weDo": ["sam"],
+      "youDo": ["am"]
     }
   },
   "step6": {
@@ -70,6 +69,13 @@
         "word": "I",
         "breakdown": [
           { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+        ]
+      },
+      {
+        "word": "am",
+        "breakdown": [
+          { "grapheme": "a", "phoneme": "/ă/" },
+          { "grapheme": "m", "phoneme": "/m/" }
         ]
       }
     ],
@@ -87,7 +93,7 @@
     "readSentences": ["I am sam.", "sam is."],
     "spellSentences": ["I am sam."]
   },
-  "wordList": ["am", "as", "sam"],
+  "wordList": ["am", "as", "sam", "is"],
   "highFrequencyWords": {
     "dolch": ["I", "a", "am", "is"],
     "fry": ["I", "a", "is"]

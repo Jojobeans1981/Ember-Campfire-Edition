@@ -1,33 +1,21 @@
-﻿{
+{
   "lessonNumber": 1,
   "title": "a /ă/",
   "grapheme": "a",
   "phoneme": "/ă/",
   "step1": {
-    "blend": [
-      {
-        "phonemes": [
-          "/ă/",
-          "/t/"
-        ],
-        "word": "at"
-      }
-    ],
-    "segment": [
-      {
-        "word": "at",
-        "phonemes": [
-          "/ă/",
-          "/t/"
-        ]
-      }
-    ]
+    "blend": [],
+    "segment": []
   },
   "step2": {
-    "items": []
+    "items": [
+      { "grapheme": "a", "phonemes": ["/ă/"] }
+    ]
   },
   "step3": {
-    "items": []
+    "items": [
+      { "phoneme": "/ă/", "graphemes": ["a"] }
+    ]
   },
   "step4": {
     "wordChain": [],
@@ -38,18 +26,26 @@
     }
   },
   "step5": {
-    "instructionalNotes": "At this point, A is being introduced only as short /ă/. A can also represent other sounds, such as long /eɪ/ in A_E words (Lesson 54).",
+    "instructionalNotes": "Introduce short a only. Keep the first lesson simple: meet the letter, hear the sound, and say the sound.",
     "introductionScript": [
       {
         "line": "1",
-        "text": "This is the letter A. A is a vowel. The long vowel sound is the same as its name, A. Today we are going to read words with the short vowel sound."
+        "text": "This is the letter A."
       },
       {
         "line": "2",
-        "text": "The short vowel A spells the short A sound, like the A at the beginning of the word apple."
+        "text": "A says /ă/, like the start of apple."
+      },
+      {
+        "line": "3",
+        "text": "Open your mouth wide. Voice on. /ăăă/."
+      },
+      {
+        "line": "4",
+        "text": "Your turn. Say /ă/."
       }
     ],
-    "articulatoryGesture": "To make the short A /ă/ sound, open your mouth wide. Your voice should be on. Like all vowels, /ă/ is a continuous sound that can be stretched out. Let's say /ă/ together.",
+    "articulatoryGesture": "Open your mouth wide. Voice on. Hold the short a sound: /ă/.",
     "graphemePlacements": [
       {
         "grapheme": "a",
@@ -85,42 +81,17 @@
   },
   "step7": {
     "review": [],
-    "teach": [
-      {
-        "word": "the",
-        "breakdown": [
-          {
-            "grapheme": "th",
-            "phoneme": "/ð/",
-            "regular": false
-          },
-          {
-            "grapheme": "e",
-            "phoneme": "/ə/",
-            "regular": false
-          }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
     "readSentences": [],
     "spellSentences": []
   },
   "highFrequencyWords": {
-    "dolch": [
-      "the"
-    ],
-    "fry": [
-      "the"
-    ]
+    "dolch": [],
+    "fry": []
   },
   "decodableTexts": [],
   "status": "no_decodable",
-  "wordList": [
-    "at",
-    "cat",
-    "map",
-    "the"
-  ]
+  "wordList": []
 }

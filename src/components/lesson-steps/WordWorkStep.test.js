@@ -56,6 +56,36 @@ describe('WordWorkStep', () => {
     expect(wrapper.emitted('step-complete')).toBeTruthy();
   });
 
+  it('only advances the word sort after the correct category is chosen', async () => {
+    const wrapper = mount(WordWorkStep, {
+      props: {
+        step: {
+          wordChain: ['am'],
+          wordSort: {
+            categories: ['animal', 'word family'],
+            words: [
+              { word: 'am', category: 'word family' },
+              { word: 'sam', category: 'word family' },
+            ],
+          },
+        },
+      },
+    });
+
+    await wrapper.find('.word-chip').trigger('click');
+    await wrapper.find('button[aria-label="Word sort"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('am');
+    await wrapper.find('button[aria-label="Sort under animal"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.text()).toContain('am');
+
+    await wrapper.find('button[aria-label="Sort under word family"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.text()).toContain('sam');
+  });
+
   it('has no step title heading', () => {
     const wrapper = mount(WordWorkStep, {
       props: { step: { wordChain: ['at'] } },

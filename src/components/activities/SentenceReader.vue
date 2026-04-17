@@ -42,6 +42,7 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getCumulativeReadSentences } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
+import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 
 const props = defineProps({ lessonId: String, activityType: String });
@@ -49,6 +50,7 @@ const emit = defineEmits(['complete']);
 
 const ember = useEmber();
 const { startWordListening, sustainProgress: micProgress, requestMicPermission, cancelListening } = useSpeechRecognition();
+const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 
 // Authored, decodable sentences from lessons 1..lessonId. Random-joining
 // cumulative words produces nonsense like "cat at at" for early lessons,
@@ -95,19 +97,26 @@ async function readToMe() {
 
 async function attemptRead() {
   phase.value = 'listen';
+  await prepareMicTurn();
   const result = await startWordListening(currentSentence.value, 10000);
 
   if (cancelled) return;
-  phase.value = 'success';
-  completed.value++;
-  await ember.speak('Great reading!');
-  await new Promise(r => setTimeout(r, 800));
+  if (result?.matched) {
+    phase.value = 'success';
+    completed.value++;
+    await ember.speak('Great reading!');
+    await new Promise(r => setTimeout(r, 800));
 
-  if (completed.value >= targetCount) {
-    emit('complete');
-  } else {
-    buildSentence();
+    if (completed.value >= targetCount) {
+      emit('complete');
+    } else {
+      buildSentence();
+    }
+    return;
   }
+
+  phase.value = 'read';
+  await ember.speak('Try again. Read the whole sentence.');
 }
 
 onMounted(async () => {

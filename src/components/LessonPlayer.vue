@@ -33,6 +33,7 @@
 <script setup>
 import { ref, computed, onMounted, defineProps, defineEmits } from 'vue';
 import { getUfliLesson } from '../data/ufli/ufliLessons.js';
+import { getRenderableUfliStepKeys } from '../data/ufli/lessonFlow.js';
 import { useEmber } from '../composables/useEmber.js';
 import EmberMascot from './ui/EmberMascot.vue';
 import PhonemicAwarenessStep from './lesson-steps/PhonemicAwarenessStep.vue';
@@ -48,8 +49,6 @@ const props = defineProps({ unitId: { type: String, required: true } });
 const emit = defineEmits(['complete']);
 
 const ember = useEmber();
-
-const STEP_KEYS = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'step8'];
 
 const stepComponentByKey = {
   step1: PhonemicAwarenessStep,
@@ -68,78 +67,15 @@ const isAdvancing = ref(false);
 
 onMounted(async () => {
   lesson.value = await getUfliLesson(props.unitId);
-  if (!lesson.value) {
+  if (!lesson.value || getRenderableUfliStepKeys(lesson.value).length === 0) {
     emit('complete');
   }
 });
 
-/**
- * Skip a step when its content has nothing meaningful for the kid to do.
- * Single-letter "wordChain" entries in step 4/6 are not worth showing,
- * step 1 needs at least one blend item, etc.
- */
-function hasAtLeastNLetters(lessonData, minimum) {
-  const letters = new Set();
-  for (const word of lessonData?.wordList ?? []) {
-    for (const ch of String(word).toLowerCase()) {
-      if (/[a-z]/.test(ch)) letters.add(ch);
-    }
-  }
-  return letters.size >= minimum;
-}
-
-function isStepWorthShowing(key, data, lessonData) {
-  if (!data) return false;
-  switch (key) {
-    case 'step1': {
-      if (!hasAtLeastNLetters(lessonData, 2)) return false;
-      const blend = data.blend ?? [];
-      const segment = data.segment ?? [];
-      const hasRealBlend = blend.some((item) => (item?.phonemes?.length ?? 0) >= 2);
-      const hasRealSegment = segment.some((item) => String(item?.word ?? '').replace(/[^a-z]/gi, '').length >= 2);
-      return hasRealBlend || hasRealSegment;
-    }
-    case 'step2':
-    case 'step3': {
-      return (data.items ?? []).length > 0;
-    }
-    case 'step4': {
-      const chain = data.wordChain ?? [];
-      // Only show if there's at least one multi-letter word to blend
-      return chain.some((w) => typeof w === 'string' && w.length >= 2);
-    }
-    case 'step5': {
-      const script = data.introductionScript ?? [];
-      return script.length > 0;
-    }
-    case 'step6': {
-      const chain = data.wordChain ?? [];
-      // Only show word work if there's at least one multi-letter word
-      return chain.some((w) => typeof w === 'string' && w.length >= 2);
-    }
-    case 'step7': {
-      if (!hasAtLeastNLetters(lessonData, 3)) return false;
-      const review = data.review ?? [];
-      const teach = data.teach ?? [];
-      return review.length > 0 || teach.length > 0;
-    }
-    case 'step8': {
-      if (!hasAtLeastNLetters(lessonData, 3)) return false;
-      const read = data.readSentences ?? [];
-      const spell = data.spellSentences ?? [];
-      // Skip step 8 if both lists are empty OR every entry is a single letter
-      const hasReal = (arr) => arr.some((s) => typeof s === 'string' && s.replace(/[^a-zA-Z]/g, '').length >= 2);
-      return hasReal(read) || hasReal(spell);
-    }
-    default:
-      return true;
-  }
-}
-
 const activeSteps = computed(() => {
   const l = lesson.value;
   if (!l) return [];
-  return STEP_KEYS.filter((k) => isStepWorthShowing(k, l[k], l));
+  return getRenderableUfliStepKeys(l);
 });
 
 const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] ?? null);
@@ -154,6 +90,7 @@ function onStepComplete() {
     currentStepIndex.value++;
     setTimeout(() => { isAdvancing.value = false; }, 0);
   } else {
+    void ember.speak('You finished the lesson! Great learning.', { priority: 'feedback' });
     emit('complete');
     setTimeout(() => { isAdvancing.value = false; }, 0);
   }
