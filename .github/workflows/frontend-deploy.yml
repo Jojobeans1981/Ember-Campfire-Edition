@@ -49,8 +49,7 @@ jobs:
         id: distribution
         run: |
           set -euo pipefail
-          distribution_id=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Quantity > \
-            \\`0\\` && contains(Aliases.Items, '$APP_DOMAIN')].Id | [0]" --output text)
+          distribution_id=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Aliases.Items, '$APP_DOMAIN')].Id | [0]" --output text)
           if [ "$distribution_id" = "None" ] || [ -z "$distribution_id" ]; then
             echo "CloudFront distribution for '$APP_DOMAIN' does not exist yet. Apply Terraform infrastructure first." >&2
             exit 1
