@@ -1,60 +1,81 @@
 <template>
   <div class="new-concept-step">
-    <h3 class="step-title">Meet the Letter</h3>
+    <FocusStage v-if="phase === 'intro' && grapheme" :tokens="introTokens" emphasis="letter" />
 
     <div v-if="phase === 'intro'" class="intro-section">
-      <div v-if="grapheme" class="grapheme-card">{{ grapheme }}</div>
-      <div v-if="currentScriptLine" class="script-line">{{ displayScriptLine }}</div>
-      <div v-if="articulation" class="articulation">{{ stripIpa(articulation) }}</div>
-      <div v-if="showMicPrompt" class="mic-card">
-        <div v-if="micPhase === 'idle'" class="mic-help">Say the sound when you're ready.</div>
-        <div v-else-if="micPhase === 'listening'" class="mic-help listening">Listening...</div>
-        <div v-else-if="micPhase === 'matched'" class="mic-help success">Nice job! You said it.</div>
-        <div v-else class="mic-help retry">Try again, then tap My turn.</div>
-        <div v-if="micPhase === 'listening'" class="sustain-meter">
+      <div v-if="showMicPrompt && micPhase === 'listening'" class="mic-area" aria-hidden="true">
+        <div class="mic-icon">🎤</div>
+        <div class="sustain-meter">
           <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
         </div>
       </div>
       <div class="btn-row">
-        <button class="audio-btn" @click="speakCurrentLine">🔊 Hear again</button>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-label="Hear again"
+          @click="speakCurrentLine"
+        >🔊</button>
         <button
           v-if="showMicPrompt"
-          class="audio-btn"
-          @click="startMicPractice"
+          class="icon-btn"
+          type="button"
+          aria-label="My turn to say the sound"
           :disabled="micPhase === 'listening'"
-        >
-          🎤 My turn
-        </button>
-        <button class="next-btn" :disabled="nextDisabled" @click="advanceScript">{{ scriptDone ? "Let's practice" : 'Next' }}</button>
+          @click="startMicPractice"
+        >🎤</button>
+        <button
+          class="icon-btn primary"
+          type="button"
+          :aria-label="scriptDone ? 'Start practice' : 'Next'"
+          :disabled="nextDisabled"
+          @click="advanceScript"
+        >➡️</button>
       </div>
     </div>
 
     <div v-else-if="phase === 'read'" class="practice-section">
-      <div class="prompt">Tap each word to read it.</div>
+      <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: 'active' }]" emphasis="letter" />
       <div class="word-pool">
         <button
           v-for="(w, i) in readWords"
           :key="`r-${i}`"
           class="word-chip"
           :class="{ done: readDone[i] }"
+          type="button"
+          :aria-label="`Read the word ${w}`"
           @click="markRead(i)"
         >{{ w }}</button>
       </div>
-      <button class="next-btn" :disabled="!allRead" @click="phase = 'spell'">Spell next</button>
+      <button
+        class="icon-btn primary"
+        type="button"
+        aria-label="Spell next"
+        :disabled="!allRead"
+        @click="phase = 'spell'"
+      >➡️</button>
     </div>
 
     <div v-else-if="phase === 'spell'" class="practice-section">
-      <div class="prompt">Tap each word to practice it.</div>
+      <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: 'active' }]" emphasis="letter" />
       <div class="word-pool">
         <button
           v-for="(w, i) in spellWords"
           :key="`s-${i}`"
           class="word-chip"
           :class="{ done: spellDone[i] }"
+          type="button"
+          :aria-label="`Practice the word ${w}`"
           @click="markSpell(i)"
         >{{ w }}</button>
       </div>
-      <button class="next-btn" :disabled="!allSpelled" @click="finish">Done</button>
+      <button
+        class="icon-btn primary"
+        type="button"
+        aria-label="Done"
+        :disabled="!allSpelled"
+        @click="finish"
+      >✅</button>
     </div>
   </div>
 </template>
@@ -63,6 +84,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
+import FocusStage from './FocusStage.vue';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
@@ -81,7 +103,6 @@ const scriptIndex = ref(0);
 const playedAnchorSound = ref(false);
 
 const script = computed(() => props.step?.introductionScript ?? []);
-const articulation = computed(() => props.step?.articulatoryGesture ?? '');
 const grapheme = computed(() => {
   const placements = props.step?.graphemePlacements ?? [];
   return placements[0]?.grapheme ?? '';
@@ -91,44 +112,52 @@ const currentScriptLine = computed(() => script.value[scriptIndex.value]);
 const scriptDone = computed(() => scriptIndex.value >= script.value.length - 1);
 const micPhase = ref('idle');
 
+const introTokens = computed(() => [{
+  text: grapheme.value,
+  kind: 'grapheme',
+  state: micPhase.value === 'matched' ? 'done' : 'active',
+}]);
+
 function stripIpa(text) {
   if (!text) return '';
-  // Remove /…/ phoneme notations and tidy whitespace/punctuation that's left behind
-  return text.replace(/\/[^/]*\//g, '').replace(/\s{2,}/g, ' ').replace(/\s+([,.!?])/g, '$1').trim();
+  return text
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
 }
 
 function lineNeedsResponse(text) {
   if (!text) return false;
   const normalized = String(text).toLowerCase();
-  return normalized.includes('your turn') || normalized.includes('now you try') || normalized.includes('say /');
+  return normalized.includes('your turn')
+    || normalized.includes('now you try')
+    || normalized.includes('say /');
 }
 
 const showMicPrompt = computed(() => lineNeedsResponse(currentScriptLine.value?.text));
 
-const displayScriptLine = computed(() => {
-  const line = stripIpa(currentScriptLine.value?.text ?? '');
+function spokenLineFor(text) {
+  const line = stripIpa(text ?? '');
   if (!line) return '';
   const normalized = line.toLowerCase();
-
   if (normalized.includes('watch my mouth')) {
     return 'Listen closely to the sound, then try it too.';
   }
-
   if (normalized.includes('your turn') || normalized.includes('now you try')) {
-    return 'Tap "My turn" and say the sound.';
+    return 'Tap my turn and say the sound.';
   }
-
   return line;
-});
+}
 
 const nextDisabled = computed(() => showMicPrompt.value && micPhase.value !== 'matched');
 
 async function speakCurrentLine() {
   const line = currentScriptLine.value;
   if (!line) return;
-  await ember.speakTeacher(displayScriptLine.value || line.text);
+  const spoken = spokenLineFor(line.text);
+  if (spoken) await ember.speakTeacher(spoken);
   if (cancelled) return;
-  // Play the anchor sound once at intro start, not on every Next click.
   if (!playedAnchorSound.value && scriptIndex.value === 0 && grapheme.value) {
     playedAnchorSound.value = true;
     await ember.playPhoneme(grapheme.value);
@@ -141,17 +170,27 @@ async function startMicPractice() {
     return;
   }
   micPhase.value = 'listening';
+  await ember.speak('Say the sound when you are ready.');
+  await ember.speak('Listening.');
   const result = await startListening(grapheme.value, 7000);
   if (cancelled) return;
-  micPhase.value = result?.matched ? 'matched' : 'missed';
   if (result?.matched) {
-    await ember.speakTeacher('Nice job!');
+    micPhase.value = 'matched';
+    await ember.speak('Nice job! You said it.');
+  } else {
+    micPhase.value = 'missed';
+    await ember.speak('Try again, then tap my turn.');
   }
 }
 
 watch(scriptIndex, async () => {
   micPhase.value = 'idle';
   if (phase.value === 'intro') await speakCurrentLine();
+});
+
+watch(phase, async (next) => {
+  if (next === 'read') await ember.speak('Tap each word to read it.');
+  else if (next === 'spell') await ember.speak('Tap each word to practice it.');
 });
 
 onMounted(async () => {
@@ -213,42 +252,107 @@ function finish() {
 </script>
 
 <style scoped>
-.new-concept-step { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; max-width: 360px; }
-.step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
-.intro-section, .practice-section { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
-.grapheme-card { font-size: 5rem; color: #FF8C00; font-weight: bold; line-height: 1; }
-.phoneme-label { font-size: 1.5rem; color: #64FFDA; }
-.script-line { color: #E0E0E0; text-align: center; font-size: 1rem; min-height: 2.5rem; }
-.articulation { color: #888; font-size: 0.85rem; text-align: center; font-style: italic; }
-.mic-card { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
-.mic-help { color: #cbd5e1; font-size: 0.9rem; text-align: center; }
-.mic-help.listening { color: #64FFDA; }
-.mic-help.success { color: #64FFDA; }
-.mic-help.retry { color: #FFD93D; }
-.sustain-meter { width: 200px; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
-.sustain-fill { height: 100%; background: #FF8C00; transition: width 0.1s; }
-.prompt { color: #aaa; }
-.word-pool { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+.new-concept-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.intro-section, .practice-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.mic-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mic-icon {
+  font-size: 2rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.sustain-meter {
+  width: 200px;
+  height: 10px;
+  background: #333;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.sustain-fill {
+  height: 100%;
+  background: #ff8c00;
+  transition: width 0.1s;
+}
+
+.word-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
 .word-chip {
-  padding: 0.4rem 0.8rem;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1.5px solid rgba(255, 140, 0, 0.3);
-  color: #FF8C00;
-  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  background: rgba(25, 47, 74, 0.75);
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  color: #ffd166;
+  border-radius: 0.6rem;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 1.15rem;
   cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease;
 }
-.word-chip.done { background: rgba(100, 255, 218, 0.15); border-color: #64FFDA; color: #64FFDA; }
-.next-btn, .audio-btn {
-  background: rgba(255, 140, 0, 0.15);
-  border: 1.5px solid #FF8C00;
-  color: #FF8C00;
-  padding: 0.5rem 1.25rem;
-  border-radius: 1.5rem;
-  font-family: inherit;
+
+.word-chip:hover { transform: scale(1.05); border-color: #ffd166; }
+.word-chip.done {
+  background: rgba(126, 232, 136, 0.15);
+  border-color: rgba(126, 232, 136, 0.75);
+  color: #bff3c1;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.icon-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 1.6rem;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
+  border-radius: 50%;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
-.next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-row { display: flex; gap: 0.5rem; }
+
+.icon-btn:hover:not(:disabled) { transform: scale(1.06); border-color: #ffd166; }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.icon-btn.primary {
+  background: rgba(255, 140, 0, 0.22);
+  border-color: #ff8c00;
+  color: #fff4dc;
+}
 </style>

@@ -35,4 +35,14 @@ describe('AuditoryDrillStep', () => {
     expect(choices).toContain('a');
     expect(choices.length).toBeGreaterThan(1);
   });
+
+  it('has no step title heading', () => {
+    const wrapper = mount(AuditoryDrillStep, {
+      props: {
+        step: fixtureStep,
+        lessonId: '001',
+      },
+    });
+    expect(wrapper.find('h3').exists()).toBe(false);
+  });
 });

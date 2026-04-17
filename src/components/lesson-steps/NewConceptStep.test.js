@@ -1,6 +1,28 @@
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, vi } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
 import NewConceptStep from './NewConceptStep.vue';
+
+const startListening = vi.fn().mockResolvedValue({ matched: true });
+const cancelListening = vi.fn();
+const requestMicPermission = vi.fn().mockResolvedValue({});
+
+vi.mock('../../composables/useSpeechRecognition.js', () => ({
+  useSpeechRecognition: () => ({
+    startListening,
+    cancelListening,
+    requestMicPermission,
+    sustainProgress: { value: 0 },
+  }),
+}));
+
+vi.mock('../../composables/useEmber.js', () => ({
+  useEmber: () => ({
+    speak: vi.fn().mockResolvedValue(undefined),
+    speakTeacher: vi.fn().mockResolvedValue(undefined),
+    playPhoneme: vi.fn().mockResolvedValue(undefined),
+    stopSpeaking: vi.fn(),
+  }),
+}));
 
 const fixtureStep = {
   instructionalNotes: 'Teach the letter M.',
@@ -16,24 +38,32 @@ const fixtureStep = {
   spellWords: { iDo: ['am'], weDo: [], youDo: [] },
 };
 
+function tokens(wrapper) {
+  return wrapper.findComponent({ name: 'FocusStage' }).props('tokens');
+}
+
 describe('NewConceptStep', () => {
-  it('mounts and shows the grapheme', () => {
+  it('mounts and shows the grapheme via FocusStage', () => {
     const wrapper = mount(NewConceptStep, { props: { step: fixtureStep } });
-    expect(wrapper.text()).toContain('m');
-    expect(wrapper.text()).toContain('This is the letter M.');
+    const first = tokens(wrapper)[0];
+    expect(first).toMatchObject({ text: 'm', kind: 'grapheme' });
   });
 
   it('walks script → read → spell → emits step-complete', async () => {
     const wrapper = mount(NewConceptStep, { props: { step: fixtureStep } });
-    // Advance through 2-line script
-    await wrapper.find('.next-btn').trigger('click'); // line 1 → line 2
-    await wrapper.find('.next-btn').trigger('click'); // line 2 → read phase
-    // Mark the one read word
+    await wrapper.find('button[aria-label="Next"]').trigger('click');
+    await wrapper.find('button[aria-label="Start practice"]').trigger('click');
+    await flushPromises();
     await wrapper.find('.word-chip').trigger('click');
-    await wrapper.find('.next-btn').trigger('click'); // read → spell
-    // Mark the one spell word
+    await wrapper.find('button[aria-label="Spell next"]').trigger('click');
+    await flushPromises();
     await wrapper.find('.word-chip').trigger('click');
-    await wrapper.find('.next-btn').trigger('click'); // spell → done
+    await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
+  });
+
+  it('has no step title heading', () => {
+    const wrapper = mount(NewConceptStep, { props: { step: fixtureStep } });
+    expect(wrapper.find('h3').exists()).toBe(false);
   });
 });

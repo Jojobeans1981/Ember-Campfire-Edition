@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-16T22:22:55.365Z",
+  "generatedAt": "2026-04-17T01:05:39.574Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -279,6 +279,86 @@
     "bbccdf2efb33": {
       "text": "the",
       "file": "/audio/tts/bbccdf2efb33.mp3"
+    },
+    "d7a707923995": {
+      "text": "Correct!",
+      "file": "/audio/tts/d7a707923995.mp3"
+    },
+    "9248b6bcc249": {
+      "text": "Great! You said it!",
+      "file": "/audio/tts/9248b6bcc249.mp3"
+    },
+    "680a71797ff3": {
+      "text": "Listen and blend.",
+      "file": "/audio/tts/680a71797ff3.mp3"
+    },
+    "37fc0b26b420": {
+      "text": "Listen closely to the sound, then try it too.",
+      "file": "/audio/tts/37fc0b26b420.mp3"
+    },
+    "3a96b13add5c": {
+      "text": "Listen to the sound.",
+      "file": "/audio/tts/3a96b13add5c.mp3"
+    },
+    "102ea34b77f1": {
+      "text": "Listen to the word.",
+      "file": "/audio/tts/102ea34b77f1.mp3"
+    },
+    "dc5513004d21": {
+      "text": "Listening.",
+      "file": "/audio/tts/dc5513004d21.mp3"
+    },
+    "5dddd31931a7": {
+      "text": "Listening. Say the sound.",
+      "file": "/audio/tts/5dddd31931a7.mp3"
+    },
+    "4e3c17d8c035": {
+      "text": "Nice job! You said it.",
+      "file": "/audio/tts/4e3c17d8c035.mp3"
+    },
+    "13b957e60ce4": {
+      "text": "Say the sound when you are ready.",
+      "file": "/audio/tts/13b957e60ce4.mp3"
+    },
+    "64fef215e61c": {
+      "text": "Tap each word to practice it.",
+      "file": "/audio/tts/64fef215e61c.mp3"
+    },
+    "a5d8621b9a5b": {
+      "text": "Tap each word to read it.",
+      "file": "/audio/tts/a5d8621b9a5b.mp3"
+    },
+    "b29b426b7d69": {
+      "text": "Tap my turn and say the sound.",
+      "file": "/audio/tts/b29b426b7d69.mp3"
+    },
+    "f1dd5dcdf031": {
+      "text": "Tap the letter that matches.",
+      "file": "/audio/tts/f1dd5dcdf031.mp3"
+    },
+    "fcdd76be5ac6": {
+      "text": "Tap the sound tiles, then blend it out loud.",
+      "file": "/audio/tts/fcdd76be5ac6.mp3"
+    },
+    "8ff7e5baa167": {
+      "text": "Tap the speaker to hear me read, then tap the microphone for your turn.",
+      "file": "/audio/tts/8ff7e5baa167.mp3"
+    },
+    "0f42dc77d841": {
+      "text": "This is a tricky word. The tricky part is underlined.",
+      "file": "/audio/tts/0f42dc77d841.mp3"
+    },
+    "92345a0bcff6": {
+      "text": "Try again, then tap my turn.",
+      "file": "/audio/tts/92345a0bcff6.mp3"
+    },
+    "539684ec7f4b": {
+      "text": "Try again. Tap the microphone and read it out loud.",
+      "file": "/audio/tts/539684ec7f4b.mp3"
+    },
+    "3bc1c9464d79": {
+      "text": "Try again. Tap the microphone and say the sound.",
+      "file": "/audio/tts/3bc1c9464d79.mp3"
     }
   }
 }

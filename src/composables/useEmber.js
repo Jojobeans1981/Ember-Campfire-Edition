@@ -5,8 +5,6 @@ const isSpeaking = ref(false);
 const currentText = ref('');
 
 let activeAudio = null;
-let preferredVoice = null;
-let voiceBootstrapDone = false;
 let activePlayback = null; // { id, type, priority }
 let playbackIdSeed = 0;
 
@@ -16,126 +14,6 @@ const AUDIO_PRIORITY = {
   phoneme: 70,
   critical: 100,
 };
-
-const VOICE_NAME_PREFERENCES = [
-  'aria online',
-  'jenny online',
-  'guy online',
-  'ava online',
-  'sara online',
-  'alloy',
-  'nova',
-  'shimmer',
-  'aria',
-  'jenny',
-  'samantha',
-  'allison',
-  'ava',
-  'google us english',
-  'google uk english female',
-  'zira',
-  'sara',
-  'libby',
-];
-
-const VOICE_NAME_AVOID = [
-  'espeak',
-  'rhvoice',
-  'festival',
-  'microsoft david',
-  'microsoft mark',
-  'compact',
-  'robot',
-];
-
-function scoreVoice(voice) {
-  const name = String(voice?.name || '').toLowerCase();
-  const lang = String(voice?.lang || '').toLowerCase();
-  let score = 0;
-
-  if (voice?.localService) score += 40;
-  if (lang === 'en-us') score += 25;
-  else if (lang.startsWith('en-')) score += 15;
-  else if (lang.startsWith('en')) score += 10;
-
-  for (let i = 0; i < VOICE_NAME_PREFERENCES.length; i += 1) {
-    if (name.includes(VOICE_NAME_PREFERENCES[i])) {
-      score += 120 - i;
-      break;
-    }
-  }
-
-  for (let i = 0; i < VOICE_NAME_AVOID.length; i += 1) {
-    if (name.includes(VOICE_NAME_AVOID[i])) {
-      score -= 160;
-      break;
-    }
-  }
-
-  if (name.includes('natural')) score += 8;
-  if (name.includes('neural')) score += 8;
-  if (name.includes('online')) score += 10;
-  if (name.includes('enhanced')) score += 5;
-  if (name.includes('female')) score += 4;
-
-  return score;
-}
-
-function pickPreferredVoice(voiceName) {
-  if (!window.speechSynthesis?.getVoices) return null;
-  const voices = window.speechSynthesis.getVoices() || [];
-  if (!voices.length) return null;
-
-  if (voiceName) {
-    const requested = String(voiceName).toLowerCase();
-    const exact = voices.find((v) => String(v.name).toLowerCase() === requested);
-    if (exact) return exact;
-    const partial = voices.find((v) => String(v.name).toLowerCase().includes(requested));
-    if (partial) return partial;
-  }
-
-  const englishVoices = voices.filter((v) => String(v.lang || '').toLowerCase().startsWith('en'));
-  const pool = englishVoices.length ? englishVoices : voices;
-  return pool.reduce((best, voice) => {
-    if (!best) return voice;
-    return scoreVoice(voice) > scoreVoice(best) ? voice : best;
-  }, null);
-}
-
-function bootstrapPreferredVoice() {
-  if (!window.speechSynthesis || voiceBootstrapDone) return;
-  voiceBootstrapDone = true;
-
-  const updatePreferredVoice = () => {
-    preferredVoice = pickPreferredVoice();
-  };
-
-  updatePreferredVoice();
-  window.speechSynthesis.addEventListener?.('voiceschanged', updatePreferredVoice);
-}
-
-async function waitForVoices(timeoutMs = 1500) {
-  if (!window.speechSynthesis?.getVoices) return;
-  const existing = window.speechSynthesis.getVoices() || [];
-  if (existing.length) return;
-
-  await new Promise((resolve) => {
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      window.clearTimeout(timeoutId);
-      window.speechSynthesis?.removeEventListener?.('voiceschanged', onVoicesChanged);
-      resolve();
-    };
-    const onVoicesChanged = () => {
-      const voices = window.speechSynthesis?.getVoices?.() || [];
-      if (voices.length) finish();
-    };
-    const timeoutId = window.setTimeout(finish, timeoutMs);
-    window.speechSynthesis?.addEventListener?.('voiceschanged', onVoicesChanged);
-  });
-}
 
 function stopActiveAudio() {
   if (!activeAudio) return;
@@ -163,9 +41,6 @@ function releasePlayback(playbackId) {
 }
 
 function stopAllPlaybackNow() {
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
   stopActiveAudio();
   activePlayback = null;
 }
@@ -250,8 +125,6 @@ export function phonemeToAudioKey(phoneme) {
 }
 
 export function useEmber() {
-  bootstrapPreferredVoice();
-
   function speak(text, options = {}) {
     return new Promise((resolve) => {
       if (typeof window === 'undefined') {

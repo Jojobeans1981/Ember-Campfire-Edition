@@ -1,13 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, vi } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
 import WordWorkStep from './WordWorkStep.vue';
 
+vi.mock('../../composables/useEmber.js', () => ({
+  useEmber: () => ({
+    speak: vi.fn().mockResolvedValue(undefined),
+    stopSpeaking: vi.fn(),
+  }),
+}));
+
 describe('WordWorkStep', () => {
-  it('mounts and shows the word chain', () => {
+  it('renders the word chain as chips', () => {
     const wrapper = mount(WordWorkStep, {
       props: { step: { wordChain: ['at', 'mat', 'sat'] } },
     });
-    expect(wrapper.text()).toContain('Word Work');
     expect(wrapper.findAll('.word-chip').length).toBe(3);
   });
 
@@ -17,7 +23,7 @@ describe('WordWorkStep', () => {
     });
     const chips = wrapper.findAll('.word-chip');
     for (const c of chips) await c.trigger('click');
-    await wrapper.find('.next-btn').trigger('click');
+    await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
   });
 
@@ -42,9 +48,18 @@ describe('WordWorkStep', () => {
       },
     });
     await wrapper.find('.word-chip').trigger('click');
-    await wrapper.find('.next-btn').trigger('click');
-    expect(wrapper.text()).toContain('Define each word');
-    await wrapper.find('.next-btn').trigger('click');
+    await wrapper.find('button[aria-label="Word meaning"]').trigger('click');
+    await flushPromises();
+    const focus = wrapper.findComponent({ name: 'FocusStage' });
+    expect(focus.props('tokens')[0].text).toBe('unhappy');
+    await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
+  });
+
+  it('has no step title heading', () => {
+    const wrapper = mount(WordWorkStep, {
+      props: { step: { wordChain: ['at'] } },
+    });
+    expect(wrapper.find('h3').exists()).toBe(false);
   });
 });

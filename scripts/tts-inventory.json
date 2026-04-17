@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-16T21:51:53.820Z",
+  "generatedAt": "2026-04-17T00:51:47.845Z",
   "scope": {
     "lessonIds": [
       "001"
     ],
     "lessonsScanned": 1
   },
-  "entryCount": 64,
-  "totalCharacters": 3834,
+  "entryCount": 84,
+  "totalCharacters": 4459,
   "skippedIpa": [],
   "entries": [
     {
@@ -59,6 +59,12 @@
       ]
     },
     {
+      "text": "Correct!",
+      "sources": [
+        "AuditoryDrillStep.vue (match success)"
+      ]
+    },
+    {
       "text": "Every campfire starts with an Ember. Let's make reading your fire.",
       "sources": [
         "App.vue splash (launch-splash)"
@@ -98,6 +104,12 @@
       "text": "Great!",
       "sources": [
         "VisualDrillStep.vue:109 / SpeechPractice.vue:114"
+      ]
+    },
+    {
+      "text": "Great! You said it!",
+      "sources": [
+        "VisualDrillStep.vue / ConnectedTextStep.vue (success)"
       ]
     },
     {
@@ -215,6 +227,42 @@
       ]
     },
     {
+      "text": "Listen and blend.",
+      "sources": [
+        "PhonemicAwarenessStep.vue (blend mount)"
+      ]
+    },
+    {
+      "text": "Listen closely to the sound, then try it too.",
+      "sources": [
+        "NewConceptStep.vue (script intro)"
+      ]
+    },
+    {
+      "text": "Listen to the sound.",
+      "sources": [
+        "AuditoryDrillStep.vue (listen phase)"
+      ]
+    },
+    {
+      "text": "Listen to the word.",
+      "sources": [
+        "PhonemicAwarenessStep.vue (segment mount)"
+      ]
+    },
+    {
+      "text": "Listening.",
+      "sources": [
+        "NewConceptStep.vue / ConnectedTextStep.vue (listening pulse)"
+      ]
+    },
+    {
+      "text": "Listening. Say the sound.",
+      "sources": [
+        "VisualDrillStep.vue (mic prompt)"
+      ]
+    },
+    {
       "text": "map",
       "sources": [
         "word-list (bare)"
@@ -224,6 +272,12 @@
       "text": "Nice job!",
       "sources": [
         "NewConceptStep.vue:146"
+      ]
+    },
+    {
+      "text": "Nice job! You said it.",
+      "sources": [
+        "NewConceptStep.vue (success)"
       ]
     },
     {
@@ -275,6 +329,12 @@
       ]
     },
     {
+      "text": "Say the sound when you are ready.",
+      "sources": [
+        "NewConceptStep.vue (mic prompt)"
+      ]
+    },
+    {
       "text": "Tap each letter.",
       "sources": [
         "BlendingStep.vue:133"
@@ -284,6 +344,42 @@
       "text": "Tap each sound from left to right.",
       "sources": [
         "BlendingGame.vue:157"
+      ]
+    },
+    {
+      "text": "Tap each word to practice it.",
+      "sources": [
+        "NewConceptStep.vue (spell phase)"
+      ]
+    },
+    {
+      "text": "Tap each word to read it.",
+      "sources": [
+        "NewConceptStep.vue (read phase)"
+      ]
+    },
+    {
+      "text": "Tap my turn and say the sound.",
+      "sources": [
+        "NewConceptStep.vue (script prompt)"
+      ]
+    },
+    {
+      "text": "Tap the letter that matches.",
+      "sources": [
+        "AuditoryDrillStep.vue (listen phase)"
+      ]
+    },
+    {
+      "text": "Tap the sound tiles, then blend it out loud.",
+      "sources": [
+        "BlendingStep.vue (mount)"
+      ]
+    },
+    {
+      "text": "Tap the speaker to hear me read, then tap the microphone for your turn.",
+      "sources": [
+        "ConnectedTextStep.vue (mount)"
       ]
     },
     {
@@ -335,9 +431,21 @@
       ]
     },
     {
+      "text": "This is a tricky word. The tricky part is underlined.",
+      "sources": [
+        "IrregularWordsStep.vue (mount)"
+      ]
+    },
+    {
       "text": "This is the letter A. A is a vowel. The long vowel sound is the same as its name, A. Today we are going to read words with the short vowel sound.",
       "sources": [
         "lesson-001 step5.introductionScript"
+      ]
+    },
+    {
+      "text": "Try again, then tap my turn.",
+      "sources": [
+        "NewConceptStep.vue (retry)"
       ]
     },
     {
@@ -350,6 +458,18 @@
       "text": "Try again. Say the whole word.",
       "sources": [
         "BlendingGame.vue:101"
+      ]
+    },
+    {
+      "text": "Try again. Tap the microphone and read it out loud.",
+      "sources": [
+        "ConnectedTextStep.vue (retry)"
+      ]
+    },
+    {
+      "text": "Try again. Tap the microphone and say the sound.",
+      "sources": [
+        "VisualDrillStep.vue (retry)"
       ]
     },
     {
