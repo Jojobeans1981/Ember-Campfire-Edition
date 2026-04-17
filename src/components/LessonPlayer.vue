@@ -3,16 +3,19 @@
     <div v-if="!lesson" class="loading">Loading lesson…</div>
 
     <template v-else>
-      <div class="lesson-header">
-        <h2>{{ headerTitle }}</h2>
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
-        </div>
-        <div class="step-label">Step {{ currentStepIndex + 1 }} of {{ activeSteps.length }}</div>
-      </div>
+      <nav class="step-trail" aria-label="Lesson progress">
+        <span
+          v-for="(key, i) in activeSteps"
+          :key="key"
+          class="step-dot"
+          :class="{ active: i === currentStepIndex, done: i < currentStepIndex }"
+          :aria-current="i === currentStepIndex ? 'step' : undefined"
+          :aria-label="`Step ${i + 1} of ${activeSteps.length}`"
+        />
+      </nav>
 
       <div class="lesson-content">
-        <EmberMascot :speaking="ember.isSpeaking.value" :text="ember.currentText.value" />
+        <EmberMascot :speaking="ember.isSpeaking.value" />
 
         <component
           :is="currentStepComponent"
@@ -143,31 +146,6 @@ const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] 
 const currentStepData = computed(() => (currentStepKey.value ? lesson.value?.[currentStepKey.value] : null));
 const currentStepComponent = computed(() => (currentStepKey.value ? stepComponentByKey[currentStepKey.value] : null));
 
-function stripIpa(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/\/[^/]*\//g, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\s+([,.!?])/g, '$1')
-    .trim();
-}
-
-const headerTitle = computed(() => {
-  const l = lesson.value;
-  if (!l) return '';
-  if (l.grapheme && /^[a-z]$/i.test(l.grapheme)) {
-    return `Letter ${l.grapheme.toUpperCase()}`;
-  }
-  if (l.grapheme) return l.grapheme.toLowerCase();
-  return stripIpa(l.title) || `Lesson ${l.lessonNumber}`;
-});
-
-const progressPercent = computed(() => {
-  const total = activeSteps.value.length;
-  if (total === 0) return 0;
-  return Math.round((currentStepIndex.value / total) * 100);
-});
-
 function onStepComplete() {
   if (isAdvancing.value) return;
   isAdvancing.value = true;
@@ -195,35 +173,32 @@ function onStepComplete() {
 
 .loading { color: #888; padding: 2rem; }
 
-.lesson-header {
-  width: 100%;
-  text-align: center;
+.step-trail {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 6px 0 2px;
 }
 
-.lesson-header h2 {
-  color: #FF8C00;
-  margin: 0 0 0.5rem;
-  font-size: 1.3rem;
+.step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 209, 102, 0.25);
+  transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
 }
 
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: #333;
-  border-radius: 4px;
-  overflow: hidden;
+.step-dot.done {
+  background: rgba(126, 232, 136, 0.7);
+  border-color: rgba(126, 232, 136, 0.8);
 }
 
-.progress-fill {
-  height: 100%;
-  background: #FF8C00;
-  transition: width 0.3s ease;
-}
-
-.step-label {
-  font-size: 0.75rem;
-  color: #888;
-  margin-top: 0.25rem;
+.step-dot.active {
+  background: #ffd166;
+  border-color: #ffd166;
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.25);
 }
 
 .lesson-content {

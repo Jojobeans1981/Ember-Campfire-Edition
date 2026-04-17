@@ -1,30 +1,25 @@
 <template>
   <div class="irregular-words-step">
-    <h3 class="step-title">Tricky Words</h3>
-
-    <div v-if="allWords.length === 0" class="empty">
-      No irregular words for this lesson.
-    </div>
-
-    <div v-else-if="currentWord" class="word-card">
-      <div class="word">
-        <span
-          v-for="(part, i) in currentWord.breakdown"
-          :key="i"
-          class="grapheme"
-          :class="{ irregular: !part.regular }"
-        >{{ part.grapheme }}</span>
-      </div>
-      <div class="legend">
-        <span class="dot regular"></span> sound parts
-        <span class="dot irregular"></span> tricky parts
-      </div>
-    </div>
+    <FocusStage
+      v-if="currentWord"
+      :tokens="wordTokens"
+      emphasis="tiles"
+    />
 
     <div class="controls">
-      <button v-if="currentWord" class="audio-btn" @click="speakCurrent">🔊 Hear again</button>
-      <div class="progress">{{ index + 1 }} / {{ allWords.length }}</div>
-      <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
+      <button
+        v-if="currentWord"
+        class="icon-btn"
+        type="button"
+        aria-label="Hear again"
+        @click="speakCurrent"
+      >🔊</button>
+      <button
+        class="icon-btn primary"
+        type="button"
+        :aria-label="isLast ? 'Done' : 'Next'"
+        @click="next"
+      >{{ isLast ? '✅' : '➡️' }}</button>
     </div>
   </div>
 </template>
@@ -32,6 +27,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import FocusStage from './FocusStage.vue';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
@@ -48,17 +44,39 @@ const index = ref(0);
 const currentWord = computed(() => allWords.value[index.value]);
 const isLast = computed(() => index.value >= allWords.value.length - 1);
 
+const wordTokens = computed(() => {
+  const w = currentWord.value;
+  if (!w) return [];
+  const breakdown = w.breakdown ?? [];
+  if (breakdown.length === 0) {
+    return [{ text: w.word, kind: 'word', state: 'active' }];
+  }
+  return breakdown.map((part) => ({
+    text: part.grapheme,
+    kind: part.regular ? 'grapheme' : 'grapheme-irregular',
+    state: 'active',
+  }));
+});
+
 async function speakCurrent() {
   const w = currentWord.value;
   if (!w) return;
+  if (!cancelled) {
+    await ember.speak('This is a tricky word. The tricky part is underlined.');
+  }
+  if (cancelled) return;
   await ember.speak(w.word);
 }
 
 watch(index, async () => {
-  await speakCurrent();
+  if (!cancelled) await ember.speak(currentWord.value?.word ?? '');
 });
 
 onMounted(async () => {
+  if (allWords.value.length === 0) {
+    emit('step-complete');
+    return;
+  }
   await speakCurrent();
 });
 
@@ -77,28 +95,42 @@ function next() {
 </script>
 
 <style scoped>
-.irregular-words-step { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; }
-.step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
-.empty { color: #888; }
-.word-card { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
-.word { display: flex; gap: 0.1rem; font-size: 3rem; font-weight: bold; }
-.grapheme { color: #FF8C00; }
-.grapheme.irregular { color: #FF6B6B; text-decoration: underline; }
-.phoneme-row { display: flex; gap: 0.6rem; }
-.phoneme { color: #aaa; font-size: 1rem; }
-.legend { display: flex; gap: 0.75rem; font-size: 0.75rem; color: #888; align-items: center; }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.2rem; }
-.dot.regular { background: #FF8C00; }
-.dot.irregular { background: #FF6B6B; }
-.controls { display: flex; align-items: center; gap: 1rem; }
-.progress { color: #666; font-size: 0.8rem; }
-.next-btn, .audio-btn {
-  background: rgba(255, 140, 0, 0.15);
-  border: 1.5px solid #FF8C00;
-  color: #FF8C00;
-  padding: 0.5rem 1.25rem;
-  border-radius: 1.5rem;
-  font-family: inherit;
+.irregular-words-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 1.6rem;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
+  border-radius: 50%;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.icon-btn:hover { transform: scale(1.06); border-color: #ffd166; }
+.icon-btn:active { transform: scale(0.96); }
+
+.icon-btn.primary {
+  background: rgba(255, 140, 0, 0.22);
+  border-color: #ff8c00;
+  color: #fff4dc;
 }
 </style>

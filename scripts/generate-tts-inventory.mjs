@@ -8,8 +8,14 @@
  * public/audio/phonemes/ is preserved — only the prose segments go into
  * the TTS manifest.
  *
- * Also emits a phoneme coverage report so we catch missing recordings
- * before kicking off generation.
+ * Extension points for future work:
+ *   - Lesson-authored content (intro scripts, words, sentences, breakdowns)
+ *     is picked up automatically by `collectLessonStrings`. Widen
+ *     SCOPE_LESSON_IDS to cover more lessons.
+ *   - Static UI copy that a component passes to `ember.speak(...)` must
+ *     be appended to STATIC_UI_PROMPTS below, otherwise the manifest
+ *     lookup returns null and the line plays silently. `useTts.test.js`
+ *     asserts coverage for the critical prompts.
  *
  * Writes:
  *   scripts/tts-inventory.json  — deduped prose entries + phoneme refs
@@ -91,6 +97,28 @@ const STATIC_UI_PROMPTS = [
     text: "Every campfire starts with an Ember. Let's make reading your fire.",
     source: 'App.vue splash (launch-splash)',
   },
+
+  // --- UI-cleanup pass (lesson-1 audio-only prompts) ---
+  { text: 'Listen and blend.', source: 'PhonemicAwarenessStep.vue (blend mount)' },
+  { text: 'Listen to the word.', source: 'PhonemicAwarenessStep.vue (segment mount)' },
+  { text: 'Listening. Say the sound.', source: 'VisualDrillStep.vue (mic prompt)' },
+  { text: 'Great! You said it!', source: 'VisualDrillStep.vue / ConnectedTextStep.vue (success)' },
+  { text: 'Try again. Tap the microphone and say the sound.', source: 'VisualDrillStep.vue (retry)' },
+  { text: 'Listen to the sound.', source: 'AuditoryDrillStep.vue (listen phase)' },
+  { text: 'Tap the letter that matches.', source: 'AuditoryDrillStep.vue (listen phase)' },
+  { text: 'Correct!', source: 'AuditoryDrillStep.vue (match success)' },
+  { text: 'Tap the sound tiles, then blend it out loud.', source: 'BlendingStep.vue (mount)' },
+  { text: 'Say the sound when you are ready.', source: 'NewConceptStep.vue (mic prompt)' },
+  { text: 'Listening.', source: 'NewConceptStep.vue / ConnectedTextStep.vue (listening pulse)' },
+  { text: 'Nice job! You said it.', source: 'NewConceptStep.vue (success)' },
+  { text: 'Try again, then tap my turn.', source: 'NewConceptStep.vue (retry)' },
+  { text: 'Tap each word to read it.', source: 'NewConceptStep.vue (read phase)' },
+  { text: 'Tap each word to practice it.', source: 'NewConceptStep.vue (spell phase)' },
+  { text: 'Listen closely to the sound, then try it too.', source: 'NewConceptStep.vue (script intro)' },
+  { text: 'Tap my turn and say the sound.', source: 'NewConceptStep.vue (script prompt)' },
+  { text: 'This is a tricky word. The tricky part is underlined.', source: 'IrregularWordsStep.vue (mount)' },
+  { text: 'Tap the speaker to hear me read, then tap the microphone for your turn.', source: 'ConnectedTextStep.vue (mount)' },
+  { text: 'Try again. Tap the microphone and read it out loud.', source: 'ConnectedTextStep.vue (retry)' },
 ];
 
 // ---- Friend hype lines + generic hype lines (App.vue:269-292) ----
@@ -217,6 +245,9 @@ function collectLessonStrings(lessons) {
     const L = String(g).toUpperCase();
     entries.push({ text: `This is the letter ${L}.`, source: 'teachPhoneme (grapheme)' });
     entries.push({ text: `Can you say ${L}?`, source: 'teachPhoneme (grapheme)' });
+    // Wrong-answer announcement for AuditoryDrillStep / VisualDrillStep when
+    // the kid picks a non-matching letter — spoken instead of shown on screen.
+    entries.push({ text: `It was the letter ${L}.`, source: 'auditory/visual drill wrong' });
   }
 
   return { entries, skippedIpa, stats: { words: words.size, graphemes: graphemes.size } };

@@ -1,89 +1,90 @@
 <template>
   <div class="blending-step">
-    <!-- UFLI mode: word chain + tile pools -->
-    <div v-if="ufliMode" class="ufli-mode">
-      <div class="prompt-text">Tap the sound tiles, then blend it out loud.</div>
+    <FocusStage :tokens="focusTokens" emphasis="tiles" />
 
-      <div class="chain-display">
-        <div class="current-word">{{ currentChainWord }}</div>
+    <div v-if="hasTiles" class="tile-pools" aria-label="Sound tiles">
+      <div v-if="tiles.initial?.length" class="tile-row">
+        <button
+          v-for="t in tiles.initial"
+          :key="`i-${t}`"
+          class="tile"
+          type="button"
+          :aria-label="`Play sound ${t}`"
+          @click="playTile(t)"
+        >{{ t }}</button>
       </div>
-
-      <div v-if="hasTiles" class="tile-pools">
-        <div v-if="tiles.initial?.length" class="tile-row">
-          <span class="tile-label">start</span>
-          <button v-for="t in tiles.initial" :key="`i-${t}`" class="tile" @click="playTile(t)">{{ t }}</button>
-        </div>
-        <div v-if="tiles.medial?.length" class="tile-row">
-          <span class="tile-label">middle</span>
-          <button v-for="t in tiles.medial" :key="`m-${t}`" class="tile vowel" @click="playTile(t)">{{ t }}</button>
-        </div>
-        <div v-if="tiles.final?.length" class="tile-row">
-          <span class="tile-label">end</span>
-          <button v-for="t in tiles.final" :key="`f-${t}`" class="tile" @click="playTile(t)">{{ t }}</button>
-        </div>
+      <div v-if="tiles.medial?.length" class="tile-row">
+        <button
+          v-for="t in tiles.medial"
+          :key="`m-${t}`"
+          class="tile vowel"
+          type="button"
+          :aria-label="`Play sound ${t}`"
+          @click="playTile(t)"
+        >{{ t }}</button>
       </div>
-
-      <button class="audio-btn" @click="speakCurrentWord">🔊 Hear the word</button>
-
-      <div class="controls">
-        <div class="progress">{{ chainIndex + 1 }} / {{ wordChain.length }}</div>
-        <button class="next-btn" @click="nextChainWord">{{ isLastChain ? 'Done' : 'Next' }}</button>
+      <div v-if="tiles.final?.length" class="tile-row">
+        <button
+          v-for="t in tiles.final"
+          :key="`f-${t}`"
+          class="tile"
+          type="button"
+          :aria-label="`Play sound ${t}`"
+          @click="playTile(t)"
+        >{{ t }}</button>
       </div>
     </div>
 
-    <!-- Legacy mode: items[] with audio loop (kept for backward compat) -->
-    <div v-else>
-      <div class="prompt-text">Tap each letter to sound it out!</div>
-
-      <div class="letter-tiles" v-if="currentItem">
-        <button
-          v-for="(seg, idx) in currentItem.segments"
-          :key="idx"
-          class="tile"
-          :class="{ tapped: tappedIndex > idx, current: tappedIndex === idx }"
-          @click="tapTile(idx)"
-        >
-          {{ seg }}
-        </button>
-      </div>
-
-      <div class="word-reveal" v-if="showWord">
-        {{ currentItem?.word }}
-      </div>
-
-      <div class="blend-status" v-if="phase === 'blending'">
-        Now blend them together!
-      </div>
-      <div class="blend-status success" v-else-if="phase === 'done'">
-        {{ currentItem?.word }}!
-      </div>
-
-      <div class="item-progress">
-        {{ currentIndex + 1 }} / {{ step.items?.length || 0 }}
-      </div>
+    <div class="controls">
+      <button
+        class="icon-btn"
+        type="button"
+        aria-label="Hear the word"
+        @click="speakCurrentWord"
+      >🔊</button>
+      <button
+        class="icon-btn primary"
+        type="button"
+        :aria-label="isLastChain ? 'Done' : 'Next'"
+        @click="nextChainWord"
+      >{{ isLastChain ? '✅' : '➡️' }}</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import FocusStage from './FocusStage.vue';
 
 const props = defineProps({ step: Object, unitId: String });
 const emit = defineEmits(['step-complete']);
 
-const ufliMode = computed(() => Array.isArray(props.step?.wordChain));
+const ember = useEmber();
+
 const wordChain = computed(() => props.step?.wordChain ?? []);
 const tiles = computed(() => props.step?.tiles ?? {});
 const hasTiles = computed(() =>
-  (tiles.value.initial?.length || 0) +
-  (tiles.value.medial?.length || 0) +
-  (tiles.value.final?.length || 0) > 0
+  (tiles.value.initial?.length || 0)
+    + (tiles.value.medial?.length || 0)
+    + (tiles.value.final?.length || 0) > 0,
 );
 
 const chainIndex = ref(0);
 const currentChainWord = computed(() => wordChain.value[chainIndex.value] ?? '');
 const isLastChain = computed(() => chainIndex.value >= wordChain.value.length - 1);
+const playingIndex = ref(-1);
+let cancelled = false;
+
+const focusTokens = computed(() => {
+  const word = currentChainWord.value;
+  if (!word) return [];
+  return Array.from(word).map((letter, i) => ({
+    text: letter,
+    kind: 'grapheme',
+    state: i === playingIndex.value ? 'active' : 'idle',
+  }));
+});
 
 async function nextChainWord() {
   if (wordChain.value.length === 0 || isLastChain.value) {
@@ -96,10 +97,19 @@ async function nextChainWord() {
 async function speakCurrentWord() {
   const w = currentChainWord.value;
   if (!w) return;
-  // Sound out: each letter, then the whole word
-  for (const ch of w.toLowerCase()) {
-    if (/[a-z]/.test(ch)) await ember.playPhoneme(ch);
+  const letters = Array.from(w.toLowerCase());
+  for (let i = 0; i < letters.length; i += 1) {
+    if (cancelled) {
+      playingIndex.value = -1;
+      return;
+    }
+    const ch = letters[i];
+    if (!/[a-z]/.test(ch)) continue;
+    playingIndex.value = i;
+    await ember.playPhoneme(ch);
   }
+  playingIndex.value = -1;
+  if (cancelled) return;
   await ember.speak(w);
 }
 
@@ -107,67 +117,10 @@ async function playTile(letter) {
   await ember.playPhoneme(letter);
 }
 
-// --- legacy mode below ---
-const ember = useEmber();
-const currentIndex = ref(0);
-const currentItem = ref(null);
-const tappedIndex = ref(-1);
-const showWord = ref(false);
-const phase = ref('tapping');
-let resolveTap = null;
-let cancelled = false;
-
-function tapTile(idx) {
-  if (idx === tappedIndex.value && resolveTap) {
-    resolveTap();
-  }
-}
-
-async function runItem(item) {
-  if (cancelled) return;
-  currentItem.value = item;
-  tappedIndex.value = 0;
-  showWord.value = false;
-  phase.value = 'tapping';
-
-  await ember.speak('Tap each letter.');
-
-  for (let i = 0; i < item.segments.length; i++) {
-    if (cancelled) return;
-    tappedIndex.value = i;
-    await new Promise(r => { resolveTap = r; });
-    resolveTap = null;
-    await ember.playPhoneme(item.segments[i]);
-  }
-  tappedIndex.value = item.segments.length;
-
-  if (cancelled) return;
-  phase.value = 'blending';
-  await ember.speak('Now blend them together.');
-  await new Promise(r => setTimeout(r, 300));
-
-  showWord.value = true;
-  phase.value = 'done';
-  await new Promise(r => setTimeout(r, 800));
-}
-
-onMounted(async () => {
-  if (ufliMode.value) {
-    return;
-  }
-  if (!Array.isArray(props.step?.items)) return;
-  for (let i = 0; i < props.step.items.length; i++) {
-    if (cancelled) return;
-    currentIndex.value = i;
-    await runItem(props.step.items[i]);
-  }
-  if (!cancelled) emit('step-complete');
-});
-
 onBeforeUnmount(() => {
   cancelled = true;
+  playingIndex.value = -1;
   ember.stopSpeaking();
-  resolveTap = null;
 });
 </script>
 
@@ -178,53 +131,67 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
+  width: 100%;
 }
 
-.ufli-mode { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.chain-display { display: flex; flex-direction: column; align-items: center; }
-.current-word { font-size: 3rem; color: #64FFDA; font-weight: bold; letter-spacing: 0.1em; }
-.tile-pools { display: flex; flex-direction: column; gap: 0.5rem; }
-.tile-row { display: flex; align-items: center; gap: 0.4rem; }
-.tile-label { font-size: 0.7rem; color: #888; min-width: 50px; }
-.controls { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; }
-.progress { color: #666; font-size: 0.8rem; }
-.next-btn {
-  background: rgba(255, 140, 0, 0.15);
-  border: 1.5px solid #FF8C00;
-  color: #FF8C00;
-  padding: 0.5rem 1.25rem;
-  border-radius: 1.5rem;
-  font-family: inherit;
-  cursor: pointer;
+.tile-pools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
 }
 
-.prompt-text { font-size: 1rem; color: #aaa; }
-.letter-tiles { display: flex; gap: 0.5rem; }
+.tile-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
 
 .tile {
-  width: 65px;
-  height: 65px;
+  width: 64px;
+  height: 64px;
   font-size: 2rem;
-  font-weight: bold;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 41, 59, 0.7);
-  color: #FF8C00;
+  font-weight: 700;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
   border-radius: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 160ms ease, border-color 160ms ease;
   font-family: inherit;
 }
-.tile.vowel { color: #64FFDA; border-color: rgba(100, 255, 218, 0.3); }
-.tile.current { border-color: #FF8C00; animation: bounce 0.8s ease-in-out infinite; }
-.tile.tapped { background: rgba(255, 140, 0, 0.2); color: #FF8C00; border-color: rgba(255, 140, 0, 0.4); }
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+.tile.vowel { color: #7ee888; border-color: rgba(126, 232, 136, 0.4); }
+.tile:hover { transform: scale(1.08); border-color: #ffd166; }
+.tile:active { transform: scale(0.96); }
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
 }
 
-.word-reveal { font-size: 2.5rem; color: #64FFDA; font-weight: bold; }
-.blend-status { font-size: 1rem; color: #aaa; }
-.blend-status.success { color: #64FFDA; font-size: 1.2rem; }
-.item-progress { color: #666; font-size: 0.75rem; }
+.icon-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 1.6rem;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.icon-btn:hover { transform: scale(1.06); border-color: #ffd166; }
+.icon-btn:active { transform: scale(0.96); }
+
+.icon-btn.primary {
+  background: rgba(255, 140, 0, 0.22);
+  border-color: #ff8c00;
+  color: #fff4dc;
+}
 </style>

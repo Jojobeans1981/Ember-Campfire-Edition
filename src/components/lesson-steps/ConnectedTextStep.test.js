@@ -28,32 +28,39 @@ const fixtureStep = {
   spellSentences: [],
 };
 
+function currentSentence(wrapper) {
+  const tokens = wrapper.findComponent({ name: 'FocusStage' }).props('tokens');
+  return tokens[0]?.text ?? '';
+}
+
 describe('ConnectedTextStep', () => {
-  it('mounts and shows the first sentence', () => {
+  it('mounts and shows the first sentence via FocusStage', () => {
     const wrapper = mount(ConnectedTextStep, { props: { step: fixtureStep } });
-    expect(wrapper.text()).toContain('I am sam.');
+    expect(currentSentence(wrapper)).toBe('I am sam.');
   });
 
   it('requires a mic match before advancing and emits step-complete on last', async () => {
     const wrapper = mount(ConnectedTextStep, { props: { step: fixtureStep } });
 
-    // First sentence: trigger mic, then Next
-    await wrapper.find('.audio-btn:nth-child(2)').trigger('click'); // 'My turn' is the second audio-btn
+    await wrapper.find('button[aria-label="My turn to read"]').trigger('click');
     await flushPromises();
-    await wrapper.find('.next-btn').trigger('click');
-    expect(wrapper.text()).toContain('sam sat.');
+    await wrapper.find('button[aria-label="Next"]').trigger('click');
+    expect(currentSentence(wrapper)).toBe('sam sat.');
 
-    // Second sentence: same dance
-    await wrapper.find('.audio-btn:nth-child(2)').trigger('click');
+    await wrapper.find('button[aria-label="My turn to read"]').trigger('click');
     await flushPromises();
-    await wrapper.find('.next-btn').trigger('click');
+    await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
   });
 
-  it('handles empty sentence list gracefully', async () => {
+  it('handles empty sentence list by emitting step-complete on mount', async () => {
     const wrapper = mount(ConnectedTextStep, { props: { step: { readSentences: [] } } });
-    expect(wrapper.text()).toContain('No sentences');
-    await wrapper.find('.next-btn').trigger('click');
+    await flushPromises();
     expect(wrapper.emitted('step-complete')).toBeTruthy();
+  });
+
+  it('has no step title heading', () => {
+    const wrapper = mount(ConnectedTextStep, { props: { step: fixtureStep } });
+    expect(wrapper.find('h3').exists()).toBe(false);
   });
 });

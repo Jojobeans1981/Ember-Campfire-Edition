@@ -1,32 +1,40 @@
 <template>
   <div class="auditory-drill-step">
-    <h3 class="step-title">Pick the Letter</h3>
-
-    <div class="prompt-text" v-if="phase === 'listen'">Listen to the sound.</div>
-    <div class="prompt-text" v-else-if="phase === 'pick'">Tap the letter that matches.</div>
-    <div class="prompt-text success" v-else-if="phase === 'correct'">Correct!</div>
-    <div class="prompt-text wrong" v-else-if="phase === 'wrong'">It was {{ targetGrapheme }}</div>
+    <FocusStage
+      v-if="showFocus"
+      :tokens="focusTokens"
+      :emphasis="phase === 'wrong' ? 'tiles' : 'letter'"
+    />
 
     <div class="choices" v-if="phase === 'pick'">
       <button
         v-for="choice in choices"
         :key="choice"
         class="choice-btn"
+        type="button"
+        :aria-label="`Pick the letter ${choice}`"
         @click="pick(choice)"
       >{{ choice }}</button>
     </div>
 
     <div class="controls" v-if="phase === 'listen' || phase === 'pick'">
-      <button class="audio-btn" @click="playPhonemeAgain" :disabled="busy">
-        🔊 Hear again
-      </button>
+      <button
+        class="icon-btn"
+        type="button"
+        aria-label="Hear the sound again"
+        :disabled="busy"
+        @click="playPhonemeAgain"
+      >🔊</button>
     </div>
 
     <div class="controls" v-if="phase === 'correct' || phase === 'wrong'">
-      <button class="next-btn" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>
+      <button
+        class="icon-btn primary"
+        type="button"
+        :aria-label="isLast ? 'Done' : 'Next'"
+        @click="next"
+      >{{ isLast ? '✅' : '➡️' }}</button>
     </div>
-
-    <div class="item-progress">{{ index + 1 }} / {{ items.length }}</div>
   </div>
 </template>
 
@@ -34,6 +42,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
 import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import FocusStage from './FocusStage.vue';
 
 const props = defineProps({
   step: { type: Object, required: true },
@@ -49,11 +58,27 @@ const currentItem = computed(() => items.value[index.value]);
 const isLast = computed(() => index.value >= items.value.length - 1);
 const phase = ref('listen');
 const choices = ref([]);
+const pickedChoice = ref('');
 const busy = ref(false);
 const knownLetters = ref([]);
 let cancelled = false;
 
 const targetGrapheme = computed(() => currentItem.value?.graphemes?.[0]);
+
+const showFocus = computed(() => phase.value === 'correct' || phase.value === 'wrong');
+
+const focusTokens = computed(() => {
+  if (phase.value === 'correct') {
+    return [{ text: pickedChoice.value || targetGrapheme.value || '', kind: 'grapheme', state: 'done' }];
+  }
+  if (phase.value === 'wrong') {
+    return [
+      { text: pickedChoice.value || '', kind: 'grapheme', state: 'idle' },
+      { text: targetGrapheme.value || '', kind: 'grapheme', state: 'active' },
+    ].filter((t) => t.text);
+  }
+  return [];
+});
 
 const allGraphemes = computed(() => {
   const set = new Set();
@@ -101,12 +126,14 @@ async function playCurrent() {
   const item = currentItem.value;
   if (!item) return;
   busy.value = true;
+  await ember.speak('Listen to the sound.');
   await ember.playPhoneme(item.phoneme);
   busy.value = false;
   if (cancelled) return;
   if (phase.value === 'listen') {
     choices.value = buildChoices();
     phase.value = 'pick';
+    await ember.speak('Tap the letter that matches.');
   }
 }
 
@@ -120,12 +147,17 @@ async function playPhonemeAgain() {
 }
 
 async function pick(choice) {
+  pickedChoice.value = choice;
   if (choice === targetGrapheme.value) {
     phase.value = 'correct';
-    await ember.speak('Yes!');
+    await ember.speak('Correct!');
   } else {
     phase.value = 'wrong';
     await ember.playPhoneme(currentItem.value.phoneme);
+    const target = String(targetGrapheme.value || '').toUpperCase();
+    if (target) {
+      await ember.speak(`It was the letter ${target}.`);
+    }
   }
 }
 
@@ -136,6 +168,7 @@ async function next() {
   }
   index.value++;
   phase.value = 'listen';
+  pickedChoice.value = '';
   await playCurrent();
 }
 
@@ -158,36 +191,65 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.auditory-drill-step { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; }
-.step-title { color: #FF8C00; font-size: 1.2rem; margin: 0; }
-.prompt-text { font-size: 1.1rem; color: #E0E0E0; text-align: center; }
-.prompt-text.success { color: #64FFDA; }
-.prompt-text.wrong { color: #FF6B6B; }
-.choices { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
+.auditory-drill-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.choices {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .choice-btn {
-  width: 70px;
-  height: 70px;
-  font-size: 2rem;
-  font-weight: bold;
-  border: 2px solid rgba(255, 140, 0, 0.3);
-  background: rgba(30, 41, 59, 0.7);
-  color: #FF8C00;
+  width: 88px;
+  height: 88px;
+  font-size: 2.6rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
   border-radius: 1rem;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s;
+  transition: transform 160ms ease, border-color 160ms ease;
   font-family: inherit;
 }
-.choice-btn:hover { transform: scale(1.1); border-color: #FF8C00; }
-.controls { display: flex; gap: 0.75rem; }
-.audio-btn, .next-btn {
-  background: rgba(255, 140, 0, 0.15);
-  border: 1.5px solid #FF8C00;
-  color: #FF8C00;
-  padding: 0.5rem 1.25rem;
-  border-radius: 1.5rem;
-  font-family: inherit;
+
+.choice-btn:hover { transform: scale(1.08); border-color: #ffd166; }
+.choice-btn:active { transform: scale(0.96); }
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.icon-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 1.6rem;
+  border: 2px solid rgba(255, 209, 102, 0.35);
+  background: rgba(25, 47, 74, 0.75);
+  color: #ffd166;
+  border-radius: 50%;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
-.audio-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.item-progress { color: #666; font-size: 0.75rem; }
+
+.icon-btn:hover:not(:disabled) { transform: scale(1.06); border-color: #ffd166; }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.icon-btn.primary {
+  background: rgba(255, 140, 0, 0.22);
+  border-color: #ff8c00;
+  color: #fff4dc;
+}
 </style>
