@@ -2,6 +2,8 @@ name: Frontend Deploy
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'src/**'
       - 'public/**'

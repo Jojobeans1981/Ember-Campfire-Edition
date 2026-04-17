@@ -1,10 +1,6 @@
 name: Terraform Deploy
 
 on:
-  pull_request:
-    paths:
-      - 'infra/**'
-      - '.github/workflows/terraform-deploy.yml'
   push:
     branches:
       - main

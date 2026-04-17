@@ -2,6 +2,8 @@ name: Backend Image
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'backend/**'
       - '.github/workflows/backend-image.yml'
