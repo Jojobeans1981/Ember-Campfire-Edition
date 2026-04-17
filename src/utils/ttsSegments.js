@@ -43,12 +43,26 @@ export function phonemeToAudioKey(phoneme) {
   const map = {
     'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
     'ā': 'long_a', 'ē': 'long_e', 'ī': 'long_i', 'ō': 'long_o', 'ū': 'long_u',
+    'a_e': 'long_a', 'e_e': 'long_e', 'i_e': 'long_i', 'o_e': 'long_o', 'u_e': 'long_u',
     'ɹ': 'r', 'ŋ': 'ng', 'ə': 'u', 'ɔ': 'o',
   };
   if (map[p]) return map[p];
+
   p = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const aliases = { 'kw': 'q', 'ks': 'x', 'thv': 'th_v' };
+  const aliases = {
+    'kw': 'q', 'ks': 'x', 'thv': 'th_v',
+    'ck': 'k', 'ph': 'f', 'tch': 'ch', 'dge': 'j',
+    'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z',
+    'qu': 'q',
+    'all': 'aw', 'oll': 'o', 'ull': 'oo_short'
+  };
   if (aliases[p]) return aliases[p];
+
+  // Strip leading/trailing dashes used in some UFLI labels (e.g., -all)
+  const stripped = p.replace(/^-|-$/g, '');
+  if (aliases[stripped]) return aliases[stripped];
+  if (map[stripped]) return map[stripped];
+
   // Collapse stretched continuants (UFLI notation for sustained sounds):
   // "mmm" → "m", "sss" → "s", etc. The audio file is the same.
   if (/^([a-z])\1+$/.test(p)) return p[0];

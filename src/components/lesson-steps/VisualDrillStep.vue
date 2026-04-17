@@ -94,7 +94,7 @@ async function startMic() {
   try {
     await prepareMicTurn();
     const target = item.phonemes?.[0] ?? item.grapheme;
-    const result = await startListening(target, 9000);
+    const result = await startListening(target, 3500);
     if (cancelled) return;
     if (result?.matched) {
       micPhase.value = 'matched';

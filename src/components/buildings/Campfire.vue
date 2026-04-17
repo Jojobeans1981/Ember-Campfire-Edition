@@ -172,6 +172,20 @@ const success = () => {
   campfireLit.value = true;
   store.xp += 50;
 
+  if (!skillState[currentPhoneme.value]) {
+    skillState[currentPhoneme.value] = {
+      conceptSlug: currentPhoneme.value,
+      strand: 'foundational',
+      taught: true,
+      recognitionStatus: 'not_introduced',
+      recallStatus: null,
+      reviewPressure: 'none',
+      lastPracticed: null,
+      lastAssessed: null,
+      currentSupportLevel: 'guided',
+    };
+  }
+
   pushEvent({
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),

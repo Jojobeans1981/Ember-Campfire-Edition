@@ -2,10 +2,10 @@
   <div class="speech-practice">
     <h3>Say It!</h3>
 
-    <div v-if="currentPhoneme" class="current-phoneme">{{ currentPhoneme }}</div>
+    <div v-if="currentPhoneme" class="current-phoneme">{{ displayPhoneme }}</div>
 
     <button v-if="phase === 'ready' && currentPhoneme" class="listen-btn" @click="playAndListen">
-      🎤 Hear & Say '{{ currentPhoneme }}'
+      🎤 Hear & Say '{{ displayPhoneme }}'
     </button>
 
     <div v-if="phase === 'booting'" class="status">Getting the next sound ready...</div>
@@ -30,16 +30,26 @@
 
     <div class="debug-card">
       <div class="debug-title">Recognition Debug</div>
+      <div class="debug-line">Target: {{ debugState.target }}</div>
+      <div class="debug-line">Mode: {{ debugState.mode }}</div>
+      <div class="debug-line">Transcript: {{ debugState.transcript || '(none)' }}</div>
+      <div class="debug-line">Recognizer: {{ debugState.recognizer }}</div>
+      <div class="debug-line">Result: {{ debugState.result }}</div>
+      <div class="debug-line" v-if="debugState.voskError">Error: {{ debugState.voskError }}</div>
+      <div class="debug-line" v-if="debugState.mode === 'phoneme'">
+        Stats: Centroid: {{ debugState.avgCentroid }} | High: {{ debugState.avgHighEnergyRatio }} | ZCR: {{ debugState.avgZeroCrossingRate }}
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { getCumulativeIntroducedGraphemes } from '../../data/ufli/ufliLessons.js';
 import { getLessonMeta } from '../../data/ufli/ufliCurriculum.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
+import { phonemeToDisplay } from '../../utils/phonemeDisplay.js';
 
 const props = defineProps({ lessonId: String, activityType: String });
 const emit = defineEmits(['complete']);
@@ -57,6 +67,7 @@ const allPhonemes = ref([]);
 const focusPhonemes = ref([]);
 
 const currentPhoneme = ref('');
+const displayPhoneme = computed(() => phonemeToDisplay(currentPhoneme.value));
 const phase = ref('booting');
 const correct = ref(0);
 const targetCount = 5;
@@ -92,7 +103,7 @@ async function playAndListen() {
 
   const result = await new Promise((resolve) => {
     resolveSkip = resolve;
-    startListening(currentPhoneme.value, 9000).then(resolve);
+    startListening(currentPhoneme.value, 3500).then(resolve);
   });
   resolveSkip = null;
 
@@ -131,7 +142,7 @@ onMounted(async () => {
       .toLowerCase()
       .split(',')
       .map((g) => g.trim())
-      .filter((g) => /^[a-z]$/.test(g));
+      .filter((g) => /^[a-z_ \-]+$/i.test(g));
   }
   if (allPhonemes.value.length === 0) {
     emit('complete');

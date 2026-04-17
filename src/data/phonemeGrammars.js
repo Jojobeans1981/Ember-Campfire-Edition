@@ -19,7 +19,19 @@ export const PHONEME_GRAMMARS = {
   w: ['w', 'ww', 'wuh', 'woo'],
   y: ['y', 'yy', 'yee', 'yuh'],
 
-  // --- Plosive consonants (sound-like labels only, not real words) ---
+  // --- Digraphs & Clusters ---
+  sh: ['sh', 'shh', 'shhh', 'esh', 'she'],
+  ch: ['ch', 'chh', 'che', 'etch'],
+  th: ['th', 'thh', 'the', 'eth'],
+  wh: ['w', 'wh', 'wuh', 'woo'],
+  ng: ['ng', 'ing', 'ang', 'ung'],
+  ck: ['k', 'ck', 'kuh'],
+  ph: ['f', 'ph', 'fuh'],
+  ar: ['ar', 'ark', 'arr'],
+  or: ['or', 'ore', 'orr'],
+  er: ['er', 'ur', 'ir', 'err'],
+
+  // --- Plosive consonants ---
   t: ['t', 'tt', 'tee', 'te', 'tuh'],
   p: ['p', 'pp', 'pee', 'pe', 'puh'],
   c: ['c', 'k', 'kuh', 'cuh'],
@@ -37,6 +49,13 @@ export const PHONEME_GRAMMARS = {
   i: ['i', 'ih', 'ii', 'ihh'],
   o: ['o', 'ah', 'aw', 'oh'],
   u: ['u', 'uh', 'uhh'],
+
+  // --- Long vowels ---
+  long_a: ['a', 'ay', 'ai', 'ey', 'ae'],
+  long_e: ['e', 'ee', 'ea', 'ey', 'ie'],
+  long_i: ['i', 'ie', 'y', 'igh'],
+  long_o: ['o', 'oa', 'oe', 'ow'],
+  long_u: ['u', 'ue', 'oo', 'ew'],
 };
 
 /**
@@ -59,6 +78,14 @@ export const PHONEME_TRANSCRIPT_VARIANTS = {
   e: ['e', 'eh', 'eeh'],
   o: ['o', 'ah', 'aw', 'oh'],
   u: ['u', 'uh', 'uhh'],
+  sh: ['sh', 'she', 'shoe'],
+  ch: ['ch', 'each', 'beach'],
+  th: ['th', 'the', 'think'],
+  long_a: ['a', 'hay', 'say', 'play'],
+  long_e: ['e', 'he', 'see', 'tree'],
+  long_i: ['i', 'my', 'tie', 'high'],
+  long_o: ['o', 'go', 'no', 'low'],
+  long_u: ['u', 'too', 'new', 'blue'],
 };
 
 /**
@@ -69,14 +96,25 @@ export const PHONEME_TRANSCRIPT_VARIANTS = {
 export function normalizePhonemeKey(phoneme) {
   if (!phoneme) return '';
   let p = String(phoneme).replace(/\//g, '').trim().toLowerCase();
-  const map = {
+
+  // Handle UFLI notation variants directly
+  const directMap = {
     'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
-    'ā': 'a', 'ē': 'e', 'ī': 'i', 'ō': 'o', 'ū': 'u',
-    'ɹ': 'r', 'ŋ': 'n', 'ə': 'u', 'ɔ': 'o',
+    'ā': 'long_a', 'ē': 'long_e', 'ī': 'long_i', 'ō': 'long_o', 'ū': 'long_u',
+    'a_e': 'long_a', 'e_e': 'long_e', 'i_e': 'long_i', 'o_e': 'long_o', 'u_e': 'long_u',
+    'ɹ': 'r', 'ŋ': 'ng', 'ə': 'u', 'ɔ': 'o',
+    'sh': 'sh', 'ch': 'ch', 'th': 'th', 'wh': 'wh', 'ng': 'ng',
+    'ck': 'ck', 'ph': 'ph', 'ar': 'ar', 'or': 'or', 'er': 'er',
+    'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z',
   };
-  if (map[p]) return map[p];
-  p = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return p;
+
+  if (directMap[p]) return directMap[p];
+
+  // Strip diacritics and try again
+  const normalized = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (directMap[normalized]) return directMap[normalized];
+
+  return normalized;
 }
 
 /**
