@@ -442,7 +442,7 @@ export function useSpeechRecognition() {
    * - Sustain bar shows progress (1.5s for sustain, instant for plosive)
    * - Falls back to volume-only if Vosk fails to load
    */
-  function startListening(targetPhoneme, duration = 9000) {
+  function startListening(targetPhoneme, duration = 3500) {
     return new Promise(async (resolve) => {
       let resolved = false;
       let audioContext = null;

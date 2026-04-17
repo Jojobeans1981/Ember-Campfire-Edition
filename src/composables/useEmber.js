@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { lookupTtsFile } from './useTts.js';
+import { phonemeToAudioKey } from '../utils/ttsSegments.js';
 
 const isSpeaking = ref(false);
 const currentText = ref('');
@@ -145,22 +146,7 @@ export async function preloadEmberVoice() {
   return false;
 }
 
-export function phonemeToAudioKey(phoneme) {
-  if (!phoneme) return '';
-
-  let p = String(phoneme).replace(/\//g, '').trim().toLowerCase();
-  const map = {
-    'a': 'a', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u',
-    'long_a': 'long_a', 'long_e': 'long_e', 'long_i': 'long_i', 'long_o': 'long_o', 'long_u': 'long_u',
-    'r': 'r', 'ng': 'ng',
-  };
-  if (map[p]) return map[p];
-
-  p = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const aliases = { kw: 'q', ks: 'x', thv: 'th_v' };
-  if (aliases[p]) return aliases[p];
-  return p;
-}
+export { phonemeToAudioKey };
 
 export function useEmber() {
   function speak(text, options = {}) {
