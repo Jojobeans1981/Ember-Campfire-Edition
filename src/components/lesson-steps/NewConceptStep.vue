@@ -1,87 +1,84 @@
 <template>
   <div class="new-concept-step">
-    <FocusStage v-if="phase === 'intro' && grapheme" :tokens="introTokens" emphasis="letter" />
+    <!-- Phase 1: Meet the letter -->
+    <template v-if="phase === 'letter'">
+      <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: 'active' }]" emphasis="letter" />
+      <div class="btn-row">
+        <button class="action-btn primary" type="button" aria-label="Next" @click="advanceFromLetter">
+          <ArrowRight :size="36" :stroke-width="2.75" />
+        </button>
+      </div>
+    </template>
 
-    <div v-if="phase === 'intro'" class="intro-section">
-      <div v-if="showMicPrompt && micPhase === 'listening'" class="mic-area" aria-hidden="true">
-        <div class="mic-icon">🎤</div>
+    <!-- Phase 2: Hear the sound + say it -->
+    <template v-else-if="phase === 'sound'">
+      <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: micPhase === 'matched' ? 'done' : 'active' }]" emphasis="letter" />
+      <div v-if="micPhase === 'listening'" class="mic-area" aria-hidden="true">
         <div class="sustain-meter">
           <div class="sustain-fill" :style="{ width: micProgress + '%' }"></div>
         </div>
       </div>
       <div class="btn-row">
-        <button
-          class="icon-btn"
-          type="button"
-          aria-label="Hear again"
-          @click="speakCurrentLine"
-        >🔊</button>
-        <button
-          v-if="showMicPrompt"
-          class="icon-btn"
-          type="button"
-          aria-label="My turn to say the sound"
-          :disabled="micPhase === 'listening'"
-          @click="startMicPractice"
-        >🎤</button>
-        <button
-          class="icon-btn primary"
-          type="button"
-          :aria-label="scriptDone ? 'Start practice' : 'Next'"
-          :disabled="nextDisabled"
-          @click="advanceScript"
-        >➡️</button>
+        <button class="action-btn" type="button" aria-label="Hear the sound" :disabled="introBusy || audioBusy" @click="playSound">
+          <Volume2 :size="30" :stroke-width="2.5" />
+        </button>
+        <button class="action-btn" type="button" aria-label="My turn to say the sound" :disabled="!canStartMic" @click="startMicPractice">
+          <Mic :size="30" :stroke-width="2.5" />
+        </button>
+        <button class="action-btn primary" type="button" aria-label="Next" :disabled="micPhase !== 'matched'" @click="advanceFromSound">
+          <ArrowRight :size="36" :stroke-width="2.75" />
+        </button>
       </div>
-    </div>
+    </template>
 
-    <div v-else-if="phase === 'read'" class="practice-section">
+    <!-- Phase 3: Walk each readGroup one screen at a time -->
+    <template v-else-if="phase === 'read'">
       <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: 'active' }]" emphasis="letter" />
-      <div class="word-pool">
-        <button
-          v-for="(w, i) in readWords"
-          :key="`r-${i}`"
-          class="word-chip"
-          :class="{ done: readDone[i] }"
-          type="button"
-          :aria-label="`Read the word ${w}`"
-          @click="markRead(i)"
-        >{{ w }}</button>
+      <div v-if="currentGroup" class="read-group">
+        <div
+          v-if="positionSlotIndex(currentGroup.position) > 0"
+          class="position-badge"
+          :aria-label="currentGroup.position ? `Letter at ${currentGroup.position}` : 'Letter position'"
+        >
+          <span
+            v-for="slot in 3"
+            :key="slot"
+            class="pos-slot"
+            :class="{ filled: positionSlotIndex(currentGroup.position) === slot }"
+          >{{ positionSlotIndex(currentGroup.position) === slot ? grapheme : '' }}</span>
+        </div>
+        <div class="word-pool">
+          <button
+            v-for="(w, wi) in currentGroup.words"
+            :key="wi"
+            class="word-chip"
+            :class="{ done: !!groupDone[wi] }"
+            :disabled="audioBusy"
+            type="button"
+            :aria-label="`Read the word ${w}`"
+            @click="markRead(wi)"
+          >{{ w }}</button>
+        </div>
       </div>
-      <button
-        class="icon-btn primary"
-        type="button"
-        aria-label="Spell next"
-        :disabled="!allRead"
-        @click="phase = 'spell'"
-      >➡️</button>
-    </div>
-
-    <div v-else-if="phase === 'spell'" class="practice-section">
-      <FocusStage v-if="grapheme" :tokens="[{ text: grapheme, kind: 'grapheme', state: 'active' }]" emphasis="letter" />
-      <div class="word-pool">
+      <div class="btn-row">
         <button
-          v-for="(w, i) in spellWords"
-          :key="`s-${i}`"
-          class="word-chip"
-          :class="{ done: spellDone[i] }"
+          class="action-btn primary"
           type="button"
-          :aria-label="`Practice the word ${w}`"
-          @click="markSpell(i)"
-        >{{ w }}</button>
+          :aria-label="isLastGroup ? 'Done' : 'Next'"
+          :disabled="!allGroupRead"
+          @click="advanceFromRead"
+        >
+          <Check v-if="isLastGroup" :size="36" :stroke-width="2.75" />
+          <ArrowRight v-else :size="36" :stroke-width="2.75" />
+        </button>
       </div>
-      <button
-        class="icon-btn primary"
-        type="button"
-        aria-label="Done"
-        :disabled="!allSpelled"
-        @click="finish"
-      >✅</button>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ArrowRight, Check, Mic, Volume2 } from 'lucide-vue-next';
 import { useEmber } from '../../composables/useEmber.js';
 import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
@@ -100,63 +97,90 @@ const {
 const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 let cancelled = false;
 
-const phase = ref('intro');
-const scriptIndex = ref(0);
-const playedAnchorSound = ref(false);
+// letter → sound → read (walks readGroups one at a time)
+const phase = ref('letter');
+const micPhase = ref('idle');
+const introBusy = ref(false);
+const audioBusy = ref(false);
+const groupIdx = ref(0);
+const groupDone = ref({});
 
-const script = computed(() => props.step?.introductionScript ?? []);
 const grapheme = computed(() => {
   const placements = props.step?.graphemePlacements ?? [];
   return placements[0]?.grapheme ?? '';
 });
 
-const currentScriptLine = computed(() => script.value[scriptIndex.value]);
-const scriptDone = computed(() => scriptIndex.value >= script.value.length - 1);
-const micPhase = ref('idle');
+const canStartMic = computed(() => !introBusy.value && !audioBusy.value && micPhase.value !== 'listening');
 
-const introTokens = computed(() => [{
-  text: grapheme.value,
-  kind: 'grapheme',
-  state: micPhase.value === 'matched' ? 'done' : 'active',
-}]);
+// readGroups: one per graphemePlacements entry when readWords is empty,
+// or a single unlabeled group when readWords is authored. Position strings
+// ("initial"/"medial"/"final") are passed through so the structure extends
+// to any future position taxonomy without code changes.
+const readGroups = computed(() => {
+  const r = props.step?.readWords ?? {};
+  const authored = Array.from(new Set([
+    ...(r.iDo ?? []),
+    ...(r.weDo ?? []),
+    ...(r.youDo ?? []),
+  ]));
+  if (authored.length > 0) return [{ position: null, words: authored }];
 
-function stripIpa(text) {
-  if (!text) return '';
-  return text
-    .replace(/\/[^/]*\//g, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\s+([,.!?])/g, '$1')
-    .trim();
+  const placements = props.step?.graphemePlacements ?? [];
+  return placements
+    .map((p) => ({
+      position: typeof p?.position === 'string' ? p.position.toLowerCase() : null,
+      words: (Array.isArray(p?.examples) ? p.examples : [])
+        .filter((w) => typeof w === 'string' && w.trim().length > 0),
+    }))
+    .filter((g) => g.words.length > 0);
+});
+
+const currentGroup = computed(() => readGroups.value[groupIdx.value] ?? null);
+const isLastGroup = computed(() => groupIdx.value >= readGroups.value.length - 1);
+const allGroupRead = computed(() => {
+  const g = currentGroup.value;
+  if (!g) return false;
+  return g.words.every((_w, wi) => !!groupDone.value[wi]);
+});
+
+function positionSlotIndex(position) {
+  const p = String(position || '').toLowerCase();
+  if (p === 'initial' || p === 'start' || p === 'beginning') return 1;
+  if (p === 'medial' || p === 'middle') return 2;
+  if (p === 'final' || p === 'end') return 3;
+  return 0;
 }
 
-function lineNeedsResponse(text) {
-  if (!text) return false;
-  const normalized = String(text).toLowerCase();
-  return normalized.includes('your turn')
-    || normalized.includes('now you try')
-    || normalized.includes('say /');
+async function announceLetter() {
+  if (introBusy.value) return;
+  introBusy.value = true;
+  try {
+    const letter = String(grapheme.value || '').toUpperCase();
+    if (letter) await ember.speakTeacher(`This is the letter ${letter}.`);
+  } finally {
+    introBusy.value = false;
+  }
 }
 
-const showMicPrompt = computed(() => lineNeedsResponse(currentScriptLine.value?.text));
-
-function spokenLineFor(text) {
-  return stripIpa(text ?? '');
+async function demoSoundAndPrompt() {
+  if (introBusy.value) return;
+  introBusy.value = true;
+  try {
+    if (grapheme.value) await ember.playPhoneme(grapheme.value);
+    if (cancelled) return;
+    await ember.speak('Now you try.');
+  } finally {
+    introBusy.value = false;
+  }
 }
 
-const nextDisabled = computed(() => showMicPrompt.value && micPhase.value !== 'matched');
-
-async function speakCurrentLine() {
-  const line = currentScriptLine.value;
-  if (!line) return;
-  const spoken = spokenLineFor(line.text);
-  if (spoken) await ember.speakTeacher(spoken);
-  if (cancelled) return;
-  
-  // Only play the raw phoneme sound if the line is purely introductory 
-  // and DOES NOT already contain an explanation of the sound (to avoid "A says /a/ ... /a/").
-  const isIntroOnly = scriptIndex.value === 0;
-  if (grapheme.value && isIntroOnly) {
-    await ember.playPhoneme(grapheme.value);
+async function playSound() {
+  if (audioBusy.value) return;
+  audioBusy.value = true;
+  try {
+    if (grapheme.value) await ember.playPhoneme(grapheme.value);
+  } finally {
+    audioBusy.value = false;
   }
 }
 
@@ -174,23 +198,55 @@ async function startMicPractice() {
     await ember.speak('Nice job! You said it.');
   } else {
     micPhase.value = 'missed';
-    await ember.speak(grapheme.value === 'm' ? 'Try again. Hold the sound like mmm.' : 'Try again, then tap my turn.');
+    await ember.speak('Try again, then tap my turn.');
   }
 }
 
-watch(scriptIndex, async () => {
-  micPhase.value = 'idle';
-  if (phase.value === 'intro') await speakCurrentLine();
-});
+function advanceFromLetter() {
+  phase.value = 'sound';
+}
+
+function advanceFromSound() {
+  if (micPhase.value !== 'matched') return;
+  if (readGroups.value.length > 0) {
+    groupIdx.value = 0;
+    groupDone.value = {};
+    phase.value = 'read';
+  } else {
+    emit('step-complete');
+  }
+}
+
+function advanceFromRead() {
+  if (!allGroupRead.value) return;
+  if (groupIdx.value < readGroups.value.length - 1) {
+    groupIdx.value += 1;
+    groupDone.value = {};
+  } else {
+    emit('step-complete');
+  }
+}
+
+async function markRead(wi) {
+  if (audioBusy.value) return;
+  audioBusy.value = true;
+  try {
+    groupDone.value = { ...groupDone.value, [wi]: true };
+    const word = currentGroup.value?.words?.[wi];
+    if (word) await ember.speakTeacher(word);
+  } finally {
+    audioBusy.value = false;
+  }
+}
 
 watch(phase, async (next) => {
-  if (next === 'read') await ember.speak('Tap each word to read it.');
-  else if (next === 'spell') await ember.speak('Tap each word to practice it.');
+  if (next === 'sound') await demoSoundAndPrompt();
+  else if (next === 'read') await ember.speak('Tap each word to read it.');
 });
 
 onMounted(async () => {
   await requestMicPermission();
-  await speakCurrentLine();
+  await announceLetter();
 });
 
 onBeforeUnmount(() => {
@@ -198,52 +254,6 @@ onBeforeUnmount(() => {
   ember.stopSpeaking();
   cancelListening();
 });
-
-const readWords = computed(() => {
-  const r = props.step?.readWords ?? {};
-  return Array.from(new Set([...(r.iDo ?? []), ...(r.weDo ?? []), ...(r.youDo ?? [])]));
-});
-const spellWords = computed(() => {
-  const s = props.step?.spellWords ?? {};
-  return Array.from(new Set([...(s.iDo ?? []), ...(s.weDo ?? []), ...(s.youDo ?? [])]));
-});
-
-const readDone = ref([]);
-const spellDone = ref([]);
-
-const allRead = computed(() => readWords.value.length > 0 && readWords.value.every((_, i) => readDone.value[i]));
-const allSpelled = computed(() => spellWords.value.length > 0 && spellWords.value.every((_, i) => spellDone.value[i]));
-
-function advanceScript() {
-  if (nextDisabled.value) return;
-  if (scriptDone.value) {
-    if (readWords.value.length > 0) {
-      phase.value = 'read';
-    } else if (spellWords.value.length > 0) {
-      phase.value = 'spell';
-    } else {
-      emit('step-complete');
-    }
-    return;
-  }
-  scriptIndex.value++;
-}
-
-async function markRead(i) {
-  readDone.value[i] = true;
-  const word = readWords.value[i];
-  if (word) await ember.speakTeacher(word);
-}
-
-async function markSpell(i) {
-  spellDone.value[i] = true;
-  const word = spellWords.value[i];
-  if (word) await ember.speakTeacher(word);
-}
-
-function finish() {
-  emit('step-complete');
-}
 </script>
 
 <style scoped>
@@ -257,14 +267,6 @@ function finish() {
   width: 100%;
 }
 
-.intro-section, .practice-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-}
-
 .mic-area {
   display: flex;
   flex-direction: column;
@@ -272,28 +274,56 @@ function finish() {
   gap: 0.45rem;
 }
 
-.mic-icon {
-  font-size: 2rem;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
 .sustain-meter {
-  width: 200px;
-  height: 10px;
-  background: #333;
-  border-radius: 5px;
+  width: min(240px, 70vw);
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .sustain-fill {
   height: 100%;
-  background: #ff8c00;
+  background: linear-gradient(90deg, #ff8c00, #ffd166);
   transition: width 0.1s;
+}
+
+.read-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+}
+
+.position-badge {
+  display: inline-flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 209, 102, 0.22);
+}
+
+.pos-slot {
+  width: 28px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(255, 244, 220, 0.3);
+  line-height: 1;
+}
+
+.pos-slot.filled {
+  background: rgba(255, 209, 102, 0.3);
+  color: #fff4dc;
+  box-shadow: inset 0 0 0 2px rgba(255, 209, 102, 0.75);
 }
 
 .word-pool {
@@ -304,50 +334,69 @@ function finish() {
 }
 
 .word-chip {
-  padding: 0.5rem 0.9rem;
+  padding: 0.6rem 1rem;
   background: rgba(25, 47, 74, 0.75);
   border: 2px solid rgba(255, 209, 102, 0.35);
   color: #ffd166;
-  border-radius: 0.6rem;
+  border-radius: 0.7rem;
   font-family: inherit;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, opacity 160ms ease;
 }
 
-.word-chip:hover { transform: scale(1.05); border-color: #ffd166; }
+.word-chip:hover:not(:disabled) { transform: scale(1.05); border-color: #ffd166; }
+.word-chip:disabled { opacity: 0.55; cursor: wait; }
 .word-chip.done {
-  background: rgba(126, 232, 136, 0.15);
-  border-color: rgba(126, 232, 136, 0.75);
+  background: rgba(126, 232, 136, 0.18);
+  border-color: rgba(126, 232, 136, 0.8);
   color: #bff3c1;
 }
 
 .btn-row {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.9rem;
+  align-items: center;
+  margin-top: 0.25rem;
 }
 
-.icon-btn {
+.action-btn {
   width: 64px;
   height: 64px;
-  font-size: 1.6rem;
-  border: 2px solid rgba(255, 209, 102, 0.35);
-  background: rgba(25, 47, 74, 0.75);
+  border: 2px solid rgba(255, 209, 102, 0.3);
+  background: rgba(25, 47, 74, 0.8);
   color: #ffd166;
   border-radius: 50%;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
 }
 
-.icon-btn:hover:not(:disabled) { transform: scale(1.06); border-color: #ffd166; }
-.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.action-btn:hover:not(:disabled) { transform: scale(1.06); border-color: #ffd166; }
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.icon-btn.primary {
-  background: rgba(255, 140, 0, 0.22);
+.action-btn.primary {
+  width: 84px;
+  height: 84px;
+  background: linear-gradient(180deg, rgba(255, 180, 90, 0.35), rgba(255, 140, 0, 0.22));
   border-color: #ff8c00;
   color: #fff4dc;
+  box-shadow: 0 0 0 0 rgba(255, 140, 0, 0);
+}
+
+.action-btn.primary:not(:disabled) {
+  animation: primary-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes primary-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 140, 0, 0); transform: translateY(0); }
+  50% { box-shadow: 0 0 0 10px rgba(255, 140, 0, 0.14), 0 0 20px rgba(255, 140, 0, 0.3); transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-btn.primary:not(:disabled) { animation: none; }
 }
 </style>

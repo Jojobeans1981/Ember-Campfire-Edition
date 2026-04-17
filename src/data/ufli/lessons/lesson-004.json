@@ -2,97 +2,215 @@
   "lessonNumber": 4,
   "title": "t /t/",
   "grapheme": "t",
-  "phoneme": "/t/",
+  "phoneme": "t",
   "step1": {
     "blend": [
-      { "phonemes": ["/ă/", "/t/"], "word": "at" },
-      { "phonemes": ["/m/", "/ă/", "/t/"], "word": "mat" },
-      { "phonemes": ["/s/", "/ă/", "/t/"], "word": "sat" }
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ],
+        "word": "mat"
+      },
+      {
+        "phonemes": [
+          "s",
+          "æ",
+          "t"
+        ],
+        "word": "sat"
+      },
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "p"
+        ],
+        "word": "map"
+      }
     ],
     "segment": [
-      { "word": "at", "phonemes": ["/ă/", "/t/"] },
-      { "word": "mat", "phonemes": ["/m/", "/ă/", "/t/"] },
-      { "word": "sat", "phonemes": ["/s/", "/ă/", "/t/"] }
+      {
+        "word": "at",
+        "phonemes": [
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "tap",
+        "phonemes": [
+          "t",
+          "æ",
+          "p"
+        ]
+      },
+      {
+        "word": "tack",
+        "phonemes": [
+          "t",
+          "æ",
+          "k"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "t", "phonemes": ["/t/"] },
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "s",
+        "phonemes": [
+          "s"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/t/", "graphemes": ["t"] },
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "s",
+        "graphemes": [
+          "s"
+        ]
+      },
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["at", "mat", "sat", "sam", "am"],
+    "wordChain": [],
     "tiles": {
-      "initial": ["s", "m", "t"],
-      "medial": ["a"],
-      "final": ["t", "s", "m"]
+      "initial": [],
+      "medial": [],
+      "final": []
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce the letter T. Tongue tip taps the ridge behind the top teeth. Voice off. Quick pop — /t/.",
+    "instructionalNotes": "The phoneme /t/ is an unvoiced stop sound. When modeling, be careful not to add a schwa or short /ʌ/ at the end (i.e., /t/, not /tuh/).",
     "introductionScript": [
-      { "line": "1", "text": "This is the letter T." },
-      { "line": "2", "text": "T says /t/, like in tap." },
-      { "line": "3", "text": "Tap your tongue behind your top teeth. /t/ /t/ /t/." },
-      { "line": "4", "text": "Your turn. Say /t/." }
+      {
+        "line": "This is the letter T. T is a consonant.",
+        "text": "t"
+      },
+      {
+        "line": "T spells /t/, like in the beginning of the word tiger.",
+        "text": "t"
+      }
     ],
-    "articulatoryGesture": "Tongue tip taps the alveolar ridge behind the top teeth. Voice off. Short, crisp release.",
+    "articulatoryGesture": "To make the /t/ sound, tap your tongue right behind your top, front teeth. Keep your voice off when you make the /t/ sound. The /t/ sound is a stop sound that can't be stretched out. /t/. You try /t/.",
     "graphemePlacements": [
-      { "grapheme": "t", "position": "initial", "examples": ["tap", "ten", "top"] },
-      { "grapheme": "t", "position": "final", "examples": ["at", "mat", "sat"] }
+      {
+        "grapheme": "t",
+        "position": "final",
+        "examples": [
+          "at",
+          "sat"
+        ]
+      },
+      {
+        "grapheme": "t",
+        "position": "initial",
+        "examples": [
+          "tap",
+          "top"
+        ]
+      }
     ],
     "readWords": {
-      "iDo": ["at", "mat"],
-      "weDo": ["sat", "mat"],
-      "youDo": ["at", "sam"]
+      "iDo": [
+        "at",
+        "mat",
+        "sat"
+      ],
+      "weDo": [
+        "at",
+        "mat",
+        "sat"
+      ],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["at"],
-      "weDo": ["mat"],
-      "youDo": ["sat"]
+      "iDo": [
+        "at"
+      ],
+      "weDo": [
+        "at"
+      ],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["at", "mat", "sat", "sam"]
+    "wordChain": []
   },
   "step7": {
     "review": [
       {
-        "word": "is",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
-          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "I",
+        "breakdown": [
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": [
-      {
-        "word": "the",
-        "breakdown": [
-          { "grapheme": "th", "phoneme": "/th/", "regular": false },
-          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
-    "readSentences": ["sam sat.", "I sat at the mat."],
-    "spellSentences": ["sam sat at a mat."]
+    "readSentences": [],
+    "spellSentences": []
   },
-  "wordList": ["at", "mat", "sat", "sam", "am", "as"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "the", "a"],
-    "fry": ["I", "is", "the", "a"]
-  }
+    "dolch": [
+      "at"
+    ],
+    "fry": [
+      "at"
+    ]
+  },
+  "decodableTexts": [],
+  "wordList": [
+    "at",
+    "mat",
+    "sat"
+  ]
 }

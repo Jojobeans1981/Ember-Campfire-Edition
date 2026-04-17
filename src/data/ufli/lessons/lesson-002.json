@@ -2,88 +2,139 @@
   "lessonNumber": 2,
   "title": "m /m/",
   "grapheme": "m",
-  "phoneme": "/m/",
+  "phoneme": "m",
   "step1": {
     "blend": [
-      { "phonemes": ["/ă/", "/m/"], "word": "am" }
+      {
+        "phonemes": [
+          "æ",
+          "t"
+        ],
+        "word": "at"
+      },
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ],
+        "word": "mat"
+      }
     ],
     "segment": [
-      { "word": "am", "phonemes": ["/ă/", "/m/"] }
+      {
+        "word": "at",
+        "phonemes": [
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "mat",
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["am"],
+    "wordChain": [],
     "tiles": {
-      "initial": ["m"],
-      "medial": ["a"],
-      "final": ["m"]
+      "initial": [],
+      "medial": [],
+      "final": []
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce the letter M. Lips press together. Voice on. The sound hums. Now that we have two letters (a and m), we can read our first real word: 'am'.",
+    "instructionalNotes": "When M appears after A, the pronunciation of A changes and the sound becomes nasalized, as the air is released through the nose. The nasalized A (e.g., am) is addressed in Lesson 11.",
     "introductionScript": [
-      { "line": "1", "text": "This is the letter M." },
-      { "line": "2", "text": "M says /m/, like the start of mom." },
-      { "line": "3", "text": "Press your lips together and hum. /mmm/." },
-      { "line": "4", "text": "Your turn. Say /m/." },
-      { "line": "5", "text": "Now we can put A and M together to make our first word: am." }
+      {
+        "line": "This is the letter M. M is a consonant.",
+        "text": "m"
+      },
+      {
+        "line": "M spells /m/, like in the beginning of the word mouse.",
+        "text": "m"
+      }
     ],
-    "articulatoryGesture": "Lips pressed together. Voice on. The sound is held and hums through the nose.",
+    "articulatoryGesture": "To make the /m/ sound put your lips together and hum. Your voice is on. Your mouth should not open at all during this sound. All of the air should come out of your nose. The /m/ sound is a continuous sound that can be stretched out. /mmm/. You try: /mmm/.",
     "graphemePlacements": [
-      { "grapheme": "m", "position": "initial", "examples": ["mom"] },
-      { "grapheme": "m", "position": "final", "examples": ["am"] }
+      {
+        "grapheme": "m",
+        "position": "initial",
+        "examples": [
+          "mad",
+          "mop"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "position": "final",
+        "examples": [
+          "gum",
+          "him"
+        ]
+      }
     ],
     "readWords": {
-      "iDo": ["am"],
-      "weDo": ["am"],
-      "youDo": ["am"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["am"],
-      "weDo": ["am"],
-      "youDo": ["am"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["am"]
+    "wordChain": []
   },
   "step7": {
     "review": [
       {
-        "word": "a",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "a", "phoneme": "/ă/" }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": [
-      {
-        "word": "I",
-        "breakdown": [
-          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
-    "readSentences": ["I am."],
-    "spellSentences": ["I am."]
+    "readSentences": [],
+    "spellSentences": []
   },
-  "wordList": ["am", "I"],
-  "highFrequencyWords": {
-    "dolch": ["I", "a", "am"],
-    "fry": ["I", "a"]
-  }
+  "decodableTexts": []
 }

@@ -2,100 +2,180 @@
   "lessonNumber": 3,
   "title": "s /s/",
   "grapheme": "s",
-  "phoneme": "/s/",
+  "phoneme": "s",
   "step1": {
     "blend": [
-      { "phonemes": ["/ă/", "/s/"], "word": "as" },
-      { "phonemes": ["/s/", "/ă/", "/m/"], "word": "sam" }
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "p"
+        ],
+        "word": "map"
+      },
+      {
+        "phonemes": [
+          "s",
+          "æ",
+          "t"
+        ],
+        "word": "sat"
+      },
+      {
+        "phonemes": [
+          "s",
+          "æ",
+          "p"
+        ],
+        "word": "sap"
+      }
     ],
     "segment": [
-      { "word": "as", "phonemes": ["/ă/", "/s/"] },
-      { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] }
+      {
+        "word": "map",
+        "phonemes": [
+          "m",
+          "æ",
+          "p"
+        ]
+      },
+      {
+        "word": "sat",
+        "phonemes": [
+          "s",
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "sap",
+        "phonemes": [
+          "s",
+          "æ",
+          "p"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["am", "as", "sam"],
+    "wordChain": [],
     "tiles": {
-      "initial": ["s", "m"],
-      "medial": ["a"],
-      "final": ["s", "m"]
+      "initial": [],
+      "medial": [],
+      "final": []
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce the letter S. Teeth close, tongue near the roof of the mouth, air pushes through. Voice off — it hisses like a snake. With S we can now read three words: am, as, sam.",
+    "instructionalNotes": "At this point, S is being introduced only as initial /s/. The -S ending (e.g., cats) is introduced in Lesson 20. S as /z/ (e.g., has) is introduced in Lesson 21. The /s/ sound spelled SS (e.g., miss) is introduced in Lesson 42.",
     "introductionScript": [
-      { "line": "1", "text": "This is the letter S." },
-      { "line": "2", "text": "S says /s/, like a snake hissing." },
-      { "line": "3", "text": "Teeth together, push the air. /sss/." },
-      { "line": "4", "text": "Your turn. Say /s/." },
-      { "line": "5", "text": "Now we have three letters. We can read three words: am, as, sam." }
+      {
+        "line": "This is the letter S. S is a consonant.",
+        "text": "s"
+      },
+      {
+        "line": "S spells /s/ like in the beginning of the word sun.",
+        "text": "s"
+      }
     ],
-    "articulatoryGesture": "Teeth nearly closed. Tongue tip near the roof of the mouth. Air streams out. Voice off.",
+    "articulatoryGesture": "To make the /s/ sound, put your tongue right behind your top, front teeth and blow air out. The /s/ sound is a continuous sound that can be stretched out. You sound like a hissing snake when you say the /s/ sound. Keep your voice off when you make the /s/ sound. /sss/. You try /sss/.",
     "graphemePlacements": [
-      { "grapheme": "s", "position": "initial", "examples": ["sam"] },
-      { "grapheme": "s", "position": "final", "examples": ["as"] }
+      {
+        "grapheme": "s",
+        "position": "initial",
+        "examples": [
+          "sat",
+          "sip"
+        ]
+      }
     ],
     "readWords": {
-      "iDo": ["as"],
-      "weDo": ["sam"],
-      "youDo": ["am"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["as"],
-      "weDo": ["sam"],
-      "youDo": ["am"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["am", "as", "sam"]
+    "wordChain": []
   },
   "step7": {
     "review": [
       {
-        "word": "I",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
-        ]
-      },
-      {
-        "word": "am",
-        "breakdown": [
-          { "grapheme": "a", "phoneme": "/ă/" },
-          { "grapheme": "m", "phoneme": "/m/" }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
         ]
       }
     ],
     "teach": [
       {
-        "word": "is",
+        "word": "I",
         "breakdown": [
-          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
-          { "grapheme": "s", "phoneme": "/z/", "regular": false }
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
         ]
       }
     ]
   },
   "step8": {
-    "readSentences": ["I am sam.", "sam is."],
-    "spellSentences": ["I am sam."]
+    "readSentences": [],
+    "spellSentences": []
   },
-  "wordList": ["am", "as", "sam", "is"],
   "highFrequencyWords": {
-    "dolch": ["I", "a", "am", "is"],
-    "fry": ["I", "a", "is"]
-  }
+    "dolch": [
+      "I"
+    ],
+    "fry": [
+      "I"
+    ]
+  },
+  "decodableTexts": []
 }

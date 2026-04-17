@@ -15,6 +15,12 @@ vi.mock('../../composables/useSpeechRecognition.js', () => ({
   }),
 }));
 
+vi.mock('../../composables/useMicTurn.js', () => ({
+  useMicTurn: () => ({
+    prepareMicTurn: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock('../../composables/useEmber.js', () => ({
   useEmber: () => ({
     speak: vi.fn().mockResolvedValue(undefined),
@@ -49,15 +55,21 @@ describe('NewConceptStep', () => {
     expect(first).toMatchObject({ text: 'm', kind: 'grapheme' });
   });
 
-  it('walks script → read → spell → emits step-complete', async () => {
+  it('walks letter → sound (mic match) → read → emits step-complete', async () => {
     const wrapper = mount(NewConceptStep, { props: { step: fixtureStep } });
+    await flushPromises(); // announceLetter
+    // letter phase: one Next button to advance to 'sound'
     await wrapper.find('button[aria-label="Next"]').trigger('click');
-    await wrapper.find('button[aria-label="Start practice"]').trigger('click');
+    await flushPromises(); // demoSoundAndPrompt
+    // sound phase: tap mic to practice — mock returns matched
+    await wrapper.find('button[aria-label="My turn to say the sound"]').trigger('click');
     await flushPromises();
-    await wrapper.find('.word-chip').trigger('click');
-    await wrapper.find('button[aria-label="Spell next"]').trigger('click');
+    // Next advances to read phase (first group)
+    await wrapper.find('button[aria-label="Next"]').trigger('click');
     await flushPromises();
+    // Tap the one chip in the authored readWords group, then Done.
     await wrapper.find('.word-chip').trigger('click');
+    await flushPromises();
     await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
   });

@@ -31,10 +31,11 @@ const repoRoot = path.resolve(__dirname, '..');
 const lessonsDir = path.join(repoRoot, 'src/data/ufli/lessons');
 const outPath = path.join(repoRoot, 'scripts/tts-inventory.json');
 
-// First pass: lesson 001 only. Shared strings (UI prompts, friend lines,
-// adventure intros, campground greetings) are still included in full since
-// they fire everywhere. Widen this array to add more lessons.
-const SCOPE_LESSON_IDS = ['001'];
+// Covers lessons currently reachable in the MVP flow. Shared strings
+// (UI prompts, friend lines, adventure intros, campground greetings) are
+// always included in full since they fire everywhere. Widen this array
+// as more lessons come online.
+const SCOPE_LESSON_IDS = ['001', '002'];
 
 const FRIEND_NAMES = ['Fox', 'Lion', 'Panda', 'Kangaroo'];
 
@@ -99,7 +100,7 @@ const STATIC_UI_PROMPTS = [
   },
 
   // --- UI-cleanup pass (lesson-1 audio-only prompts) ---
-  { text: 'Listen and blend.', source: 'PhonemicAwarenessStep.vue (blend mount)' },
+  { text: "Let's put sounds together to make a word.", source: 'PhonemicAwarenessStep.vue (blend mount)' },
   { text: 'Listen to the word.', source: 'PhonemicAwarenessStep.vue (segment mount)' },
   { text: 'Listening. Say the sound.', source: 'VisualDrillStep.vue (mic prompt)' },
   { text: 'Great! You said it!', source: 'VisualDrillStep.vue / ConnectedTextStep.vue (success)' },
@@ -116,9 +117,28 @@ const STATIC_UI_PROMPTS = [
   { text: 'Tap each word to practice it.', source: 'NewConceptStep.vue (spell phase)' },
   { text: 'Listen closely to the sound, then try it too.', source: 'NewConceptStep.vue (script intro)' },
   { text: 'Tap my turn and say the sound.', source: 'NewConceptStep.vue (script prompt)' },
+  { text: 'Now you try.', source: 'NewConceptStep.vue (intro handoff to mic)' },
   { text: 'This is a tricky word. The tricky part is underlined.', source: 'IrregularWordsStep.vue (mount)' },
   { text: 'Tap the speaker to hear me read, then tap the microphone for your turn.', source: 'ConnectedTextStep.vue (mount)' },
   { text: 'Try again. Tap the microphone and read it out loud.', source: 'ConnectedTextStep.vue (retry)' },
+
+  // --- Lesson progress step labels (spoken on step transition in LessonPlayer) ---
+  { text: 'Hear sounds.', source: 'LessonPlayer.vue (step1 transition)' },
+  { text: 'See the letter.', source: 'LessonPlayer.vue (step2 transition)' },
+  { text: 'Match the sound.', source: 'LessonPlayer.vue (step3 transition)' },
+  { text: 'Blend sounds.', source: 'LessonPlayer.vue (step4 transition)' },
+  { text: 'Learn the letter.', source: 'LessonPlayer.vue (step5 transition)' },
+  { text: 'Word work.', source: 'LessonPlayer.vue (step6 transition)' },
+  { text: 'Tricky words.', source: 'LessonPlayer.vue (step7 transition)' },
+  { text: 'Read sentences.', source: 'LessonPlayer.vue (step8 transition)' },
+
+  // --- Lesson completion + map intro (CampgroundMap + LessonPlayer) ---
+  { text: 'You finished the lesson! Great learning.', source: 'LessonPlayer.vue (lesson complete)' },
+  { text: "Fox's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.", source: 'CampgroundMap.vue (speakMapIntro Fox)' },
+  { text: "Lion's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.", source: 'CampgroundMap.vue (speakMapIntro Lion)' },
+  { text: "Panda's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.", source: 'CampgroundMap.vue (speakMapIntro Panda)' },
+  { text: "Kangaroo's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.", source: 'CampgroundMap.vue (speakMapIntro Kangaroo)' },
+  { text: "Your Guardian's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.", source: 'CampgroundMap.vue (speakMapIntro fallback)' },
 ];
 
 // ---- Friend hype lines + generic hype lines (App.vue:269-292) ----
@@ -181,11 +201,25 @@ async function loadScopedLessons() {
  * be excluded from TTS so we don't generate a duplicate (mispronounced)
  * version.
  */
+function stripIpaForTts(text) {
+  return String(text ?? '')
+    .replace(/\/[^/]*\//g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 function ingestSpokenLine(line, sourceLabel, textOut, skippedIpa) {
   const text = String(line ?? '').trim();
   if (!text) return;
   if (hasIpaToken(text)) {
+    // Phoneme audio plays the sound at runtime, but the surrounding prose
+    // still needs Jasmine. Emit the IPA-stripped version so the manifest
+    // lookup in useTts.js matches — the runtime strips IPA before lookup
+    // using the same rules.
     skippedIpa.push({ text, source: sourceLabel });
+    const prose = stripIpaForTts(text);
+    if (prose) textOut.push({ text: prose, source: `${sourceLabel} (IPA-stripped)` });
     return;
   }
   textOut.push({ text, source: sourceLabel });
@@ -203,6 +237,14 @@ function collectLessonStrings(lessons) {
     for (const b of data.step1?.blend || []) words.add(b.word);
     for (const s of data.step1?.segment || []) words.add(s.word);
 
+    // The letter the lesson is teaching — step2/step3 items may only carry
+    // old (review) letters, so pick up the top-level grapheme and each
+    // graphemePlacements entry explicitly. NewConceptStep speaks
+    // "This is the letter X." for this grapheme on mount.
+    if (typeof data.grapheme === 'string') graphemes.add(data.grapheme);
+    for (const p of data.step5?.graphemePlacements || []) {
+      if (typeof p?.grapheme === 'string') graphemes.add(p.grapheme);
+    }
     for (const it of data.step2?.items || []) graphemes.add(it.grapheme);
     for (const it of data.step3?.items || []) {
       for (const g of it.graphemes || []) graphemes.add(g);
@@ -217,6 +259,11 @@ function collectLessonStrings(lessons) {
     for (const bucket of ['iDo', 'weDo', 'youDo']) {
       for (const w of data.step5?.readWords?.[bucket] || []) words.add(w);
       for (const w of data.step5?.spellWords?.[bucket] || []) words.add(w);
+    }
+    // Example words surfaced as tap-to-hear chips when readWords is empty
+    // (see NewConceptStep.vue placementExamples fallback).
+    for (const p of data.step5?.graphemePlacements || []) {
+      for (const w of p?.examples || []) words.add(w);
     }
 
     for (const r of data.step7?.review || []) words.add(r.word);
@@ -234,10 +281,13 @@ function collectLessonStrings(lessons) {
     for (const w of data.highFrequencyWords?.fry || []) words.add(w);
   }
 
-  // Bare words + "The word is X." template (PhonemicAwarenessStep, BlendingGame)
+  // Bare words + templated phrases spoken at runtime for each blend word.
+  //   "The word is X."        — spoken by PhonemicAwarenessStep segment phase
+  //   "This makes the word, X." — spoken after blending in the blend phase
   for (const w of words) {
     entries.push({ text: w, source: 'word-list (bare)' });
     entries.push({ text: `The word is ${w}.`, source: 'word-list (The word is X.)' });
+    entries.push({ text: `This makes the word, ${w}.`, source: 'word-list (This makes the word, X.)' });
   }
 
   // teachPhoneme letter announcements — graphemes uppercased at runtime

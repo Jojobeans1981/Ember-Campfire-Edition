@@ -38,8 +38,7 @@ function activitiesAllComplete(lessonId, progress) {
 function isUfliConnectedTextUnlocked(lessonId) {
   const id = lessonIdFromNumber(lessonId);
   const p = store.ufliProgress[id];
-  if (!p || !p.lessonComplete) return false;
-  return activitiesAllComplete(id, p);
+  return Boolean(p?.lessonComplete);
 }
 
 function getUfliLessonSparkProgress(lessonId) {
@@ -77,8 +76,6 @@ export function useUfliProgression() {
     if (!isUfliLessonUnlocked(id)) return 'locked';
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return 'kindling';
-    if (!activitiesAllComplete(id, p)) return 'sparks';
-    if (hasUfliConnectedText(id) && !p.connectedTextRead) return 'fire';
     return 'complete';
   }
 
@@ -104,7 +101,6 @@ export function useUfliProgression() {
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return;
     if (!hasUfliConnectedText(id)) return;
-    if (!activitiesAllComplete(id, p)) return;
     if (p.connectedTextRead) return;
     await submitOperation('complete_connected_text', { lessonId: id });
   }

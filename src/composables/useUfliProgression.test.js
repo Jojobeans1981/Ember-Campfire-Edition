@@ -98,43 +98,16 @@ describe('useUfliProgression', () => {
       expect(getUfliLessonStatus('002')).toBe('locked');
     });
 
-    it('after completing lesson 001, status becomes sparks', async () => {
+    it('lesson 001 becomes complete as soon as the lesson itself is finished', async () => {
       const { getUfliLessonStatus, completeUfliLesson } = useUfliProgression();
       await completeUfliLesson('001');
-      expect(getUfliLessonStatus('001')).toBe('sparks');
-    });
-
-    it('lesson 001 becomes complete after speech and match are done', async () => {
-      const { getUfliLessonStatus, completeUfliLesson, completeUfliActivity } = useUfliProgression();
-      await completeUfliLesson('001');
-      await completeUfliActivity('001', 'speech');
-      await completeUfliActivity('001', 'match');
       expect(getUfliLessonStatus('001')).toBe('complete');
     });
 
-    it('lesson 002 reaches fire after all visible activities and before connected text', async () => {
-      const { getUfliLessonStatus, completeUfliLesson, completeUfliActivity } = useUfliProgression();
+    it('lesson 002 becomes complete immediately after finishing the lesson', async () => {
+      const { getUfliLessonStatus, completeUfliLesson } = useUfliProgression();
       await completeUfliLesson('001');
       await completeUfliLesson('002');
-      for (const type of ALL_ACTIVITY_TYPES) {
-        await completeUfliActivity('002', type);
-      }
-      expect(getUfliLessonStatus('002')).toBe('fire');
-    });
-
-    it('lesson 002 becomes complete after connected text', async () => {
-      const {
-        getUfliLessonStatus,
-        completeUfliLesson,
-        completeUfliActivity,
-        completeUfliConnectedText,
-      } = useUfliProgression();
-      await completeUfliLesson('001');
-      await completeUfliLesson('002');
-      for (const type of ALL_ACTIVITY_TYPES) {
-        await completeUfliActivity('002', type);
-      }
-      await completeUfliConnectedText('002');
       expect(getUfliLessonStatus('002')).toBe('complete');
     });
   });
@@ -215,40 +188,25 @@ describe('useUfliProgression', () => {
 
   describe('completeUfliConnectedText', () => {
     it('does nothing for lesson 001 because connected text is not authored yet', async () => {
-      const { completeUfliLesson, completeUfliActivity, completeUfliConnectedText } = useUfliProgression();
-      await completeUfliLesson('001');
-      await completeUfliActivity('001', 'speech');
-      await completeUfliActivity('001', 'match');
-      await completeUfliConnectedText('001');
-      expect(store.ufliProgress['001'].connectedTextRead).not.toBe(true);
-      expect(store.xp).toBe(200);
-    });
-
-    it('stays locked for lesson 002 until its activities are complete', async () => {
       const { completeUfliLesson, completeUfliConnectedText } = useUfliProgression();
       await completeUfliLesson('001');
-      await completeUfliLesson('002');
-      await completeUfliConnectedText('002');
-      expect(store.ufliProgress['002'].connectedTextRead).not.toBe(true);
-      expect(store.xp).toBe(200);
+      await completeUfliConnectedText('001');
+      expect(store.ufliProgress['001'].connectedTextRead).not.toBe(true);
+      expect(store.xp).toBe(100);
     });
 
-    it('awards +75 XP once lesson 002 is ready for connected text', async () => {
+    it('unlocks as soon as lesson 002 itself is complete', async () => {
       const {
         completeUfliLesson,
-        completeUfliActivity,
         completeUfliConnectedText,
         isUfliConnectedTextUnlocked,
       } = useUfliProgression();
       await completeUfliLesson('001');
       await completeUfliLesson('002');
-      for (const type of ALL_ACTIVITY_TYPES) {
-        await completeUfliActivity('002', type);
-      }
       expect(isUfliConnectedTextUnlocked('002')).toBe(true);
       await completeUfliConnectedText('002');
       expect(store.ufliProgress['002'].connectedTextRead).toBe(true);
-      expect(store.xp).toBe(100 + 100 + 50 * 5 + 75);
+      expect(store.xp).toBe(100 + 100 + 75);
     });
   });
 

@@ -7,11 +7,16 @@
         <span
           v-for="(key, i) in activeSteps"
           :key="key"
-          class="step-dot"
-          :class="{ active: i === currentStepIndex, done: i < currentStepIndex }"
-          :aria-current="i === currentStepIndex ? 'step' : undefined"
-          :aria-label="`Step ${i + 1} of ${activeSteps.length}`"
-        />
+          class="step-cell"
+        >
+          <span
+            class="step-box"
+            :class="{ active: i === currentStepIndex, done: i < currentStepIndex }"
+            :aria-current="i === currentStepIndex ? 'step' : undefined"
+            :aria-label="stepAriaLabel(key, i)"
+          >{{ i + 1 }}</span>
+          <span v-if="i < activeSteps.length - 1" class="step-arrow" aria-hidden="true">→</span>
+        </span>
       </nav>
 
       <div class="lesson-content">
@@ -31,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineProps, defineEmits } from 'vue';
+import { ref, computed, onMounted, watch, defineProps, defineEmits } from 'vue';
 import { getUfliLesson } from '../data/ufli/ufliLessons.js';
 import { getRenderableUfliStepKeys } from '../data/ufli/lessonFlow.js';
 import { useEmber } from '../composables/useEmber.js';
@@ -61,6 +66,20 @@ const stepComponentByKey = {
   step8: ConnectedTextStep,
 };
 
+// These labels are pre-generated as Jasmine clips in tts-manifest.json
+// (see scripts/generate-tts-inventory.mjs). Changing a label here without
+// regenerating the manifest will fall through to browser speechSynthesis.
+const stepLabelByKey = {
+  step1: 'Hear sounds.',
+  step2: 'See the letter.',
+  step3: 'Match the sound.',
+  step4: 'Blend sounds.',
+  step5: 'Learn the letter.',
+  step6: 'Word work.',
+  step7: 'Tricky words.',
+  step8: 'Read sentences.',
+};
+
 const lesson = ref(null);
 const currentStepIndex = ref(0);
 const isAdvancing = ref(false);
@@ -81,6 +100,20 @@ const activeSteps = computed(() => {
 const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] ?? null);
 const currentStepData = computed(() => (currentStepKey.value ? lesson.value?.[currentStepKey.value] : null));
 const currentStepComponent = computed(() => (currentStepKey.value ? stepComponentByKey[currentStepKey.value] : null));
+
+function stepAriaLabel(key, i) {
+  const label = stepLabelByKey[key] ?? `Step ${i + 1}`;
+  return `${label} Step ${i + 1} of ${activeSteps.value.length}.`;
+}
+
+// Announce each step with Jasmine as it becomes active. Fires on initial
+// lesson load and on each advance; the step component's own prompts queue
+// after this via the priority-based speech queue in useEmber.
+watch(currentStepKey, (newKey) => {
+  if (!newKey) return;
+  const label = stepLabelByKey[newKey];
+  if (label) void ember.speak(label, { priority: 'instruction' });
+});
 
 function onStepComplete() {
   if (isAdvancing.value) return;
@@ -112,30 +145,63 @@ function onStepComplete() {
 
 .step-trail {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
   justify-content: center;
-  padding: 6px 0 2px;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 4px;
+  width: 100%;
 }
 
-.step-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+.step-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
   border: 2px solid rgba(255, 209, 102, 0.25);
-  transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
+  color: rgba(255, 244, 220, 0.6);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 
-.step-dot.done {
-  background: rgba(126, 232, 136, 0.7);
+.step-box.done {
+  background: rgba(126, 232, 136, 0.28);
   border-color: rgba(126, 232, 136, 0.8);
+  color: #e6fff0;
 }
 
-.step-dot.active {
-  background: #ffd166;
+.step-box.active {
+  background: rgba(255, 209, 102, 0.22);
   border-color: #ffd166;
-  transform: scale(1.25);
-  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.25);
+  color: #fff4dc;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.22), 0 0 18px rgba(255, 209, 102, 0.35);
+}
+
+.step-arrow {
+  color: rgba(255, 209, 102, 0.45);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0 2px;
+  user-select: none;
 }
 
 .lesson-content {

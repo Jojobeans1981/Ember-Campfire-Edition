@@ -72,14 +72,24 @@ export function isUfliLessonStepRenderable(stepKey, stepData) {
     case 'step1':
       return hasRenderableItems(stepData?.blend, (item) => (item?.phonemes?.length ?? 0) >= 2)
         || hasRenderableItems(stepData?.segment, (item) => letterCount(item?.word) >= 2);
-    case 'step2':
-      return hasRenderableItems(stepData?.items, (item) => {
+    case 'step2': {
+      // Visual drill overlaps the new-concept intro when there's only one
+      // grapheme to show, so skip it for single-letter lessons.
+      const items = Array.isArray(stepData?.items) ? stepData.items : [];
+      if (items.length < 2) return false;
+      return items.some((item) => {
         return normalizeText(item?.grapheme).length > 0 || (item?.phonemes?.length ?? 0) > 0;
       });
-    case 'step3':
-      return hasRenderableItems(stepData?.items, (item) => {
+    }
+    case 'step3': {
+      // Auditory drill is a discrimination task — if there's only a single
+      // phoneme/grapheme, there's nothing to choose between, so skip it.
+      const items = Array.isArray(stepData?.items) ? stepData.items : [];
+      if (items.length < 2) return false;
+      return items.some((item) => {
         return normalizeText(item?.phoneme).length > 0 || (item?.graphemes?.length ?? 0) > 0;
       });
+    }
     case 'step4':
       return hasRenderableWordList(stepData?.wordChain ?? [], 2) || hasRenderableTiles(stepData?.tiles);
     case 'step5':
@@ -99,8 +109,11 @@ export function isUfliLessonStepRenderable(stepKey, stepData) {
         || hasRenderableWordSort(stepData?.wordSort)
         || hasRenderableWordMeaning(stepData?.wordMeaning);
     case 'step7':
-      return hasRenderableIrregularWords(stepData?.review ?? [])
-        || hasRenderableIrregularWords(stepData?.teach ?? []);
+      // Skipped for MVP: the review/teach buckets in the JSON aren't
+      // dependency-aware, so a word like "the" can land in `review`
+      // before anything has ever introduced it. Re-enable once the
+      // tricky-words data has a coherent teach→review progression.
+      return false;
     case 'step8':
       return hasRenderableSentenceList(stepData?.readSentences)
         || hasRenderableSentenceList(stepData?.spellSentences);
