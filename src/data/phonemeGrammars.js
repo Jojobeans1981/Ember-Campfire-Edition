@@ -1,44 +1,42 @@
 /**
- * Grammar constraints for Vosk speech recognition.
+ * Sound-only grammar constraints for single-phoneme recognition.
  *
- * Each phoneme maps to a list of words that Vosk's recognizer is allowed to
- * output. By constraining the vocabulary, any recognition result is strong
- * evidence the child produced the target sound. The lists are intentionally
- * generous to handle unclear child speech.
+ * These drills should validate the child saying the sound itself, not a whole
+ * word that merely contains the sound. Word reading is handled elsewhere.
  */
 
 export const PHONEME_GRAMMARS = {
   // --- Sustain consonants ---
-  s: ['s', 'ss', 'sss', 'sun', 'see', 'say', 'so', 'sit', 'set', 'six'],
-  m: ['m', 'mm', 'mmm', 'mom', 'me', 'my', 'man', 'map', 'mat', 'hm'],
-  n: ['n', 'nn', 'nnn', 'no', 'not', 'nap', 'net', 'nut', 'nine', 'nice'],
-  f: ['f', 'ff', 'fff', 'fun', 'fan', 'fit', 'fix', 'five', 'for', 'fat'],
-  l: ['l', 'll', 'lll', 'let', 'lap', 'lip', 'lot', 'leg', 'lit', 'log'],
-  h: ['h', 'hh', 'ha', 'he', 'hi', 'hot', 'hat', 'hit', 'hug', 'hop'],
-  r: ['r', 'rr', 'rrr', 'run', 'red', 'rip', 'rat', 'rug', 'ram', 'rob'],
-  v: ['v', 'vv', 'vvv', 'van', 'vet', 'vine', 'very', 'vim', 'vat', 'vast'],
-  z: ['z', 'zz', 'zzz', 'zip', 'zoo', 'zone', 'zero', 'zap', 'zen', 'zig'],
-  w: ['w', 'ww', 'we', 'was', 'win', 'wet', 'wag', 'web', 'wit', 'wow'],
-  y: ['y', 'yy', 'yes', 'yet', 'yam', 'yep', 'you', 'yell', 'your', 'yawn'],
+  s: ['s', 'ss', 'sss', 'es', 'ess', 'suh'],
+  m: ['m', 'mm', 'mmm', 'mmmm', 'em', 'um', 'umm', 'muh', 'hm', 'hmm', 'hmmm'],
+  n: ['n', 'nn', 'nnn', 'en', 'nuh'],
+  f: ['f', 'ff', 'fff', 'ef', 'eff', 'fuh'],
+  l: ['l', 'll', 'lll', 'el', 'luh'],
+  h: ['h', 'hh', 'huh', 'ha'],
+  r: ['r', 'rr', 'er', 'ruh'],
+  v: ['v', 'vv', 'vee', 'vuh'],
+  z: ['z', 'zz', 'zee', 'zuh'],
+  w: ['w', 'ww', 'wuh', 'woo'],
+  y: ['y', 'yy', 'yee', 'yuh'],
 
-  // --- Plosive consonants (need carrier words) ---
-  t: ['t', 'to', 'top', 'ten', 'tap', 'tip', 'tub', 'two', 'tie', 'tin'],
-  p: ['p', 'pop', 'pan', 'pat', 'pet', 'pin', 'pig', 'pot', 'put', 'pit'],
-  c: ['c', 'k', 'cup', 'cat', 'can', 'cap', 'cut', 'cot', 'cub', 'cab'],
-  b: ['b', 'but', 'bat', 'bed', 'big', 'bit', 'bus', 'bug', 'box', 'bun'],
-  d: ['d', 'do', 'did', 'dog', 'dig', 'dug', 'den', 'dot', 'dip', 'dam'],
-  g: ['g', 'go', 'got', 'get', 'gum', 'gap', 'gas', 'gun', 'gut', 'gig'],
-  k: ['k', 'kid', 'kit', 'key', 'kin', 'keg', 'kick', 'king', 'keep', 'kept'],
-  j: ['j', 'jug', 'jam', 'jet', 'jot', 'job', 'jump', 'just', 'joy', 'jar'],
-  x: ['x', 'ax', 'ox', 'box', 'fox', 'fix', 'mix', 'six', 'wax', 'hex'],
-  q: ['q', 'quick', 'quit', 'quiz', 'queen', 'quiet', 'quest', 'quote', 'quack', 'quilt'],
+  // --- Plosive consonants (sound-like labels only, not real words) ---
+  t: ['t', 'tt', 'tee', 'te', 'tuh'],
+  p: ['p', 'pp', 'pee', 'pe', 'puh'],
+  c: ['c', 'k', 'kuh', 'cuh'],
+  b: ['b', 'bb', 'bee', 'be', 'buh'],
+  d: ['d', 'dd', 'dee', 'de', 'duh'],
+  g: ['g', 'gg', 'gee', 'guh'],
+  k: ['k', 'kk', 'kay', 'kuh'],
+  j: ['j', 'jj', 'jay', 'juh'],
+  x: ['x', 'ex', 'ks', 'kss'],
+  q: ['q', 'qu', 'kw', 'qoo'],
 
   // --- Short vowels ---
-  a: ['a', 'ah', 'at', 'am', 'an', 'as', 'add', 'ant', 'and', 'ask'],
-  e: ['e', 'eh', 'ed', 'egg', 'end', 'elf', 'elm', 'elk', 'edge', 'echo'],
-  i: ['i', 'ih', 'it', 'in', 'is', 'if', 'ill', 'ink', 'inn', 'itch'],
-  o: ['o', 'ah', 'on', 'ox', 'odd', 'off', 'opt', 'olive', 'opera', 'otter'],
-  u: ['u', 'uh', 'up', 'us', 'ump', 'under', 'uncle', 'utter', 'ugly', 'until'],
+  a: ['a', 'ah', 'aa', 'aah'],
+  e: ['e', 'eh', 'eeh'],
+  i: ['i', 'ih', 'ii', 'ihh'],
+  o: ['o', 'ah', 'aw', 'oh'],
+  u: ['u', 'uh', 'uhh'],
 };
 
 /**
@@ -47,14 +45,20 @@ export const PHONEME_GRAMMARS = {
  * single-sound lessons work without the local Vosk model present.
  */
 export const PHONEME_TRANSCRIPT_VARIANTS = {
-  a: ['a', 'ah', 'aa', 'aah', 'at', 'am', 'an', 'ash'],
-  m: ['m', 'mm', 'mmm', 'em', 'um', 'muh', 'mom', 'me'],
-  s: ['s', 'ss', 'sss', 'es', 'ess', 'suh', 'see', 'say'],
-  t: ['t', 'tt', 'tee', 'te', 'tuh', 'to', 'ten', 'tap'],
-  p: ['p', 'pp', 'pee', 'pe', 'puh', 'pop', 'pat'],
-  n: ['n', 'nn', 'en', 'nuh', 'no', 'net'],
-  i: ['i', 'ih', 'ee', 'it', 'in', 'is'],
-  c: ['c', 'k', 'kuh', 'cuh', 'cat', 'cap', 'can'],
+  a: ['a', 'ah', 'aa', 'aah'],
+  m: ['m', 'mm', 'mmm', 'mmmm', 'em', 'um', 'umm', 'muh', 'hm', 'hmm', 'hmmm'],
+  s: ['s', 'ss', 'sss', 'es', 'ess', 'suh'],
+  t: ['t', 'tt', 'tee', 'te', 'tuh'],
+  p: ['p', 'pp', 'pee', 'pe', 'puh'],
+  n: ['n', 'nn', 'nnn', 'en', 'nuh'],
+  i: ['i', 'ih', 'ii', 'ee', 'ihh'],
+  c: ['c', 'k', 'kuh', 'cuh'],
+  b: ['b', 'bb', 'bee', 'be', 'buh'],
+  d: ['d', 'dd', 'dee', 'de', 'duh'],
+  g: ['g', 'gg', 'gee', 'guh'],
+  e: ['e', 'eh', 'eeh'],
+  o: ['o', 'ah', 'aw', 'oh'],
+  u: ['u', 'uh', 'uhh'],
 };
 
 /**

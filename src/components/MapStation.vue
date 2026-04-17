@@ -10,21 +10,20 @@
     </div>
     <div class="station-label">{{ stationLabel }}</div>
     <div v-if="status !== 'locked'" class="spark-dots">
-      <span class="dot" :class="{ lit: sparksEarned >= 1 }"></span>
-      <span class="dot" :class="{ lit: sparksEarned >= 2 }"></span>
-      <span class="dot" :class="{ lit: sparksEarned >= 3 }"></span>
-      <span class="dot" :class="{ lit: sparksEarned >= 4 }"></span>
-      <span class="dot" :class="{ lit: sparksEarned >= 5 }"></span>
-      <span class="dot" :class="{ lit: sparksEarned >= 6 }"></span>
-      <span class="dot big" :class="{ lit: sparksEarned >= 7 }"></span>
+      <span
+        v-for="index in sparkTotal"
+        :key="index"
+        class="dot"
+        :class="{ lit: sparksEarned >= index, big: index === sparkTotal }"
+      ></span>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import { store } from '../store';
 import { getLessonMeta } from '../data/ufli/ufliCurriculum.js';
+import { useUfliProgression } from '../composables/useUfliProgression.js';
 import CampfireIcon from './ui/CampfireIcon.vue';
 
 const props = defineProps({
@@ -33,6 +32,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['select']);
+const { getUfliLessonSparkProgress } = useUfliProgression();
 
 const meta = computed(() => getLessonMeta(props.lessonId));
 
@@ -44,14 +44,10 @@ const stationLabel = computed(() => {
 });
 
 const sparksEarned = computed(() => {
-  const p = store.ufliProgress[props.lessonId];
-  if (!p) return 0;
-  let count = 0;
-  if (p.lessonComplete) count++;
-  count += Object.values(p.activitiesComplete || {}).filter(Boolean).length;
-  if (p.connectedTextRead) count++;
-  return count;
+  return getUfliLessonSparkProgress(props.lessonId).earned;
 });
+
+const sparkTotal = computed(() => getUfliLessonSparkProgress(props.lessonId).total);
 
 function handleClick() {
   if (props.status === 'locked') return;

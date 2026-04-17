@@ -48,7 +48,7 @@ vi.mock('./useProfileProgress.js', async () => {
 import { store, clearBootstrapState } from '../store';
 import { useUfliProgression } from './useUfliProgression.js';
 
-const ACTIVITY_TYPES = ['speech', 'match', 'blend', 'build', 'sentence'];
+const ALL_ACTIVITY_TYPES = ['speech', 'match', 'blend', 'build', 'sentence'];
 
 function resetStore() {
   clearBootstrapState();
@@ -88,7 +88,7 @@ describe('useUfliProgression', () => {
   });
 
   describe('getUfliLessonStatus', () => {
-    it('lesson 001 starts as kindling (unlocked, lesson incomplete)', () => {
+    it('lesson 001 starts as kindling', () => {
       const { getUfliLessonStatus } = useUfliProgression();
       expect(getUfliLessonStatus('001')).toBe('kindling');
     });
@@ -98,22 +98,31 @@ describe('useUfliProgression', () => {
       expect(getUfliLessonStatus('002')).toBe('locked');
     });
 
-    it('after completing a lesson, status becomes sparks', async () => {
+    it('after completing lesson 001, status becomes sparks', async () => {
       const { getUfliLessonStatus, completeUfliLesson } = useUfliProgression();
       await completeUfliLesson('001');
       expect(getUfliLessonStatus('001')).toBe('sparks');
     });
 
-    it('after all 5 activities, status becomes fire', async () => {
+    it('lesson 001 becomes complete after speech and match are done', async () => {
       const { getUfliLessonStatus, completeUfliLesson, completeUfliActivity } = useUfliProgression();
       await completeUfliLesson('001');
-      for (const t of ACTIVITY_TYPES) {
-        await completeUfliActivity('001', t);
-      }
-      expect(getUfliLessonStatus('001')).toBe('fire');
+      await completeUfliActivity('001', 'speech');
+      await completeUfliActivity('001', 'match');
+      expect(getUfliLessonStatus('001')).toBe('complete');
     });
 
-    it('after connected text read, status becomes complete', async () => {
+    it('lesson 002 reaches fire after all visible activities and before connected text', async () => {
+      const { getUfliLessonStatus, completeUfliLesson, completeUfliActivity } = useUfliProgression();
+      await completeUfliLesson('001');
+      await completeUfliLesson('002');
+      for (const type of ALL_ACTIVITY_TYPES) {
+        await completeUfliActivity('002', type);
+      }
+      expect(getUfliLessonStatus('002')).toBe('fire');
+    });
+
+    it('lesson 002 becomes complete after connected text', async () => {
       const {
         getUfliLessonStatus,
         completeUfliLesson,
@@ -121,11 +130,28 @@ describe('useUfliProgression', () => {
         completeUfliConnectedText,
       } = useUfliProgression();
       await completeUfliLesson('001');
-      for (const t of ACTIVITY_TYPES) {
-        await completeUfliActivity('001', t);
+      await completeUfliLesson('002');
+      for (const type of ALL_ACTIVITY_TYPES) {
+        await completeUfliActivity('002', type);
       }
-      await completeUfliConnectedText('001');
-      expect(getUfliLessonStatus('001')).toBe('complete');
+      await completeUfliConnectedText('002');
+      expect(getUfliLessonStatus('002')).toBe('complete');
+    });
+  });
+
+  describe('lesson activity helpers', () => {
+    it('returns only sensible activities for lesson 001', () => {
+      const { lessonActivityTypes, getUfliLessonSparkProgress } = useUfliProgression();
+      expect(lessonActivityTypes('001')).toEqual(['speech', 'match']);
+      expect(getUfliLessonSparkProgress('001')).toEqual({ earned: 0, total: 3 });
+    });
+
+    it('returns the full loop for lesson 002', async () => {
+      const { completeUfliLesson, lessonActivityTypes, getUfliLessonSparkProgress } = useUfliProgression();
+      await completeUfliLesson('001');
+      await completeUfliLesson('002');
+      expect(lessonActivityTypes('002')).toEqual(['speech', 'match', 'blend', 'build', 'sentence']);
+      expect(getUfliLessonSparkProgress('002')).toEqual({ earned: 1, total: 7 });
     });
   });
 
@@ -148,8 +174,8 @@ describe('useUfliProgression', () => {
       const { completeUfliLesson } = useUfliProgression();
       await completeUfliLesson('001');
       const ac = store.ufliProgress['001'].activitiesComplete;
-      for (const t of ACTIVITY_TYPES) {
-        expect(ac).toHaveProperty(t, false);
+      for (const type of ALL_ACTIVITY_TYPES) {
+        expect(ac).toHaveProperty(type, false);
       }
     });
   });
@@ -170,6 +196,14 @@ describe('useUfliProgression', () => {
       expect(store.xp).toBe(150);
     });
 
+    it('ignores hidden activities for lesson 001', async () => {
+      const { completeUfliLesson, completeUfliActivity } = useUfliProgression();
+      await completeUfliLesson('001');
+      await completeUfliActivity('001', 'blend');
+      expect(store.ufliProgress['001'].activitiesComplete.blend).toBe(false);
+      expect(store.xp).toBe(100);
+    });
+
     it('does not double-award XP for the same activity', async () => {
       const { completeUfliLesson, completeUfliActivity } = useUfliProgression();
       await completeUfliLesson('001');
@@ -180,29 +214,41 @@ describe('useUfliProgression', () => {
   });
 
   describe('completeUfliConnectedText', () => {
-    it('is locked until all 5 activities are complete', async () => {
-      const { completeUfliLesson, completeUfliConnectedText } = useUfliProgression();
+    it('does nothing for lesson 001 because connected text is not authored yet', async () => {
+      const { completeUfliLesson, completeUfliActivity, completeUfliConnectedText } = useUfliProgression();
       await completeUfliLesson('001');
+      await completeUfliActivity('001', 'speech');
+      await completeUfliActivity('001', 'match');
       await completeUfliConnectedText('001');
       expect(store.ufliProgress['001'].connectedTextRead).not.toBe(true);
-      expect(store.xp).toBe(100);
+      expect(store.xp).toBe(200);
     });
 
-    it('awards +75 XP and unlocks the next lesson once complete', async () => {
+    it('stays locked for lesson 002 until its activities are complete', async () => {
+      const { completeUfliLesson, completeUfliConnectedText } = useUfliProgression();
+      await completeUfliLesson('001');
+      await completeUfliLesson('002');
+      await completeUfliConnectedText('002');
+      expect(store.ufliProgress['002'].connectedTextRead).not.toBe(true);
+      expect(store.xp).toBe(200);
+    });
+
+    it('awards +75 XP once lesson 002 is ready for connected text', async () => {
       const {
         completeUfliLesson,
         completeUfliActivity,
         completeUfliConnectedText,
-        isUfliLessonUnlocked,
+        isUfliConnectedTextUnlocked,
       } = useUfliProgression();
       await completeUfliLesson('001');
-      for (const t of ACTIVITY_TYPES) {
-        await completeUfliActivity('001', t);
+      await completeUfliLesson('002');
+      for (const type of ALL_ACTIVITY_TYPES) {
+        await completeUfliActivity('002', type);
       }
-      await completeUfliConnectedText('001');
-      expect(store.ufliProgress['001'].connectedTextRead).toBe(true);
-      expect(store.xp).toBe(100 + 50 * 5 + 75);
-      expect(isUfliLessonUnlocked('002')).toBe(true);
+      expect(isUfliConnectedTextUnlocked('002')).toBe(true);
+      await completeUfliConnectedText('002');
+      expect(store.ufliProgress['002'].connectedTextRead).toBe(true);
+      expect(store.xp).toBe(100 + 100 + 50 * 5 + 75);
     });
   });
 

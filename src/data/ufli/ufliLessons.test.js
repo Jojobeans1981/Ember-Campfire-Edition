@@ -7,6 +7,9 @@ import {
   getCumulativeDecodableWords,
   getCumulativeIntroducedGraphemes,
   getCumulativeReadSentences,
+  getAvailableUfliActivityTypes,
+  getUfliLessonSparkTotal,
+  hasUfliConnectedText,
   getUpcomingGraphemes,
   lessonIdFromNumber,
   _clearLessonCache,
@@ -76,7 +79,8 @@ describe('getUfliLesson', () => {
       expect(lesson[key], `lesson 001 missing ${key}`).toBeDefined();
     }
     expect(Array.isArray(lesson.wordList)).toBe(true);
-    expect(lesson.wordList.length).toBeGreaterThan(0);
+    expect(lesson.wordList).toEqual([]);
+    expect(lesson.step5.introductionScript.at(-1)?.text).toBe('Your turn. Say /ă/.');
   });
 
   it('accepts a number argument', async () => {
@@ -96,7 +100,7 @@ describe('getUfliLesson', () => {
     expect(getUfliLessonSync('001')).toBeDefined();
   });
 
-  it('loads lessons 001 through 010 with all 8 steps and non-empty word lists', async () => {
+  it('loads lessons 001 through 010 with all 8 steps and sensible word lists', async () => {
     for (let i = 1; i <= 10; i++) {
       const id = lessonIdFromNumber(i);
       const lesson = await getUfliLesson(id);
@@ -104,7 +108,11 @@ describe('getUfliLesson', () => {
       for (const key of ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'step8']) {
         expect(lesson[key], `lesson ${id} missing ${key}`).toBeDefined();
       }
-      expect(lesson.wordList.length, `lesson ${id} has empty wordList`).toBeGreaterThan(0);
+      if (id === '001') {
+        expect(lesson.wordList, `lesson ${id} should stay focused on the new sound`).toEqual([]);
+      } else {
+        expect(lesson.wordList.length, `lesson ${id} has empty wordList`).toBeGreaterThan(0);
+      }
     }
   });
 });
@@ -114,9 +122,14 @@ describe('getCumulativeWordList', () => {
     _clearLessonCache();
   });
 
-  it('returns at least one word for lesson 001', async () => {
+  it('returns [] for lesson 001 because no buildable words exist yet', async () => {
     const words = await getCumulativeWordList('001');
-    expect(words.length).toBeGreaterThan(0);
+    expect(words).toEqual([]);
+  });
+
+  it('returns the first real word at lesson 002', async () => {
+    const words = await getCumulativeWordList('002');
+    expect(words).toEqual(['am']);
   });
 
   it('returns words from lessons 1+2+3 for lesson 003', async () => {
@@ -192,34 +205,42 @@ describe('getCumulativeDecodableWords with authored decompositions', () => {
     _clearLessonCache();
   });
 
-  it('uses step7.teach breakdown phonemes for heart words (the → /ð/ + /ə/)', async () => {
+  it('returns [] for lesson 001 now that the first lesson is sound-only', async () => {
     const words = await getCumulativeDecodableWords('001');
+    expect(words).toEqual([]);
+  });
+
+  it('uses step1 blend phonemes for lesson 002 word am', async () => {
+    const words = await getCumulativeDecodableWords('002');
+    const am = words.find((w) => w.word.toLowerCase() === 'am');
+    expect(am).toBeDefined();
+    expect(am.phonemes).toEqual(['/ă/', '/m/']);
+    expect(am.graphemes).toEqual(['a', 'm']);
+  });
+
+  it('keeps tricky words like "the" out of the decodable activity pool until authored there', async () => {
+    const words = await getCumulativeDecodableWords('004');
     const the = words.find((w) => w.word.toLowerCase() === 'the');
-    expect(the).toBeDefined();
-    expect(the.phonemes).toEqual(['/ð/', '/ə/']);
+    expect(the).toBeUndefined();
+  });
+});
+
+describe('lesson activity availability', () => {
+  it('shows only speech and match for lesson 001', () => {
+    expect(getAvailableUfliActivityTypes('001')).toEqual(['speech', 'match']);
+    expect(hasUfliConnectedText('001')).toBe(false);
+    expect(getUfliLessonSparkTotal('001')).toBe(3);
   });
 
-  it('uses step7.teach breakdown graphemes for heart words (the → th + e)', async () => {
-    const words = await getCumulativeDecodableWords('001');
-    const the = words.find((w) => w.word.toLowerCase() === 'the');
-    expect(the.graphemes).toEqual(['th', 'e']);
+  it('unlocks the full lesson loop by lesson 002', () => {
+    expect(getAvailableUfliActivityTypes('002')).toEqual(['speech', 'match', 'blend', 'build', 'sentence']);
+    expect(hasUfliConnectedText('002')).toBe(true);
+    expect(getUfliLessonSparkTotal('002')).toBe(7);
   });
 
-  it('uses step1.blend phonemes when available', async () => {
-    const words = await getCumulativeDecodableWords('001');
-    const at = words.find((w) => w.word.toLowerCase() === 'at');
-    expect(at).toBeDefined();
-    expect(at.phonemes).toEqual(['/ă/', '/t/']);
-  });
-
-  it('falls back to letter-split for words without an authored breakdown', async () => {
-    const words = await getCumulativeDecodableWords('001');
-    // "cat" is in lesson 1's wordList but has no authored breakdown —
-    // expect letter-split fallback for both phonemes and graphemes.
-    const cat = words.find((w) => w.word.toLowerCase() === 'cat');
-    expect(cat).toBeDefined();
-    expect(cat.phonemes).toEqual(['c', 'a', 't']);
-    expect(cat.graphemes).toEqual(['c', 'a', 't']);
+  it('returns no activities for unknown lessons', () => {
+    expect(getAvailableUfliActivityTypes('999')).toEqual([]);
+    expect(getUfliLessonSparkTotal('999')).toBe(0);
   });
 });
 

@@ -1,5 +1,11 @@
 import { store } from '../store';
-import { ALL_UFLI_LESSON_IDS, lessonIdFromNumber } from '../data/ufli/ufliLessons.js';
+import {
+  ALL_UFLI_LESSON_IDS,
+  lessonIdFromNumber,
+  getAvailableUfliActivityTypes,
+  getUfliLessonSparkTotal,
+  hasUfliConnectedText,
+} from '../data/ufli/ufliLessons.js';
 import { useProfileProgress } from './useProfileProgress.js';
 
 const ACTIVITY_TYPES = ['speech', 'match', 'blend', 'build', 'sentence'];
@@ -21,8 +27,37 @@ function ensureProgress(id) {
   return store.ufliProgress[id];
 }
 
-function activitiesAllComplete(progress) {
-  return ACTIVITY_TYPES.every((t) => progress.activitiesComplete[t]);
+function lessonActivityTypes(lessonId) {
+  return getAvailableUfliActivityTypes(lessonId);
+}
+
+function activitiesAllComplete(lessonId, progress) {
+  return lessonActivityTypes(lessonId).every((t) => progress.activitiesComplete[t]);
+}
+
+function isUfliConnectedTextUnlocked(lessonId) {
+  const id = lessonIdFromNumber(lessonId);
+  const p = store.ufliProgress[id];
+  if (!p || !p.lessonComplete) return false;
+  return activitiesAllComplete(id, p);
+}
+
+function getUfliLessonSparkProgress(lessonId) {
+  const id = lessonIdFromNumber(lessonId);
+  const p = store.ufliProgress[id];
+  if (!p) {
+    return { earned: 0, total: getUfliLessonSparkTotal(id) };
+  }
+
+  let earned = 0;
+  if (p.lessonComplete) earned++;
+  earned += lessonActivityTypes(id).filter((type) => p.activitiesComplete[type]).length;
+  if (hasUfliConnectedText(id) && p.connectedTextRead) earned++;
+
+  return {
+    earned,
+    total: getUfliLessonSparkTotal(id),
+  };
 }
 
 export function useUfliProgression() {
@@ -42,8 +77,8 @@ export function useUfliProgression() {
     if (!isUfliLessonUnlocked(id)) return 'locked';
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return 'kindling';
-    if (!activitiesAllComplete(p)) return 'sparks';
-    if (!p.connectedTextRead) return 'fire';
+    if (!activitiesAllComplete(id, p)) return 'sparks';
+    if (hasUfliConnectedText(id) && !p.connectedTextRead) return 'fire';
     return 'complete';
   }
 
@@ -59,6 +94,7 @@ export function useUfliProgression() {
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return;
     if (!ACTIVITY_TYPES.includes(activityType)) return;
+    if (!lessonActivityTypes(id).includes(activityType)) return;
     if (p.activitiesComplete[activityType]) return;
     await submitOperation('complete_activity', { lessonId: id, activityType });
   }
@@ -67,7 +103,8 @@ export function useUfliProgression() {
     const id = lessonIdFromNumber(lessonId);
     const p = store.ufliProgress[id];
     if (!p || !p.lessonComplete) return;
-    if (!activitiesAllComplete(p)) return;
+    if (!hasUfliConnectedText(id)) return;
+    if (!activitiesAllComplete(id, p)) return;
     if (p.connectedTextRead) return;
     await submitOperation('complete_connected_text', { lessonId: id });
   }
@@ -84,5 +121,8 @@ export function useUfliProgression() {
     completeUfliActivity,
     completeUfliConnectedText,
     getCumulativeLearnedLessonIds,
+    getUfliLessonSparkProgress,
+    isUfliConnectedTextUnlocked,
+    lessonActivityTypes,
   };
 }

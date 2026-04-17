@@ -39,6 +39,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
+import { useMicTurn } from '../../composables/useMicTurn.js';
 import { useSpeechRecognition } from '../../composables/useSpeechRecognition.js';
 import FocusStage from './FocusStage.vue';
 
@@ -52,6 +53,7 @@ const {
   requestMicPermission,
   sustainProgress: micProgress,
 } = useSpeechRecognition();
+const { prepareMicTurn } = useMicTurn({ ember, cancelListening });
 
 let cancelled = false;
 
@@ -81,17 +83,8 @@ async function startMic() {
   const s = currentSentence.value;
   if (!s) return;
   micPhase.value = 'listening';
-  await ember.speak('Listening.');
-  const words = s
-    .replace(/[^a-zA-Z\s]/g, '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  const targetWord = words.find((word) => word.length >= 3)
-    || words.find((word) => word.length >= 2)
-    || words[0]
-    || s;
-  const result = await startWordListening(targetWord, 8000);
+  await prepareMicTurn();
+  const result = await startWordListening(s, 9000);
   if (cancelled) return;
   if (result?.matched) {
     micPhase.value = 'matched';

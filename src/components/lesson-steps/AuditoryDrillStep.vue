@@ -41,7 +41,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEmber } from '../../composables/useEmber.js';
-import { getCumulativeLetters } from '../../data/ufli/ufliLessons.js';
+import { getCumulativeIntroducedGraphemes, getUpcomingGraphemes } from '../../data/ufli/ufliLessons.js';
 import FocusStage from './FocusStage.vue';
 
 const props = defineProps({
@@ -61,6 +61,7 @@ const choices = ref([]);
 const pickedChoice = ref('');
 const busy = ref(false);
 const knownLetters = ref([]);
+const upcomingLetters = ref([]);
 let cancelled = false;
 
 const targetGrapheme = computed(() => currentItem.value?.graphemes?.[0]);
@@ -104,10 +105,7 @@ function buildChoices() {
   const candidatePool = [
     ...allGraphemes.value,
     ...knownLetters.value,
-    'm',
-    's',
-    't',
-    'a',
+    ...upcomingLetters.value,
   ]
     .map((grapheme) => String(grapheme).trim().toLowerCase())
     .filter((grapheme) => /^[a-z]$/.test(grapheme));
@@ -178,7 +176,8 @@ onMounted(async () => {
     return;
   }
   if (props.lessonId) {
-    knownLetters.value = await getCumulativeLetters(props.lessonId);
+    knownLetters.value = getCumulativeIntroducedGraphemes(props.lessonId);
+    upcomingLetters.value = getUpcomingGraphemes(props.lessonId, 4);
   }
   await ember.speak('In this section, listen to the sound and tap the matching letter.');
   await playCurrent();

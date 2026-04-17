@@ -44,7 +44,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import {
   getCumulativeDecodableWords,
   getCumulativeIntroducedGraphemes,
-  getUpcomingGraphemes,
 } from '../../data/ufli/ufliLessons.js';
 import { useEmber } from '../../composables/useEmber.js';
 import { celebrateCorrect } from '../../composables/useCelebration.js';
@@ -136,15 +135,15 @@ async function hearWord() {
 
 onMounted(async () => {
   const all = await getCumulativeDecodableWords(props.lessonId);
-  // ≥2 graphemes so a 2-tile heart word like "the" (th + e) is buildable;
-  // single-grapheme "a" still auto-completes.
-  words.value = all.filter((w) => w.graphemes.length >= 2);
-  // Letter-bank pool: introduced graphemes + a couple of upcoming ones
-  // so early lessons still offer visible distractors. Target graphemes
-  // are always in the word itself, so the child is never asked to
-  // identify an unlearned sound.
   const introduced = getCumulativeIntroducedGraphemes(props.lessonId);
-  allPhonemes.value = [...introduced, ...getUpcomingGraphemes(props.lessonId, 2)];
+  const introducedSet = new Set(introduced.map((grapheme) => String(grapheme).toLowerCase()));
+  words.value = all.filter((word) => {
+    return (word.graphemes?.length ?? 0) >= 2
+      && word.graphemes.every((grapheme) => introducedSet.has(String(grapheme).toLowerCase()));
+  });
+  // Keep the letter bank limited to taught graphemes so build practice
+  // never jumps ahead of the lesson sequence.
+  allPhonemes.value = introduced;
   if (words.value.length === 0) {
     emit('complete');
     return;
@@ -223,3 +222,4 @@ h3 { color: #FF8C00; margin: 0; }
 .success { color: #64FFDA; font-size: 1.5rem; font-weight: bold; }
 .progress-info { color: #888; font-size: 0.85rem; }
 </style>
+

@@ -30,6 +30,7 @@ vi.mock('./composables/useUfliProgression.js', () => ({
     completeUfliActivity: vi.fn().mockResolvedValue(null),
     completeUfliConnectedText: vi.fn().mockResolvedValue(null),
     getUfliLessonStatus: vi.fn().mockReturnValue('kindling'),
+    isUfliConnectedTextUnlocked: vi.fn().mockReturnValue(false),
     ACTIVITY_TYPES: ['speech', 'match', 'blend', 'build', 'sentence'],
   }),
 }));
@@ -78,6 +79,8 @@ describe('App bootstrap', () => {
     store.activeLessonId = null;
     store.activeActivity = null;
     localStorage.clear();
+    sessionStorage.clear();
+    sessionStorage.setItem('ember-splash-seen', '1');
     vi.restoreAllMocks();
   });
 
@@ -127,10 +130,10 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('selection');
     expect(wrapper.text()).toContain('Choose a Guardian');
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
-      'http://127.0.0.1:3001/me',
-      'http://127.0.0.1:3001/account',
-      'http://127.0.0.1:3001/profiles',
-      'http://127.0.0.1:3001/profiles/profile-1/progress',
+      'http://127.0.0.1:3002/me',
+      'http://127.0.0.1:3002/account',
+      'http://127.0.0.1:3002/profiles',
+      'http://127.0.0.1:3002/profiles/profile-1/progress',
     ]);
 
     expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toMatchObject({

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import ConnectedTextStep from './ConnectedTextStep.vue';
 
@@ -34,6 +34,14 @@ function currentSentence(wrapper) {
 }
 
 describe('ConnectedTextStep', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('mounts and shows the first sentence via FocusStage', () => {
     const wrapper = mount(ConnectedTextStep, { props: { step: fixtureStep } });
     expect(currentSentence(wrapper)).toBe('I am sam.');
@@ -43,11 +51,13 @@ describe('ConnectedTextStep', () => {
     const wrapper = mount(ConnectedTextStep, { props: { step: fixtureStep } });
 
     await wrapper.find('button[aria-label="My turn to read"]').trigger('click');
+    await vi.advanceTimersByTimeAsync(180);
     await flushPromises();
     await wrapper.find('button[aria-label="Next"]').trigger('click');
     expect(currentSentence(wrapper)).toBe('sam sat.');
 
     await wrapper.find('button[aria-label="My turn to read"]').trigger('click');
+    await vi.advanceTimersByTimeAsync(180);
     await flushPromises();
     await wrapper.find('button[aria-label="Done"]').trigger('click');
     expect(wrapper.emitted('step-complete')).toBeTruthy();
