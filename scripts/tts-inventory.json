@@ -1,15 +1,47 @@
 {
-  "generatedAt": "2026-04-17T00:51:47.845Z",
+  "generatedAt": "2026-04-17T21:57:21.744Z",
   "scope": {
     "lessonIds": [
-      "001"
+      "001",
+      "002"
     ],
-    "lessonsScanned": 1
+    "lessonsScanned": 2
   },
-  "entryCount": 84,
-  "totalCharacters": 4459,
-  "skippedIpa": [],
+  "entryCount": 138,
+  "totalCharacters": 6003,
+  "skippedIpa": [
+    {
+      "text": "A says /ă/, like the start of apple.",
+      "source": "lesson-001 step5.introductionScript"
+    },
+    {
+      "text": "Open your mouth wide. Voice on. /ăăă/.",
+      "source": "lesson-001 step5.introductionScript"
+    },
+    {
+      "text": "Your turn. Say /ă/.",
+      "source": "lesson-001 step5.introductionScript"
+    }
+  ],
   "entries": [
+    {
+      "text": "A says, like the start of apple.",
+      "sources": [
+        "lesson-001 step5.introductionScript (IPA-stripped)"
+      ]
+    },
+    {
+      "text": "apple",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "as",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
     {
       "text": "at",
       "sources": [
@@ -29,6 +61,12 @@
       ]
     },
     {
+      "text": "Blend sounds.",
+      "sources": [
+        "LessonPlayer.vue (step4 transition)"
+      ]
+    },
+    {
       "text": "Build the word! Tap the hear button to listen.",
       "sources": [
         "WordBuilder.vue:140"
@@ -38,6 +76,18 @@
       "text": "Can you read this word?",
       "sources": [
         "WordReadingStep.vue:57"
+      ]
+    },
+    {
+      "text": "Can you say A?",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "Can you say M?",
+      "sources": [
+        "teachPhoneme (grapheme)"
       ]
     },
     {
@@ -89,6 +139,12 @@
       ]
     },
     {
+      "text": "Fox's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "sources": [
+        "CampgroundMap.vue (speakMapIntro Fox)"
+      ]
+    },
+    {
       "text": "Great reading!",
       "sources": [
         "ConnectedTextStep.vue:84 / SentenceReader.vue:106"
@@ -110,6 +166,24 @@
       "text": "Great! You said it!",
       "sources": [
         "VisualDrillStep.vue / ConnectedTextStep.vue (success)"
+      ]
+    },
+    {
+      "text": "gum",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "Hear sounds.",
+      "sources": [
+        "LessonPlayer.vue (step1 transition)"
+      ]
+    },
+    {
+      "text": "him",
+      "sources": [
+        "word-list (bare)"
       ]
     },
     {
@@ -137,6 +211,18 @@
       ]
     },
     {
+      "text": "It was the letter A.",
+      "sources": [
+        "auditory/visual drill wrong"
+      ]
+    },
+    {
+      "text": "It was the letter M.",
+      "sources": [
+        "auditory/visual drill wrong"
+      ]
+    },
+    {
       "text": "Kangaroo and the spark trail. Kangaroo spotted bouncing ember dots. Each sound you say launches the next leap toward the story campfire!",
       "sources": [
         "adventureIntro.Kangaroo"
@@ -158,6 +244,18 @@
       "text": "Kangaroo's reading adventure. Kangaroo needs your sounds to light the campfire path. Tap a glowing trail and start the fun! Today's mission: light one new reading stop.",
       "sources": [
         "campgroundMap.Kangaroo"
+      ]
+    },
+    {
+      "text": "Kangaroo's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "sources": [
+        "CampgroundMap.vue (speakMapIntro Kangaroo)"
+      ]
+    },
+    {
+      "text": "Learn the letter.",
+      "sources": [
+        "LessonPlayer.vue (step5 transition)"
       ]
     },
     {
@@ -197,6 +295,48 @@
       ]
     },
     {
+      "text": "Lesson 2. m Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.Complete!"
+      ]
+    },
+    {
+      "text": "Lesson 2. m Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.Locked"
+      ]
+    },
+    {
+      "text": "Lesson 2. m Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.Practicing"
+      ]
+    },
+    {
+      "text": "Lesson 2. m Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.Ready to Learn"
+      ]
+    },
+    {
+      "text": "Lesson 2. m Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.Story Time!"
+      ]
+    },
+    {
+      "text": "Lesson 2. m Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.2.noStatus"
+      ]
+    },
+    {
+      "text": "Let's put sounds together to make a word.",
+      "sources": [
+        "PhonemicAwarenessStep.vue (blend mount)"
+      ]
+    },
+    {
       "text": "Let's sound it out together.",
       "sources": [
         "WordReadingStep.vue:72"
@@ -227,9 +367,9 @@
       ]
     },
     {
-      "text": "Listen and blend.",
+      "text": "Lion's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
       "sources": [
-        "PhonemicAwarenessStep.vue (blend mount)"
+        "CampgroundMap.vue (speakMapIntro Lion)"
       ]
     },
     {
@@ -263,7 +403,37 @@
       ]
     },
     {
+      "text": "m",
+      "sources": [
+        "lesson-002 step5.introductionScript"
+      ]
+    },
+    {
+      "text": "mad",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
       "text": "map",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "mat",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "Match the sound.",
+      "sources": [
+        "LessonPlayer.vue (step3 transition)"
+      ]
+    },
+    {
+      "text": "mop",
       "sources": [
         "word-list (bare)"
       ]
@@ -284,6 +454,18 @@
       "text": "Now blend them together.",
       "sources": [
         "BlendingStep.vue:146"
+      ]
+    },
+    {
+      "text": "Now you try.",
+      "sources": [
+        "NewConceptStep.vue (intro handoff to mic)"
+      ]
+    },
+    {
+      "text": "Open your mouth wide. Voice on..",
+      "sources": [
+        "lesson-001 step5.introductionScript (IPA-stripped)"
       ]
     },
     {
@@ -311,6 +493,18 @@
       ]
     },
     {
+      "text": "Panda's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "sources": [
+        "CampgroundMap.vue (speakMapIntro Panda)"
+      ]
+    },
+    {
+      "text": "Read sentences.",
+      "sources": [
+        "LessonPlayer.vue (step8 transition)"
+      ]
+    },
+    {
       "text": "Read the sentence. Tap each word to hear it, then read the whole sentence out loud.",
       "sources": [
         "SentenceReader.vue:118"
@@ -332,6 +526,12 @@
       "text": "Say the sound when you are ready.",
       "sources": [
         "NewConceptStep.vue (mic prompt)"
+      ]
+    },
+    {
+      "text": "See the letter.",
+      "sources": [
+        "LessonPlayer.vue (step2 transition)"
       ]
     },
     {
@@ -401,9 +601,15 @@
       ]
     },
     {
-      "text": "The short vowel A spells the short A sound, like the A at the beginning of the word apple.",
+      "text": "The word is apple.",
       "sources": [
-        "lesson-001 step5.introductionScript"
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is as.",
+      "sources": [
+        "word-list (The word is X.)"
       ]
     },
     {
@@ -419,7 +625,37 @@
       ]
     },
     {
+      "text": "The word is gum.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is him.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is mad.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
       "text": "The word is map.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is mat.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is mop.",
       "sources": [
         "word-list (The word is X.)"
       ]
@@ -437,9 +673,88 @@
       ]
     },
     {
-      "text": "This is the letter A. A is a vowel. The long vowel sound is the same as its name, A. Today we are going to read words with the short vowel sound.",
+      "text": "This is the letter A.",
       "sources": [
-        "lesson-001 step5.introductionScript"
+        "lesson-001 step5.introductionScript",
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "This is the letter M.",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "This makes the word, apple.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, as.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, at.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, cat.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, gum.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, him.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, mad.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, map.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, mat.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, mop.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "This makes the word, the.",
+      "sources": [
+        "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "Tricky words.",
+      "sources": [
+        "LessonPlayer.vue (step7 transition)"
       ]
     },
     {
@@ -473,6 +788,12 @@
       ]
     },
     {
+      "text": "Word work.",
+      "sources": [
+        "LessonPlayer.vue (step6 transition)"
+      ]
+    },
+    {
       "text": "Yes!",
       "sources": [
         "AuditoryDrillStep.vue:125"
@@ -497,6 +818,12 @@
       ]
     },
     {
+      "text": "You finished the lesson! Great learning.",
+      "sources": [
+        "LessonPlayer.vue (lesson complete)"
+      ]
+    },
+    {
       "text": "Your guardian and the spark trail. Your guardian is ready. Each sound you say lights the path to tonight's story campfire!",
       "sources": [
         "adventureIntro.fallback"
@@ -509,9 +836,21 @@
       ]
     },
     {
+      "text": "Your Guardian's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "sources": [
+        "CampgroundMap.vue (speakMapIntro fallback)"
+      ]
+    },
+    {
       "text": "Your turn. Say the whole word.",
       "sources": [
         "BlendingGame.vue:92"
+      ]
+    },
+    {
+      "text": "Your turn. Say.",
+      "sources": [
+        "lesson-001 step5.introductionScript (IPA-stripped)"
       ]
     }
   ]

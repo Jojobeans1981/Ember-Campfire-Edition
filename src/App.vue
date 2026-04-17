@@ -129,10 +129,7 @@
         </div>
 
         <CampgroundMap v-else-if="store.currentPage === 'campground'" key="campground" />
-        <UfliLessonHub v-else-if="store.currentPage === 'unit-hub'" key="unit-hub" />
         <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeLessonId" @complete="onLessonComplete" />
-        <ActivityPlayer v-else-if="store.currentPage === 'activity'" key="activity" :lessonId="store.activeLessonId" :activityType="store.activeActivity" @complete="onActivityComplete" />
-        <StoryReader v-else-if="store.currentPage === 'story'" key="story" :unitId="store.activeLessonId" @complete="onStoryComplete" />
         <Dashboard v-else-if="store.currentPage === 'dashboard'" key="dashboard" />
 
         <div v-else key="page-fallback" class="selection">
@@ -234,24 +231,15 @@ import { useUfliProgression } from './composables/useUfliProgression.js';
 import { stopAllAudio, preloadEmberVoice } from './composables/useEmber.js';
 import { useEmber } from './composables/useEmber.js';
 import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
-import { celebrateComplete, celebrateFireLit, celebrateStory, celebrateUnitComplete } from './composables/useCelebration.js';
+import { celebrateComplete } from './composables/useCelebration.js';
 import CampgroundMap from './components/CampgroundMap.vue';
-import UfliLessonHub from './components/UfliLessonHub.vue';
 import LessonPlayer from './components/LessonPlayer.vue';
-import ActivityPlayer from './components/ActivityPlayer.vue';
-import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
 import PlayfulBackdrop from './components/PlayfulBackdrop.vue';
 
 const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
 const { submitOperation } = useProfileProgress();
-const {
-  completeUfliLesson,
-  completeUfliActivity,
-  completeUfliConnectedText,
-  getUfliLessonStatus,
-  isUfliConnectedTextUnlocked,
-} = useUfliProgression();
+const { completeUfliLesson } = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
 const ember = useEmber();
 
@@ -323,10 +311,6 @@ const syncBannerText = computed(() => {
 
   return 'Progress is queued locally.';
 });
-
-function isConnectedTextUnlocked(lessonId) {
-  return isUfliConnectedTextUnlocked(lessonId);
-}
 
 const xpPop = ref(false);
 const showCelebration = ref(false);
@@ -508,14 +492,9 @@ watch(() => store.xp, (nextXp, prevXp) => {
 });
 
 watch(() => store.currentPage, (nextPage, prevPage) => {
-  const startsActivity = prevPage === 'unit-hub' && (
-    nextPage === 'lesson' || nextPage === 'activity' || nextPage === 'story'
-  );
-  const returnsFromActivity = nextPage === 'unit-hub' && (
-    prevPage === 'lesson' || prevPage === 'activity' || prevPage === 'story'
-  );
+  const returnsFromLesson = nextPage === 'campground' && prevPage === 'lesson';
   if (showLaunchSplash.value || showAdventureIntro.value) return;
-  if (startsActivity || returnsFromActivity) {
+  if (returnsFromLesson) {
     void maybeSpeakHypeLine();
   }
 
@@ -694,7 +673,7 @@ const PAGE_PERSIST_KEY = 'ember-current-page';
 // pages depend on activeLessonId and activeActivity which aren't persisted
 // in the snapshot yet, so they're excluded to avoid restoring into a
 // broken state.
-const RESTORABLE_PAGES = new Set(['selection', 'campground', 'unit-hub', 'dashboard']);
+const RESTORABLE_PAGES = new Set(['selection', 'campground', 'dashboard']);
 
 function loadPersistedPage() {
   try {
@@ -847,7 +826,6 @@ onErrorCaptured((error, instance, info) => {
   if (!store.activeLessonId) {
     store.activeLessonId = '001';
   }
-  // Fallback to map first. Unit hub should only be entered from map stop select.
   store.currentPage = store.selectedFriend ? 'campground' : 'selection';
   return false;
 });
@@ -911,9 +889,7 @@ function beginAdventure() {
 function goBack() {
   killAudio();
   const page = store.currentPage;
-  if (page === 'lesson' || page === 'activity' || page === 'story') {
-    store.currentPage = 'unit-hub';
-  } else if (page === 'unit-hub' || page === 'dashboard') {
+  if (page === 'lesson' || page === 'dashboard') {
     store.currentPage = 'campground';
   } else {
     store.currentPage = 'selection';
@@ -927,63 +903,9 @@ async function onLessonComplete() {
   try {
     const syncPromise = completeUfliLesson(store.activeLessonId);
     celebrateComplete();
-    await showCelebrationScreen('ðŸ“–', 'Lesson Complete!', 'You learned new sounds!', 100);
     await showCelebrationScreen('📖', 'Lesson Complete!', 'You learned new sounds!', 100);
     await syncPromise.catch(() => null);
-    await showStoryBeatCard('Lesson Session');
-    store.currentPage = 'unit-hub';
-  } finally {
-    completionFlowBusy = false;
-  }
-}
-
-async function onActivityComplete() {
-  if (completionFlowBusy) return;
-  completionFlowBusy = true;
-  killAudio();
-  try {
-    const wasLocked = !isConnectedTextUnlocked(store.activeLessonId);
-    const syncPromise = completeUfliActivity(store.activeLessonId, store.activeActivity);
-
-    const nowUnlocked = isConnectedTextUnlocked(store.activeLessonId);
-
-    if (wasLocked && nowUnlocked) {
-      celebrateFireLit();
-      await showCelebrationScreen('ðŸ”¥', 'The Fire is Lit!', 'You completed all the games! Time for a campfire story!', 50);
-      await showStoryBeatCard('Game Session');
-    } else {
-      celebrateComplete();
-      await showCelebrationScreen('✨', 'Activity Complete!', 'You earned a spark!', 50);
-      await showStoryBeatCard('Game Session');
-    }
-
-    await syncPromise.catch(() => null);
-    store.currentPage = 'unit-hub';
-  } finally {
-    completionFlowBusy = false;
-  }
-}
-
-async function onStoryComplete() {
-  if (completionFlowBusy) return;
-  completionFlowBusy = true;
-  killAudio();
-  try {
-    const prevStatus = getUfliLessonStatus(store.activeLessonId);
-    const syncPromise = completeUfliConnectedText(store.activeLessonId);
-
-    if (prevStatus !== 'complete') {
-      celebrateUnitComplete();
-      await showCelebrationScreen('ðŸ•ï¸', 'Lesson Mastered!', 'You finished this lesson! A new one awaits!', 75);
-      await showStoryBeatCard('Story Session');
-    } else {
-      celebrateStory();
-      await showCelebrationScreen('ðŸ“•', 'Story Finished!', 'Great reading!', 0);
-      await showStoryBeatCard('Story Session');
-    }
-
-    await syncPromise.catch(() => null);
-    store.currentPage = 'unit-hub';
+    store.currentPage = 'campground';
   } finally {
     completionFlowBusy = false;
   }

@@ -53,8 +53,9 @@ const emphasisClass = computed(() => `emphasis-${props.emphasis}`);
 }
 
 .emphasis-tiles .focus-token {
-  font-size: clamp(72px, 14vw, 140px);
-  min-width: clamp(90px, 16vw, 160px);
+  font-size: clamp(60px, 10vw, 96px);
+  min-width: clamp(72px, 12vw, 112px);
+  padding: 0.15em 0.35em;
 }
 
 .emphasis-word .focus-token {

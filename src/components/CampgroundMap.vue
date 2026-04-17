@@ -255,7 +255,7 @@ function triggerZoneReveal(zoneId) {
 
 function selectLesson(lessonId) {
   store.activeLessonId = lessonId;
-  store.currentPage = 'unit-hub';
+  store.currentPage = 'lesson';
 }
 </script>
 

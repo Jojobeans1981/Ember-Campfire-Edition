@@ -1,12 +1,17 @@
 import { phonemeToAudioKey } from './ttsSegments.js';
 
 const IPA_DISPLAY = {
+  // Short vowels — breve notation (lesson 1) and standard IPA (lessons 2–10)
   'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
+  'æ': 'a', 'ɛ': 'e', 'ɪ': 'i', 'ɒ': 'o', 'ʌ': 'u',
+  // Long vowels
   'ā': 'a', 'ē': 'e', 'ī': 'i', 'ō': 'o', 'ū': 'u',
+  'eɪ': 'a', 'aɪ': 'i', 'oʊ': 'o', 'aʊ': 'ou', 'ɔɪ': 'oi',
+  // Digraphs
   'θ': 'th', 'ð': 'th', 'ʃ': 'sh', 'ʒ': 'zh', 'ŋ': 'ng',
   'tʃ': 'ch', 'dʒ': 'j',
+  // R-controlled / schwa
   'ə': 'e', 'ɚ': 'er',
-  'eɪ': 'a', 'aɪ': 'i', 'oʊ': 'o', 'aʊ': 'ou', 'ɔɪ': 'oi',
   'ɑː': 'ar', 'ɔː': 'aw', 'ɝ': 'er',
 };
 

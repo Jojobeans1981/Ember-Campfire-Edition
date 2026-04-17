@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-17T01:05:39.574Z",
+  "generatedAt": "2026-04-17T21:57:24.452Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -359,6 +359,226 @@
     "3bc1c9464d79": {
       "text": "Try again. Tap the microphone and say the sound.",
       "file": "/audio/tts/3bc1c9464d79.mp3"
+    },
+    "1221798028ee": {
+      "text": "Blend sounds.",
+      "file": "/audio/tts/1221798028ee.mp3"
+    },
+    "18ab6d3ad4e4": {
+      "text": "Hear sounds.",
+      "file": "/audio/tts/18ab6d3ad4e4.mp3"
+    },
+    "d68c4206ce4b": {
+      "text": "It was the letter A.",
+      "file": "/audio/tts/d68c4206ce4b.mp3"
+    },
+    "b783c71e47f7": {
+      "text": "Learn the letter.",
+      "file": "/audio/tts/b783c71e47f7.mp3"
+    },
+    "8bbe52e6947d": {
+      "text": "Match the sound.",
+      "file": "/audio/tts/8bbe52e6947d.mp3"
+    },
+    "6a1ea0babffc": {
+      "text": "Read sentences.",
+      "file": "/audio/tts/6a1ea0babffc.mp3"
+    },
+    "632f00389b56": {
+      "text": "See the letter.",
+      "file": "/audio/tts/632f00389b56.mp3"
+    },
+    "1f2285f5d635": {
+      "text": "Tricky words.",
+      "file": "/audio/tts/1f2285f5d635.mp3"
+    },
+    "759361070d8c": {
+      "text": "Word work.",
+      "file": "/audio/tts/759361070d8c.mp3"
+    },
+    "3ac62e1f2bfb": {
+      "text": "A says, like the start of apple.",
+      "file": "/audio/tts/3ac62e1f2bfb.mp3"
+    },
+    "d0be2dc421be": {
+      "text": "apple",
+      "file": "/audio/tts/d0be2dc421be.mp3"
+    },
+    "df211ccdd94a": {
+      "text": "as",
+      "file": "/audio/tts/df211ccdd94a.mp3"
+    },
+    "ccb1c93333e3": {
+      "text": "Open your mouth wide. Voice on..",
+      "file": "/audio/tts/ccb1c93333e3.mp3"
+    },
+    "d1bc550cd455": {
+      "text": "The word is apple.",
+      "file": "/audio/tts/d1bc550cd455.mp3"
+    },
+    "a127196deeb8": {
+      "text": "The word is as.",
+      "file": "/audio/tts/a127196deeb8.mp3"
+    },
+    "435ae9175abe": {
+      "text": "Your turn. Say.",
+      "file": "/audio/tts/435ae9175abe.mp3"
+    },
+    "38b42ce0c927": {
+      "text": "Fox's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "file": "/audio/tts/38b42ce0c927.mp3"
+    },
+    "8a69e9307c98": {
+      "text": "Kangaroo's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "file": "/audio/tts/8a69e9307c98.mp3"
+    },
+    "feecceba1aa2": {
+      "text": "Lion's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "file": "/audio/tts/feecceba1aa2.mp3"
+    },
+    "5e7bbca66962": {
+      "text": "Panda's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "file": "/audio/tts/5e7bbca66962.mp3"
+    },
+    "d418595035ad": {
+      "text": "You finished the lesson! Great learning.",
+      "file": "/audio/tts/d418595035ad.mp3"
+    },
+    "2dab8df59206": {
+      "text": "Your Guardian's trail map is ready. Follow the campground trail to the campfire by lighting each reading stop.",
+      "file": "/audio/tts/2dab8df59206.mp3"
+    },
+    "1cf355da70a6": {
+      "text": "Now you try.",
+      "file": "/audio/tts/1cf355da70a6.mp3"
+    },
+    "511465a2b4a4": {
+      "text": "Let's put sounds together to make a word.",
+      "file": "/audio/tts/511465a2b4a4.mp3"
+    },
+    "d4c42bf76e5e": {
+      "text": "This makes the word, apple.",
+      "file": "/audio/tts/d4c42bf76e5e.mp3"
+    },
+    "bcc88482cb4a": {
+      "text": "This makes the word, as.",
+      "file": "/audio/tts/bcc88482cb4a.mp3"
+    },
+    "20b0e0c0a84c": {
+      "text": "This makes the word, at.",
+      "file": "/audio/tts/20b0e0c0a84c.mp3"
+    },
+    "fccc6dbc23e3": {
+      "text": "This makes the word, cat.",
+      "file": "/audio/tts/fccc6dbc23e3.mp3"
+    },
+    "5c948cbdcd53": {
+      "text": "This makes the word, map.",
+      "file": "/audio/tts/5c948cbdcd53.mp3"
+    },
+    "db4517266f26": {
+      "text": "gum",
+      "file": "/audio/tts/db4517266f26.mp3"
+    },
+    "330317bbc57f": {
+      "text": "him",
+      "file": "/audio/tts/330317bbc57f.mp3"
+    },
+    "cc8fe049388d": {
+      "text": "Lesson 2. m Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/cc8fe049388d.mp3"
+    },
+    "0cfb44249423": {
+      "text": "Lesson 2. m Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/0cfb44249423.mp3"
+    },
+    "87e1fd15a0dd": {
+      "text": "Lesson 2. m Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/87e1fd15a0dd.mp3"
+    },
+    "44fbcea27864": {
+      "text": "Lesson 2. m Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/44fbcea27864.mp3"
+    },
+    "3d4af9f71556": {
+      "text": "Lesson 2. m Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/3d4af9f71556.mp3"
+    },
+    "36bfb754c925": {
+      "text": "Lesson 2. m Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/36bfb754c925.mp3"
+    },
+    "6b0d31c0d563": {
+      "text": "m",
+      "file": "/audio/tts/6b0d31c0d563.mp3"
+    },
+    "1b3cccda27f8": {
+      "text": "mad",
+      "file": "/audio/tts/1b3cccda27f8.mp3"
+    },
+    "cc7c5be316e4": {
+      "text": "mat",
+      "file": "/audio/tts/cc7c5be316e4.mp3"
+    },
+    "e428b54c599d": {
+      "text": "mop",
+      "file": "/audio/tts/e428b54c599d.mp3"
+    },
+    "b4deccd1a31b": {
+      "text": "The word is gum.",
+      "file": "/audio/tts/b4deccd1a31b.mp3"
+    },
+    "1e00600942f4": {
+      "text": "The word is him.",
+      "file": "/audio/tts/1e00600942f4.mp3"
+    },
+    "1aef3218e735": {
+      "text": "The word is mad.",
+      "file": "/audio/tts/1aef3218e735.mp3"
+    },
+    "ddd5fca5fc97": {
+      "text": "The word is mat.",
+      "file": "/audio/tts/ddd5fca5fc97.mp3"
+    },
+    "e618f1262a92": {
+      "text": "The word is mop.",
+      "file": "/audio/tts/e618f1262a92.mp3"
+    },
+    "1e392e7844be": {
+      "text": "This makes the word, gum.",
+      "file": "/audio/tts/1e392e7844be.mp3"
+    },
+    "20bb843b1d13": {
+      "text": "This makes the word, him.",
+      "file": "/audio/tts/20bb843b1d13.mp3"
+    },
+    "71e677305b1b": {
+      "text": "This makes the word, mad.",
+      "file": "/audio/tts/71e677305b1b.mp3"
+    },
+    "bed23b2765a3": {
+      "text": "This makes the word, mat.",
+      "file": "/audio/tts/bed23b2765a3.mp3"
+    },
+    "069105a6f4a7": {
+      "text": "This makes the word, mop.",
+      "file": "/audio/tts/069105a6f4a7.mp3"
+    },
+    "6a4221795720": {
+      "text": "This makes the word, the.",
+      "file": "/audio/tts/6a4221795720.mp3"
+    },
+    "b58485cc2604": {
+      "text": "Can you say M?",
+      "file": "/audio/tts/b58485cc2604.mp3"
+    },
+    "2e3ad4ff2513": {
+      "text": "It was the letter M.",
+      "file": "/audio/tts/2e3ad4ff2513.mp3"
+    },
+    "1e4acadbc61f": {
+      "text": "This is the letter M.",
+      "file": "/audio/tts/1e4acadbc61f.mp3"
     }
   }
 }

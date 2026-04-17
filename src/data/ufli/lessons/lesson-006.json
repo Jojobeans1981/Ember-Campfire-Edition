@@ -2,99 +2,300 @@
   "lessonNumber": 6,
   "title": "p /p/",
   "grapheme": "p",
-  "phoneme": "/p/",
+  "phoneme": "p",
   "step1": {
     "blend": [
-      { "phonemes": ["/p/", "/ă/", "/t/"], "word": "pat" },
-      { "phonemes": ["/m/", "/ă/", "/p/"], "word": "map" },
-      { "phonemes": ["/s/", "/ă/", "/p/"], "word": "sap" }
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "p"
+        ],
+        "word": "map"
+      },
+      {
+        "phonemes": [
+          "s",
+          "æ",
+          "p"
+        ],
+        "word": "sap"
+      },
+      {
+        "phonemes": [
+          "p",
+          "æ",
+          "t"
+        ],
+        "word": "pat"
+      }
     ],
     "segment": [
-      { "word": "pat", "phonemes": ["/p/", "/ă/", "/t/"] },
-      { "word": "tap", "phonemes": ["/t/", "/ă/", "/p/"] },
-      { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] }
+      {
+        "word": "tap",
+        "phonemes": [
+          "t",
+          "æ",
+          "p"
+        ]
+      },
+      {
+        "word": "pat",
+        "phonemes": [
+          "p",
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "sap",
+        "phonemes": [
+          "s",
+          "æ",
+          "p"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "p", "phonemes": ["/p/"] },
-      { "grapheme": "t", "phonemes": ["/t/"] },
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "t",
+        "phonemes": [
+          "t"
+        ]
+      },
+      {
+        "grapheme": "s",
+        "phonemes": [
+          "s"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/p/", "graphemes": ["p"] },
-      { "phoneme": "/t/", "graphemes": ["t"] },
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "t",
+        "graphemes": [
+          "t"
+        ]
+      },
+      {
+        "phoneme": "s",
+        "graphemes": [
+          "s"
+        ]
+      },
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["at", "pat", "pap", "tap", "tat", "tam", "sam", "sap", "map", "mat"],
+    "wordChain": [
+      "at",
+      "sat",
+      "mat",
+      "tat",
+      "at"
+    ],
     "tiles": {
-      "initial": ["s", "m", "t", "p"],
-      "medial": ["a"],
-      "final": ["t", "s", "m", "p"]
+      "initial": [
+        "m",
+        "s",
+        "t"
+      ],
+      "medial": [
+        "a"
+      ],
+      "final": [
+        "t"
+      ]
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce the letter P. Lips press together, air builds up and pops out. Voice off. Like M but unvoiced and released.",
+    "instructionalNotes": "The phoneme /p/ is an unvoiced stop sound. When modeling, be careful not to add a schwa or short /ʌ/ at the end (i.e., /p/, not /puh/).",
     "introductionScript": [
-      { "line": "1", "text": "This is the letter P." },
-      { "line": "2", "text": "P says /p/, like in pop." },
-      { "line": "3", "text": "Press your lips, then pop them open. /p/ /p/ /p/." },
-      { "line": "4", "text": "Your turn. Say /p/." }
+      {
+        "line": "This is the letter P. P is a consonant.",
+        "text": "p"
+      },
+      {
+        "line": "P spells /p/ like in the beginning of the word pencil.",
+        "text": "p"
+      }
     ],
-    "articulatoryGesture": "Lips pressed together. Voice off. Air builds and releases in a quick puff.",
+    "articulatoryGesture": "To make the /p/ sound, put your lips together, and make your lips pop. Turn your voice off. It’s just a quiet pop of air. Can you feel the air with your hand? The /p/ sound is a stop sound that can’t be stretched out. Say /p/.",
     "graphemePlacements": [
-      { "grapheme": "p", "position": "initial", "examples": ["pat", "pap", "pin"] },
-      { "grapheme": "p", "position": "final", "examples": ["map", "tap", "sap"] }
+      {
+        "grapheme": "p",
+        "position": "initial",
+        "examples": [
+          "pot",
+          "pig"
+        ]
+      },
+      {
+        "grapheme": "p",
+        "position": "final",
+        "examples": [
+          "hop",
+          "nap"
+        ]
+      }
     ],
     "readWords": {
-      "iDo": ["pat", "map"],
-      "weDo": ["tap", "sap"],
-      "youDo": ["pat", "map", "tap"]
+      "iDo": [
+        "map"
+      ],
+      "weDo": [
+        "map",
+        "sap",
+        "pat",
+        "tap"
+      ],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["pat"],
-      "weDo": ["map"],
-      "youDo": ["tap", "sap"]
+      "iDo": [
+        "map"
+      ],
+      "weDo": [
+        "sap",
+        "pat"
+      ],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["at", "pat", "tap", "tam", "sam", "sam", "sap", "map", "mat"]
+    "wordChain": [
+      "sap",
+      "map",
+      "tap"
+    ],
+    "additionalChains": [
+      {
+        "label": "Onset-Rime Level: -ap",
+        "words": [
+          "sap",
+          "map",
+          "ap",
+          "tap"
+        ]
+      },
+      {
+        "label": "Phoneme Level",
+        "words": [
+          "tap",
+          "sap",
+          "map",
+          "mat",
+          "sat",
+          "at",
+          "pat"
+        ]
+      },
+      {
+        "label": "Phoneme Level: Intro Lesson",
+        "words": [
+          "sap",
+          "map",
+          "tap"
+        ]
+      }
+    ]
   },
   "step7": {
     "review": [
       {
         "word": "the",
         "breakdown": [
-          { "grapheme": "th", "phoneme": "/th/", "regular": false },
-          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "I",
+        "breakdown": [
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "and",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "æ",
+            "regular": true
+          },
+          {
+            "grapheme": "n",
+            "phoneme": "n",
+            "regular": false
+          },
+          {
+            "grapheme": "d",
+            "phoneme": "d",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": [
-      {
-        "word": "to",
-        "breakdown": [
-          { "grapheme": "t", "phoneme": "/t/", "regular": true },
-          { "grapheme": "o", "phoneme": "/oo/", "regular": false }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
-    "readSentences": ["pat sat on the mat.", "sam has a map."],
-    "spellSentences": ["pat sat.", "sam has a map."]
+    "readSentences": [
+      "I tap and pat.",
+      "Tap the map!"
+    ],
+    "spellSentences": [
+      "I tap.",
+      "Pat and I sat."
+    ]
   },
-  "wordList": ["pat", "tap", "map", "sap", "pap", "tam"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "the", "to", "a"],
-    "fry": ["I", "is", "the", "to", "a"]
-  }
+    "dolch": [],
+    "fry": []
+  },
+  "decodableTexts": [],
+  "wordList": [
+    "map",
+    "pat",
+    "sap",
+    "tap"
+  ]
 }

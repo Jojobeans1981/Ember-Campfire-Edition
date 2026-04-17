@@ -19,18 +19,14 @@ const fixtureStep = {
   ],
 };
 
-function tokens(wrapper) {
-  return wrapper.findComponent({ name: 'FocusStage' }).props('tokens');
-}
-
 describe('PhonemicAwarenessStep', () => {
-  it('mounts and renders blend phoneme tokens via FocusStage', () => {
+  it('renders a word box per letter in the blend word', () => {
     const wrapper = mount(PhonemicAwarenessStep, { props: { step: fixtureStep } });
     expect(wrapper.exists()).toBe(true);
-    const phonemeTokens = tokens(wrapper);
-    expect(phonemeTokens).toHaveLength(2);
-    expect(phonemeTokens.map((t) => t.text)).toEqual(['a', 'm']);
-    expect(phonemeTokens.every((t) => t.kind === 'phoneme')).toBe(true);
+    const boxes = wrapper.findAll('.word-box');
+    expect(boxes).toHaveLength(2); // "am" → two boxes
+    // FocusStage is only rendered during the segment phase.
+    expect(wrapper.findComponent({ name: 'FocusStage' }).exists()).toBe(false);
   });
 
   it('emits step-complete after working through blend and segment items', async () => {

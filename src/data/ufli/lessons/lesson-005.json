@@ -5,93 +5,241 @@
   "phoneme": "",
   "step1": {
     "blend": [
-      { "phonemes": ["/ă/", "/t/"], "word": "at" },
-      { "phonemes": ["/m/", "/ă/", "/t/"], "word": "mat" },
-      { "phonemes": ["/s/", "/ă/", "/t/"], "word": "sat" }
+      {
+        "phonemes": [
+          "æ",
+          "t"
+        ],
+        "word": "at"
+      },
+      {
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ],
+        "word": "mat"
+      },
+      {
+        "phonemes": [
+          "s",
+          "æ",
+          "p"
+        ],
+        "word": "sap"
+      }
     ],
     "segment": [
-      { "word": "at", "phonemes": ["/ă/", "/t/"] },
-      { "word": "sam", "phonemes": ["/s/", "/ă/", "/m/"] },
-      { "word": "mat", "phonemes": ["/m/", "/ă/", "/t/"] }
+      {
+        "word": "pat",
+        "phonemes": [
+          "p",
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "sat",
+        "phonemes": [
+          "s",
+          "æ",
+          "t"
+        ]
+      },
+      {
+        "word": "mat",
+        "phonemes": [
+          "m",
+          "æ",
+          "t"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "t", "phonemes": ["/t/"] },
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "t",
+        "phonemes": [
+          "t"
+        ]
+      },
+      {
+        "grapheme": "s",
+        "phonemes": [
+          "s"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/t/", "graphemes": ["t"] },
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "t",
+        "graphemes": [
+          "t"
+        ]
+      },
+      {
+        "phoneme": "s",
+        "graphemes": [
+          "s"
+        ]
+      },
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["at", "sat", "mat", "sam", "am"],
+    "wordChain": [
+      "at",
+      "mat",
+      "sat",
+      "at"
+    ],
     "tiles": {
-      "initial": ["s", "m", "t"],
-      "medial": ["a"],
-      "final": ["t", "s", "m"]
+      "initial": [
+        "m",
+        "s"
+      ],
+      "medial": [
+        "a"
+      ],
+      "final": [
+        "t"
+      ]
     }
   },
   "step5": {
-    "instructionalNotes": "Practice reading and spelling VC and CVC words using the four letters taught so far (a, m, s, t). No new grapheme — focus on blending and segmenting fluency.",
-    "introductionScript": [
-      { "line": "1", "text": "Today we practice the letters and sounds we already know." },
-      { "line": "2", "text": "We'll read and spell short words." },
-      { "line": "3", "text": "Sound out each letter, then blend them together." }
-    ],
-    "articulatoryGesture": "Review of all four phonemes: /ă/ /m/ /s/ /t/. Watch each mouth shape carefully.",
-    "graphemePlacements": [
-      { "grapheme": "a", "position": "medial", "examples": ["mat", "sat"] },
-      { "grapheme": "m", "position": "initial", "examples": ["mat"] },
-      { "grapheme": "s", "position": "initial", "examples": ["sat", "sam"] },
-      { "grapheme": "t", "position": "final", "examples": ["at", "sat", "mat"] }
-    ],
+    "instructionalNotes": "",
+    "introductionScript": [],
+    "articulatoryGesture": "",
+    "graphemePlacements": [],
     "readWords": {
-      "iDo": ["at", "sam"],
-      "weDo": ["mat", "sat"],
-      "youDo": ["at", "am", "as"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["at"],
-      "weDo": ["mat", "sam"],
-      "youDo": ["sat", "am"]
+      "iDo": [],
+      "weDo": [],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["at", "sat", "mat", "sam", "am", "as"]
+    "wordChain": [
+      "at",
+      "mat",
+      "sat",
+      "at"
+    ],
+    "additionalChains": [
+      {
+        "label": "Onset-Rime Level: -at",
+        "words": [
+          "at",
+          "mat",
+          "sat",
+          "at"
+        ]
+      }
+    ]
   },
   "step7": {
     "review": [
       {
-        "word": "I",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "I", "phoneme": "/ī/", "regular": false }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
         ]
       },
       {
-        "word": "the",
+        "word": "I",
         "breakdown": [
-          { "grapheme": "th", "phoneme": "/th/", "regular": false },
-          { "grapheme": "e", "phoneme": "/ə/", "regular": false }
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": []
+    "teach": [
+      {
+        "word": "and",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "æ",
+            "regular": true
+          },
+          {
+            "grapheme": "n",
+            "phoneme": "n",
+            "regular": false
+          },
+          {
+            "grapheme": "d",
+            "phoneme": "d",
+            "regular": false
+          }
+        ]
+      }
+    ]
   },
   "step8": {
-    "readSentences": ["sam sat at the mat.", "I am sam."],
-    "spellSentences": ["sam sat.", "I am at the mat."]
+    "readSentences": [
+      "I sat.",
+      "I sat at the mat."
+    ],
+    "spellSentences": [
+      "I sat.",
+      "The mat."
+    ]
   },
-  "wordList": ["at", "mat", "sat", "sam", "am", "as"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "the", "a"],
-    "fry": ["I", "is", "the", "a"]
-  }
+    "dolch": [
+      "and"
+    ],
+    "fry": [
+      "and"
+    ]
+  },
+  "decodableTexts": [],
+  "wordList": [
+    "at",
+    "mat",
+    "sat"
+  ]
 }

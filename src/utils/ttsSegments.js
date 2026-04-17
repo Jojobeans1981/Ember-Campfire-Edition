@@ -41,9 +41,14 @@ export function phonemeToAudioKey(phoneme) {
   if (!phoneme) return '';
   let p = String(phoneme).replace(/\//g, '').trim().toLowerCase();
   const map = {
+    // Short vowels — breve notation (lesson 1) and standard IPA (lessons 2–10)
     'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
+    'æ': 'a', 'ɛ': 'e', 'ɪ': 'i', 'ɒ': 'o', 'ʌ': 'u',
+    // Long vowels — macron notation
     'ā': 'long_a', 'ē': 'long_e', 'ī': 'long_i', 'ō': 'long_o', 'ū': 'long_u',
+    // Split-vowel (silent-e) notation
     'a_e': 'long_a', 'e_e': 'long_e', 'i_e': 'long_i', 'o_e': 'long_o', 'u_e': 'long_u',
+    // R-controlled / schwa / consonant IPA
     'ɹ': 'r', 'ŋ': 'ng', 'ə': 'u', 'ɔ': 'o',
   };
   if (map[p]) return map[p];

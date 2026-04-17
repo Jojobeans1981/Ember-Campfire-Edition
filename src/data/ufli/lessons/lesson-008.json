@@ -1,105 +1,387 @@
 {
   "lessonNumber": 8,
-  "title": "i /ĭ/",
+  "title": "i /ɪ/",
   "grapheme": "i",
-  "phoneme": "/ĭ/",
+  "phoneme": "ɪ",
   "step1": {
     "blend": [
-      { "phonemes": ["/ĭ/", "/t/"], "word": "it" },
-      { "phonemes": ["/s/", "/ĭ/", "/t/"], "word": "sit" },
-      { "phonemes": ["/p/", "/ĭ/", "/t/"], "word": "pit" }
+      {
+        "phonemes": [
+          "ɪ",
+          "t"
+        ],
+        "word": "it"
+      },
+      {
+        "phonemes": [
+          "s",
+          "ɪ",
+          "t"
+        ],
+        "word": "sit"
+      },
+      {
+        "phonemes": [
+          "f",
+          "ɪ",
+          "t"
+        ],
+        "word": "fit"
+      },
+      {
+        "phonemes": [
+          "s",
+          "ɪ",
+          "p"
+        ],
+        "word": "sip"
+      }
     ],
     "segment": [
-      { "word": "it", "phonemes": ["/ĭ/", "/t/"] },
-      { "word": "sit", "phonemes": ["/s/", "/ĭ/", "/t/"] },
-      { "word": "fit", "phonemes": ["/f/", "/ĭ/", "/t/"] }
+      {
+        "word": "if",
+        "phonemes": [
+          "ɪ",
+          "f"
+        ]
+      },
+      {
+        "word": "it",
+        "phonemes": [
+          "ɪ",
+          "t"
+        ]
+      },
+      {
+        "word": "pit",
+        "phonemes": [
+          "p",
+          "ɪ",
+          "t"
+        ]
+      },
+      {
+        "word": "tip",
+        "phonemes": [
+          "t",
+          "ɪ",
+          "p"
+        ]
+      }
     ]
   },
   "step2": {
     "items": [
-      { "grapheme": "i", "phonemes": ["/ĭ/"] },
-      { "grapheme": "f", "phonemes": ["/f/"] },
-      { "grapheme": "p", "phonemes": ["/p/"] },
-      { "grapheme": "t", "phonemes": ["/t/"] },
-      { "grapheme": "s", "phonemes": ["/s/"] },
-      { "grapheme": "m", "phonemes": ["/m/"] },
-      { "grapheme": "a", "phonemes": ["/ă/"] }
+      {
+        "grapheme": "f",
+        "phonemes": [
+          "f"
+        ]
+      },
+      {
+        "grapheme": "p",
+        "phonemes": [
+          "p"
+        ]
+      },
+      {
+        "grapheme": "t",
+        "phonemes": [
+          "t"
+        ]
+      },
+      {
+        "grapheme": "s",
+        "phonemes": [
+          "s"
+        ]
+      },
+      {
+        "grapheme": "m",
+        "phonemes": [
+          "m"
+        ]
+      },
+      {
+        "grapheme": "a",
+        "phonemes": [
+          "æ"
+        ]
+      }
     ]
   },
   "step3": {
     "items": [
-      { "phoneme": "/ĭ/", "graphemes": ["i"] },
-      { "phoneme": "/f/", "graphemes": ["f"] },
-      { "phoneme": "/p/", "graphemes": ["p"] },
-      { "phoneme": "/t/", "graphemes": ["t"] },
-      { "phoneme": "/s/", "graphemes": ["s"] },
-      { "phoneme": "/m/", "graphemes": ["m"] },
-      { "phoneme": "/ă/", "graphemes": ["a"] }
+      {
+        "phoneme": "f",
+        "graphemes": [
+          "f"
+        ]
+      },
+      {
+        "phoneme": "p",
+        "graphemes": [
+          "p"
+        ]
+      },
+      {
+        "phoneme": "t",
+        "graphemes": [
+          "t"
+        ]
+      },
+      {
+        "phoneme": "s",
+        "graphemes": [
+          "s"
+        ]
+      },
+      {
+        "phoneme": "m",
+        "graphemes": [
+          "m"
+        ]
+      },
+      {
+        "phoneme": "æ",
+        "graphemes": [
+          "a"
+        ]
+      }
     ]
   },
   "step4": {
-    "wordChain": ["it", "sit", "sip", "tip", "tap", "tat", "fat", "fit", "pit", "pat"],
+    "wordChain": [
+      "fat",
+      "sat",
+      "sap",
+      "tap",
+      "map",
+      "mat",
+      "pat",
+      "fat"
+    ],
     "tiles": {
-      "initial": ["s", "m", "t", "p", "f"],
-      "medial": ["a", "i"],
-      "final": ["t", "s", "m", "p", "f"]
+      "initial": [
+        "f",
+        "m",
+        "p",
+        "s",
+        "t"
+      ],
+      "medial": [
+        "a"
+      ],
+      "final": [
+        "p",
+        "t"
+      ]
     }
   },
   "step5": {
-    "instructionalNotes": "Introduce short I. Mouth slightly open, lips relaxed, tongue mid-high in front. Like the bell sound — /ĭ/ /ĭ/ /ĭ/.",
+    "instructionalNotes": "At this point, I is being introduced only as short /ɪ/. I can also represent other sounds, such as long /aɪ/ in I_E words (Lesson 55). The high frequency word ‘it’s’ is decodable at this point. The concept of a contraction should be addressed separately when appropriate.",
     "introductionScript": [
-      { "line": "1", "text": "This is the letter I." },
-      { "line": "2", "text": "I says /ĭ/, like in itch." },
-      { "line": "3", "text": "Lips slightly apart, voice on. /ĭ/ /ĭ/ /ĭ/." },
-      { "line": "4", "text": "Your turn. Say /ĭ/." }
+      {
+        "line": "This is the letter I. I is a vowel. The long vowel sound is the same as its name, I. Today we are going to read words with the short vowel sound.",
+        "text": "i"
+      },
+      {
+        "line": "The short vowel \"I\" spells /ɪ/ like in the beginning of the word insect.",
+        "text": "i"
+      }
     ],
-    "articulatoryGesture": "Mouth slightly open, lips relaxed, tongue forward and high. Voice on. Short, crisp.",
+    "articulatoryGesture": "To make the short I /ɪ/ sound, scrunch up your nose. Like the other vowels we have learned about, /ɪ/ is a continuous sound that can be stretched out. /ɪ/. You try /ɪ/.",
     "graphemePlacements": [
-      { "grapheme": "i", "position": "initial", "examples": ["it", "is", "if"] },
-      { "grapheme": "i", "position": "medial", "examples": ["sit", "pit", "fit"] }
+      {
+        "grapheme": "i",
+        "position": "medial",
+        "examples": [
+          "fit",
+          "dip"
+        ]
+      },
+      {
+        "grapheme": "i",
+        "position": "initial",
+        "examples": [
+          "in",
+          "if"
+        ]
+      }
     ],
     "readWords": {
-      "iDo": ["it", "sit"],
-      "weDo": ["fit", "pit"],
-      "youDo": ["it", "sip", "tip"]
+      "iDo": [
+        "it"
+      ],
+      "weDo": [
+        "if",
+        "sit",
+        "sip",
+        "fit",
+        "pit"
+      ],
+      "youDo": []
     },
     "spellWords": {
-      "iDo": ["it"],
-      "weDo": ["sit"],
-      "youDo": ["pit", "fit"]
+      "iDo": [
+        "sit"
+      ],
+      "weDo": [
+        "it",
+        "if",
+        "sip",
+        "tip"
+      ],
+      "youDo": []
     }
   },
   "step6": {
-    "wordChain": ["it", "sit", "sip", "tip", "tap", "fat", "fit", "pit", "pat", "mat"]
+    "wordChain": [
+      "fit",
+      "sit",
+      "sip",
+      "tip",
+      "Tim",
+      "pim",
+      "pit",
+      "it",
+      "if"
+    ],
+    "additionalChains": [
+      {
+        "label": "Onset-Rime Level: -it",
+        "words": [
+          "it",
+          "sit",
+          "fit",
+          "pit"
+        ]
+      },
+      {
+        "label": "Phoneme Level: Intro Lesson",
+        "words": [
+          "fit",
+          "sit",
+          "sip",
+          "tip",
+          "Tim",
+          "pim",
+          "pit",
+          "it",
+          "if"
+        ]
+      }
+    ]
   },
   "step7": {
     "review": [
       {
-        "word": "of",
+        "word": "the",
         "breakdown": [
-          { "grapheme": "o", "phoneme": "/ŭ/", "regular": false },
-          { "grapheme": "f", "phoneme": "/v/", "regular": false }
+          {
+            "grapheme": "th",
+            "phoneme": "ð",
+            "regular": false
+          },
+          {
+            "grapheme": "e",
+            "phoneme": "ə",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "I",
+        "breakdown": [
+          {
+            "grapheme": "I",
+            "phoneme": "aɪ",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "and",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "æ",
+            "regular": true
+          },
+          {
+            "grapheme": "n",
+            "phoneme": "n",
+            "regular": false
+          },
+          {
+            "grapheme": "d",
+            "phoneme": "d",
+            "regular": false
+          }
+        ]
+      },
+      {
+        "word": "a",
+        "breakdown": [
+          {
+            "grapheme": "a",
+            "phoneme": "ə",
+            "regular": false
+          }
         ]
       }
     ],
-    "teach": [
-      {
-        "word": "his",
-        "breakdown": [
-          { "grapheme": "h", "phoneme": "/h/", "regular": true },
-          { "grapheme": "i", "phoneme": "/ĭ/", "regular": true },
-          { "grapheme": "s", "phoneme": "/z/", "regular": false }
-        ]
-      }
-    ]
+    "teach": []
   },
   "step8": {
-    "readSentences": ["I sit.", "sam is at his pit."],
-    "spellSentences": ["I sit.", "it is fit."]
+    "readSentences": [
+      "I sat at the tip.",
+      "Pat, Tim, and I fit."
+    ],
+    "spellSentences": [
+      "I fit.",
+      "Tim and I sit."
+    ]
   },
-  "wordList": ["it", "sit", "sip", "tip", "fit", "pit", "fat", "pat", "tap", "map", "mat", "sam", "fap", "fas", "fam", "am", "as", "at", "sap"],
   "highFrequencyWords": {
-    "dolch": ["I", "am", "is", "his", "it", "the", "to", "of", "a"],
-    "fry": ["I", "is", "his", "it", "the", "to", "of", "a"]
-  }
+    "dolch": [
+      "if",
+      "it",
+      "its",
+      "sit"
+    ],
+    "fry": [
+      "if",
+      "it",
+      "its",
+      "it’s"
+    ]
+  },
+  "decodableTexts": [
+    {
+      "title": "I Sit, I Tap",
+      "text": "I sit. I tap. I sit and I tap. I tap and I sit. Pim and I sit. Pim and I tap.",
+      "sentences": [
+        "I sit.",
+        "I tap.",
+        "I sit and I tap.",
+        "I tap and I sit.",
+        "Pim and I sit.",
+        "Pim and I tap."
+      ],
+      "wordCount": 22,
+      "source": "UFLI Foundations Decodable"
+    }
+  ],
+  "wordList": [
+    "fit",
+    "if",
+    "it",
+    "its",
+    "it’s",
+    "pit",
+    "sip",
+    "sit",
+    "tip"
+  ]
 }
