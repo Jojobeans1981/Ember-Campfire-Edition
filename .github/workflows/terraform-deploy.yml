@@ -1,0 +1,178 @@
+name: Terraform Deploy
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform-deploy.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Create an apply run instead of a speculative plan'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+env:
+  TFC_ORGANIZATION: DNSG4
+  TFC_WORKSPACE: ember-infra
+
+jobs:
+  terraform-cloud-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package Terraform configuration
+        run: tar -C infra -czf infra.tar.gz .
+
+      - name: Create Terraform Cloud run
+        env:
+          TF_API_KEY: ${{ secrets.TF_API_KEY }}
+          EVENT_NAME: ${{ github.event_name }}
+          APPLY_INPUT: ${{ github.event.inputs.apply || 'false' }}
+          BACKEND_IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          short_sha="${BACKEND_IMAGE_TAG::7}"
+          speculative=true
+          auto_apply=false
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            speculative=false
+            auto_apply=true
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" = "true" ]; then
+            speculative=false
+            auto_apply=true
+          fi
+
+          workspace_response=$(curl -sS \
+            --header "Authorization: Bearer $TF_API_KEY" \
+            --header "Content-Type: application/vnd.api+json" \
+            "https://app.terraform.io/api/v2/organizations/$TFC_ORGANIZATION/workspaces/$TFC_WORKSPACE")
+
+          workspace_id=$(printf '%s' "$workspace_response" | jq -r '.data.id')
+          if [ -z "$workspace_id" ] || [ "$workspace_id" = "null" ]; then
+            echo "Unable to resolve Terraform Cloud workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE'." >&2
+            exit 1
+          fi
+
+          if [ "$speculative" = "false" ]; then
+            vars_response=$(curl -sS \
+              --header "Authorization: Bearer $TF_API_KEY" \
+              --header "Content-Type: application/vnd.api+json" \
+              "https://app.terraform.io/api/v2/workspaces/$workspace_id/vars")
+
+            backend_var_id=$(printf '%s' "$vars_response" | jq -r '.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform") | .id' | head -n 1)
+            backend_var_payload=$(jq -n \
+              --arg key "backend_image_tag" \
+              --arg value "$short_sha" \
+              '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+
+            if [ -n "$backend_var_id" ]; then
+              curl -sS \
+                --request PATCH \
+                --header "Authorization: Bearer $TF_API_KEY" \
+                --header "Content-Type: application/vnd.api+json" \
+                --data "$backend_var_payload" \
+                "https://app.terraform.io/api/v2/vars/$backend_var_id" >/dev/null
+            else
+              backend_var_payload=$(jq -n \
+                --arg key "backend_image_tag" \
+                --arg value "$short_sha" \
+                --arg workspace_id "$workspace_id" \
+                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false},relationships:{workspace:{data:{type:"workspaces",id:$workspace_id}}}}}')
+
+              curl -sS \
+                --request POST \
+                --header "Authorization: Bearer $TF_API_KEY" \
+                --header "Content-Type: application/vnd.api+json" \
+                --data "$backend_var_payload" \
+                "https://app.terraform.io/api/v2/vars" >/dev/null
+            fi
+          fi
+
+          configuration_payload=$(jq -n \
+            --arg speculative "$speculative" \
+            '{data:{type:"configuration-versions",attributes:{"auto-queue-runs":false}}}')
+
+          configuration_response=$(curl -sS \
+            --request POST \
+            --header "Authorization: Bearer $TF_API_KEY" \
+            --header "Content-Type: application/vnd.api+json" \
+            --data "$configuration_payload" \
+            "https://app.terraform.io/api/v2/workspaces/$workspace_id/configuration-versions")
+
+          upload_url=$(printf '%s' "$configuration_response" | jq -r '.data.attributes."upload-url"')
+          configuration_version_id=$(printf '%s' "$configuration_response" | jq -r '.data.id')
+
+          if [ -z "$upload_url" ] || [ "$upload_url" = "null" ]; then
+            echo "Terraform Cloud did not return an upload URL for the configuration version." >&2
+            exit 1
+          fi
+
+          curl -sS --request PUT --header "Content-Type: application/octet-stream" --data-binary @infra.tar.gz "$upload_url" >/dev/null
+
+          run_payload=$(jq -n \
+            --arg message "GitHub Actions run for $GITHUB_SHA" \
+            --arg workspace_id "$workspace_id" \
+            --arg configuration_version_id "$configuration_version_id" \
+            --argjson speculative "$speculative" \
+            --argjson auto_apply "$auto_apply" \
+            --arg image_tag "$short_sha" \
+            '{
+              data: {
+                type: "runs",
+                attributes: {
+                  message: $message,
+                  "is-destroy": false,
+                  auto_apply: $auto_apply,
+                  speculative: $speculative
+                },
+                relationships: {
+                  workspace: {
+                    data: {
+                      type: "workspaces",
+                      id: $workspace_id
+                    }
+                  },
+                  "configuration-version": {
+                    data: {
+                      type: "configuration-versions",
+                      id: $configuration_version_id
+                    }
+                  }
+                }
+              }
+            }')
+
+          run_response=$(curl -sS \
+            --request POST \
+            --header "Authorization: Bearer $TF_API_KEY" \
+            --header "Content-Type: application/vnd.api+json" \
+            --data "$run_payload" \
+            "https://app.terraform.io/api/v2/runs")
+
+          run_id=$(printf '%s' "$run_response" | jq -r '.data.id')
+          run_url=$(printf 'https://app.terraform.io/app/%s/workspaces/%s/runs/%s' "$TFC_ORGANIZATION" "$TFC_WORKSPACE" "$run_id")
+
+          if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+            echo "Failed to create Terraform Cloud run." >&2
+            echo "$run_response" >&2
+            exit 1
+          fi
+
+          echo "Queued Terraform Cloud run: $run_url" >> "$GITHUB_STEP_SUMMARY"

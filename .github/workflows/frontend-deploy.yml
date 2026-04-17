@@ -1,0 +1,79 @@
+name: Frontend Deploy
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/frontend-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-2
+  APP_DOMAIN: app.readwithember.com
+  APP_BUCKET: app.readwithember.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.GH_AWS_DEPLOYER_ROLE }}
+
+      - name: Verify frontend bucket exists
+        run: |
+          set -euo pipefail
+          if ! aws s3api head-bucket --bucket "$APP_BUCKET" >/dev/null 2>&1; then
+            echo "Expected frontend bucket '$APP_BUCKET' does not exist yet. Apply Terraform infrastructure first." >&2
+            exit 1
+          fi
+
+      - name: Resolve CloudFront distribution
+        id: distribution
+        run: |
+          set -euo pipefail
+          distribution_id=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Quantity > \
+            \\`0\\` && contains(Aliases.Items, '$APP_DOMAIN')].Id | [0]" --output text)
+          if [ "$distribution_id" = "None" ] || [ -z "$distribution_id" ]; then
+            echo "CloudFront distribution for '$APP_DOMAIN' does not exist yet. Apply Terraform infrastructure first." >&2
+            exit 1
+          fi
+          echo "distribution_id=$distribution_id" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: /api
+        run: npm run build
+
+      - name: Upload static assets
+        run: aws s3 sync dist/ "s3://$APP_BUCKET" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.distribution.outputs.distribution_id }}" \
+            --paths '/*'
