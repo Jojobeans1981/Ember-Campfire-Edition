@@ -1,0 +1,63 @@
+name: Backend Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: ember-backend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.GH_AWS_DEPLOYER_ROLE }}
+
+      - name: Verify ECR repository exists
+        run: |
+          set -euo pipefail
+          if ! aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1; then
+            echo "Expected ECR repository '$ECR_REPOSITORY' does not exist yet. Apply Terraform infrastructure first." >&2
+            exit 1
+          fi
+
+      - name: Resolve repository URI
+        id: repo
+        run: |
+          set -euo pipefail
+          repository_uri=$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].repositoryUri' --output text)
+          short_sha="${GITHUB_SHA::7}"
+          echo "repository_uri=$repository_uri" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$short_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          set -euo pipefail
+          image_uri="${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}"
+          docker build -t "$image_uri" -f backend/Dockerfile backend
+          docker push "$image_uri"
+
+      - name: Summarize image tag
+        run: |
+          echo "Pushed ${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"

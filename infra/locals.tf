@@ -1,0 +1,21 @@
+locals {
+  name_prefix             = var.project_name
+  app_bucket_name         = var.app_domain_name
+  backend_repo_name       = "${local.name_prefix}-backend"
+  backend_cluster_name    = "${local.name_prefix}-backend"
+  backend_service_name    = "${local.name_prefix}-backend"
+  backend_container_name  = "backend"
+  backend_port            = 3001
+  api_origin_header_name  = "x-ember-origin"
+  api_origin_header_value = "app-api"
+  database_subnet_ids     = length(try(data.tfe_outputs.baseinfra.values.data_subnet_ids, [])) > 0 ? data.tfe_outputs.baseinfra.values.data_subnet_ids : data.tfe_outputs.baseinfra.values.private_subnet_ids
+  common_tags = merge(
+    try(data.tfe_outputs.baseinfra.values.tags, {}),
+    {
+      Application = "Ember"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+      Project     = var.project_name
+    }
+  )
+}
