@@ -191,7 +191,7 @@ async function startMicPractice() {
   }
   micPhase.value = 'listening';
   await prepareMicTurn();
-  const result = await startListening(grapheme.value, 9000);
+  const result = await startListening(grapheme.value, 3500);
   if (cancelled) return;
   if (result?.matched) {
     micPhase.value = 'matched';

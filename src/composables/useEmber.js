@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { lookupTtsFile } from './useTts.js';
-import { phonemeToAudioKey as sharedPhonemeToAudioKey } from '../utils/ttsSegments.js';
+import { phonemeToAudioKey } from '../utils/ttsSegments.js';
 
 const isSpeaking = ref(false);
 const currentText = ref('');
@@ -146,11 +146,7 @@ export async function preloadEmberVoice() {
   return false;
 }
 
-// Re-export the shared mapper so call sites that previously imported
-// phonemeToAudioKey from useEmber.js keep working. The canonical
-// implementation lives in utils/ttsSegments.js and covers both the
-// breve notation used by lesson 1 and the bare IPA used by lessons 2–10.
-export const phonemeToAudioKey = sharedPhonemeToAudioKey;
+export { phonemeToAudioKey };
 
 export function useEmber() {
   function speak(text, options = {}) {
