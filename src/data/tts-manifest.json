@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-17T21:57:24.452Z",
+  "generatedAt": "2026-04-18T15:53:54.679Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -579,6 +579,22 @@
     "1e4acadbc61f": {
       "text": "This is the letter M.",
       "file": "/audio/tts/1e4acadbc61f.mp3"
+    },
+    "1e42159a368b": {
+      "text": "Now let's find that sound in real words.",
+      "file": "/audio/tts/1e42159a368b.mp3"
+    },
+    "d1337cb024cb": {
+      "text": "Tap any word to hear it again.",
+      "file": "/audio/tts/d1337cb024cb.mp3"
+    },
+    "b4c9d685b881": {
+      "text": "To make that sound, open your mouth wide and use your voice. You can stretch the sound out.",
+      "file": "/audio/tts/b4c9d685b881.mp3"
+    },
+    "7017b2aa4d79": {
+      "text": "To make that sound, press your lips together and hum. The air comes out through your nose.",
+      "file": "/audio/tts/7017b2aa4d79.mp3"
     }
   }
 }

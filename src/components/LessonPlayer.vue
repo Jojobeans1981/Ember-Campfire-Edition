@@ -3,20 +3,15 @@
     <div v-if="!lesson" class="loading">Loading lesson…</div>
 
     <template v-else>
-      <nav class="step-trail" aria-label="Lesson progress">
+      <nav class="step-trail" :aria-label="trailAriaLabel">
         <span
-          v-for="(key, i) in activeSteps"
-          :key="key"
-          class="step-cell"
-        >
-          <span
-            class="step-box"
-            :class="{ active: i === currentStepIndex, done: i < currentStepIndex }"
-            :aria-current="i === currentStepIndex ? 'step' : undefined"
-            :aria-label="stepAriaLabel(key, i)"
-          >{{ i + 1 }}</span>
-          <span v-if="i < activeSteps.length - 1" class="step-arrow" aria-hidden="true">→</span>
-        </span>
+          v-for="dot in progressDots"
+          :key="dot.key"
+          class="step-dot"
+          :class="{ active: dot.state === 'active', done: dot.state === 'done' }"
+          :aria-current="dot.state === 'active' ? 'step' : undefined"
+          :aria-label="dot.ariaLabel"
+        ></span>
       </nav>
 
       <div class="lesson-content">
@@ -27,8 +22,10 @@
           v-if="currentStepData"
           :step="currentStepData"
           :lesson-id="props.unitId"
+          :lesson-phoneme="lesson?.phoneme ?? ''"
           :key="currentStepKey"
           @step-complete="onStepComplete"
+          @phase-change="onPhaseChange"
         />
       </div>
     </template>
@@ -36,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, defineProps, defineEmits } from 'vue';
+import { ref, reactive, computed, onMounted, watch, defineProps, defineEmits } from 'vue';
 import { getUfliLesson } from '../data/ufli/ufliLessons.js';
 import { getRenderableUfliStepKeys } from '../data/ufli/lessonFlow.js';
 import { useEmber } from '../composables/useEmber.js';
@@ -83,6 +80,17 @@ const stepLabelByKey = {
 const lesson = ref(null);
 const currentStepIndex = ref(0);
 const isAdvancing = ref(false);
+// Per-step phase state, keyed by stepKey. Steps that don't emit
+// phase-change default to a single dot.
+const stepPhases = reactive({});
+
+function onPhaseChange(payload) {
+  const key = currentStepKey.value;
+  if (!key || !payload) return;
+  const phaseCount = Math.max(1, Number(payload.phaseCount) || 1);
+  const phaseIndex = Math.max(0, Math.min(phaseCount - 1, Number(payload.phaseIndex) || 0));
+  stepPhases[key] = { phaseCount, phaseIndex };
+}
 
 onMounted(async () => {
   lesson.value = await getUfliLesson(props.unitId);
@@ -101,10 +109,37 @@ const currentStepKey = computed(() => activeSteps.value[currentStepIndex.value] 
 const currentStepData = computed(() => (currentStepKey.value ? lesson.value?.[currentStepKey.value] : null));
 const currentStepComponent = computed(() => (currentStepKey.value ? stepComponentByKey[currentStepKey.value] : null));
 
-function stepAriaLabel(key, i) {
-  const label = stepLabelByKey[key] ?? `Step ${i + 1}`;
-  return `${label} Step ${i + 1} of ${activeSteps.value.length}.`;
-}
+const progressDots = computed(() => {
+  const steps = activeSteps.value;
+  const dots = [];
+  for (let i = 0; i < steps.length; i++) {
+    const key = steps[i];
+    const phase = stepPhases[key];
+    const count = phase?.phaseCount ?? 1;
+    const currentPhase = phase?.phaseIndex ?? 0;
+    const label = stepLabelByKey[key] ?? `Step ${i + 1}`;
+    for (let p = 0; p < count; p++) {
+      let state = 'upcoming';
+      if (i < currentStepIndex.value) state = 'done';
+      else if (i === currentStepIndex.value) {
+        if (p < currentPhase) state = 'done';
+        else if (p === currentPhase) state = 'active';
+      }
+      dots.push({
+        key: `${key}-${p}`,
+        state,
+        ariaLabel: count > 1 ? `${label} Part ${p + 1} of ${count}.` : `${label}`,
+      });
+    }
+  }
+  return dots;
+});
+
+const trailAriaLabel = computed(() => {
+  const total = progressDots.value.length;
+  const done = progressDots.value.filter((d) => d.state === 'done').length;
+  return `Lesson progress: ${done + 1} of ${total}.`;
+});
 
 // Announce each step with Jasmine as it becomes active. Fires on initial
 // lesson load and on each advance; the step component's own prompts queue
@@ -148,60 +183,34 @@ function onStepComplete() {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 4px;
-  padding: 10px 6px 4px;
+  gap: 10px;
+  padding: 12px 6px 6px;
   width: 100%;
 }
 
-.step-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.step-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(255, 209, 102, 0.25);
-  color: rgba(255, 244, 220, 0.6);
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 1.2rem;
-  line-height: 1;
+.step-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid rgba(255, 209, 102, 0.3);
   transition:
     background 220ms ease,
     border-color 220ms ease,
-    color 220ms ease,
     transform 220ms ease,
     box-shadow 220ms ease;
 }
 
-.step-box.done {
-  background: rgba(126, 232, 136, 0.28);
-  border-color: rgba(126, 232, 136, 0.8);
-  color: #e6fff0;
+.step-dot.done {
+  background: rgba(126, 232, 136, 0.85);
+  border-color: rgba(126, 232, 136, 0.95);
 }
 
-.step-box.active {
-  background: rgba(255, 209, 102, 0.22);
+.step-dot.active {
+  background: #ffd166;
   border-color: #ffd166;
-  color: #fff4dc;
-  transform: scale(1.15);
-  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.22), 0 0 18px rgba(255, 209, 102, 0.35);
-}
-
-.step-arrow {
-  color: rgba(255, 209, 102, 0.45);
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0 2px;
-  user-select: none;
+  transform: scale(1.35);
+  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.22), 0 0 14px rgba(255, 209, 102, 0.45);
 }
 
 .lesson-content {

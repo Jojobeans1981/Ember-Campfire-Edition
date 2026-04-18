@@ -113,7 +113,8 @@ const STATIC_UI_PROMPTS = [
   { text: 'Listening.', source: 'NewConceptStep.vue / ConnectedTextStep.vue (listening pulse)' },
   { text: 'Nice job! You said it.', source: 'NewConceptStep.vue (success)' },
   { text: 'Try again, then tap my turn.', source: 'NewConceptStep.vue (retry)' },
-  { text: 'Tap each word to read it.', source: 'NewConceptStep.vue (read phase)' },
+  { text: "Now let's find that sound in real words.", source: 'NewConceptStep.vue (read phase bridge)' },
+  { text: 'Tap any word to hear it again.', source: 'NewConceptStep.vue (review mode)' },
   { text: 'Tap each word to practice it.', source: 'NewConceptStep.vue (spell phase)' },
   { text: 'Listen closely to the sound, then try it too.', source: 'NewConceptStep.vue (script intro)' },
   { text: 'Tap my turn and say the sound.', source: 'NewConceptStep.vue (script prompt)' },
@@ -255,6 +256,15 @@ function collectLessonStrings(lessons) {
 
     for (const line of data.step5?.introductionScript || []) {
       ingestSpokenLine(line.text, `${tag} step5.introductionScript`, entries, skippedIpa);
+    }
+
+    // Articulation instruction spoken on sound-phase entry, prefixed with
+    // "To make that sound, " and lower-cased first letter — must match
+    // NewConceptStep.demoSoundAndPrompt exactly.
+    const articulation = String(data.step5?.articulatoryGesture || '').trim();
+    if (articulation) {
+      const prefixed = `To make that sound, ${articulation.charAt(0).toLowerCase()}${articulation.slice(1)}`;
+      ingestSpokenLine(prefixed, `${tag} step5.articulatoryGesture`, entries, skippedIpa);
     }
     for (const bucket of ['iDo', 'weDo', 'youDo']) {
       for (const w of data.step5?.readWords?.[bucket] || []) words.add(w);

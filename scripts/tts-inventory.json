@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-17T21:57:21.744Z",
+  "generatedAt": "2026-04-18T15:53:37.243Z",
   "scope": {
     "lessonIds": [
       "001",
@@ -7,8 +7,8 @@
     ],
     "lessonsScanned": 2
   },
-  "entryCount": 138,
-  "totalCharacters": 6003,
+  "entryCount": 141,
+  "totalCharacters": 6229,
   "skippedIpa": [
     {
       "text": "A says /ă/, like the start of apple.",
@@ -457,6 +457,12 @@
       ]
     },
     {
+      "text": "Now let's find that sound in real words.",
+      "sources": [
+        "NewConceptStep.vue (read phase bridge)"
+      ]
+    },
+    {
       "text": "Now you try.",
       "sources": [
         "NewConceptStep.vue (intro handoff to mic)"
@@ -535,6 +541,12 @@
       ]
     },
     {
+      "text": "Tap any word to hear it again.",
+      "sources": [
+        "NewConceptStep.vue (review mode)"
+      ]
+    },
+    {
       "text": "Tap each letter.",
       "sources": [
         "BlendingStep.vue:133"
@@ -550,12 +562,6 @@
       "text": "Tap each word to practice it.",
       "sources": [
         "NewConceptStep.vue (spell phase)"
-      ]
-    },
-    {
-      "text": "Tap each word to read it.",
-      "sources": [
-        "NewConceptStep.vue (read phase)"
       ]
     },
     {
@@ -749,6 +755,18 @@
       "text": "This makes the word, the.",
       "sources": [
         "word-list (This makes the word, X.)"
+      ]
+    },
+    {
+      "text": "To make that sound, open your mouth wide and use your voice. You can stretch the sound out.",
+      "sources": [
+        "lesson-001 step5.articulatoryGesture"
+      ]
+    },
+    {
+      "text": "To make that sound, press your lips together and hum. The air comes out through your nose.",
+      "sources": [
+        "lesson-002 step5.articulatoryGesture"
       ]
     },
     {
