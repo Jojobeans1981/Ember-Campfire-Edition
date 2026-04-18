@@ -28,6 +28,16 @@ function createJsonResponse(status, body) {
   });
 }
 
+function createDevIdentityKey(token) {
+  let hash = 0;
+  for (let index = 0; index < token.length; index += 1) {
+    hash = ((hash << 5) - hash) + token.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `token-${Math.abs(hash).toString(36)}`;
+}
+
 describe('useAppBootstrap', () => {
   beforeEach(() => {
     clearBootstrapState();
@@ -77,7 +87,7 @@ describe('useAppBootstrap', () => {
     store.currentUser = { id: 'cached-user', accountId: 'account-1' };
     store.account = { id: 'account-1' };
     store.profiles.splice(0, store.profiles.length, { id: 'profile-2', name: 'Cached Piper' });
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState({ devIdentityKey: createDevIdentityKey('dev:owner') });
 
     const fetchMock = vi.fn((input) => {
       const url = String(input);

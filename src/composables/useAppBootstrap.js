@@ -23,17 +23,46 @@ function resolveActiveProfileId(persistedActiveProfileId, profiles) {
     : null;
 }
 
+function createDevIdentityKey(token) {
+  const source = String(token ?? '').trim();
+  if (!source) {
+    return null;
+  }
+
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = ((hash << 5) - hash) + source.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `token-${Math.abs(hash).toString(36)}`;
+}
+
 export function useAppBootstrap() {
   const api = useApiClient();
   const authSession = useAuthSession();
   const persistence = usePersistence();
   const profileProgress = useProfileProgress();
 
+  async function resolveBootstrapScope() {
+    if (authSession.mode === 'dev') {
+      const token = await authSession.getBearerToken();
+      return {
+        devIdentityKey: createDevIdentityKey(token) ?? 'token-anonymous',
+      };
+    }
+
+    return {
+      accountId: store.currentUser?.accountId ?? store.account?.id,
+    };
+  }
+
   async function selectProfile(profileId) {
     store.activeProfileId = profileId;
-    persistence.saveBootstrapState();
+    const scope = await resolveBootstrapScope();
+    persistence.saveBootstrapState(scope);
     await profileProgress.bootstrapProfileProgress(profileId);
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState(scope);
   }
 
   async function bootstrapApp() {
@@ -46,7 +75,8 @@ export function useAppBootstrap() {
       return { unauthenticated: true };
     }
 
-    const persisted = authSession.mode === 'dev' ? persistence.loadBootstrapState() : null;
+    const devScope = authSession.mode === 'dev' ? await resolveBootstrapScope() : null;
+    const persisted = authSession.mode === 'dev' ? persistence.loadBootstrapState(devScope) : null;
     if (persisted?.bootstrapCache) {
       hydrateBootstrapState({
         currentUser: persisted.bootstrapCache.currentUser,
@@ -63,12 +93,16 @@ export function useAppBootstrap() {
         api.getProfiles(),
       ]);
 
-      const scopedPersisted = persistence.loadBootstrapState({ accountId: currentUser.accountId });
+      const persistenceScope = authSession.mode === 'dev'
+        ? devScope
+        : { accountId: currentUser.accountId };
+
+      const scopedPersisted = persistence.loadBootstrapState(persistenceScope);
 
       const nextActiveProfileId = resolveActiveProfileId(scopedPersisted.activeProfileId, profiles);
 
       hydrateBootstrapState({ currentUser, account, profiles, activeProfileId: nextActiveProfileId });
-      persistence.saveBootstrapState({ accountId: currentUser.accountId });
+      persistence.saveBootstrapState(persistenceScope);
 
       if (nextActiveProfileId) {
         await profileProgress.bootstrapProfileProgress(nextActiveProfileId);
@@ -100,7 +134,7 @@ export function useAppBootstrap() {
   async function createProfile(name) {
     const profile = await api.createProfile(name);
     store.profiles.splice(0, store.profiles.length, profile);
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState(await resolveBootstrapScope());
     await bootstrapApp();
     return profile;
   }

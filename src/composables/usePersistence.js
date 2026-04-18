@@ -55,7 +55,16 @@ function createProfileCacheKey(profileId) {
   return String(profileId ?? '');
 }
 
-function createScopeKey(accountId = store.currentUser?.accountId ?? store.account?.id) {
+function createScopeKey(options = {}) {
+  const normalizedOptions = typeof options === 'string'
+    ? { accountId: options }
+    : (options ?? {});
+
+  if (normalizedOptions.devIdentityKey) {
+    return `dev:${normalizedOptions.devIdentityKey}`;
+  }
+
+  const accountId = normalizedOptions.accountId ?? store.currentUser?.accountId ?? store.account?.id;
   return accountId ? `account:${accountId}` : 'local';
 }
 
@@ -75,7 +84,7 @@ function createSnapshotCache(profileId = store.activeProfileId) {
 export function usePersistence() {
   function saveBootstrapState(options = {}) {
     try {
-      const scopeKey = createScopeKey(options.accountId);
+      const scopeKey = createScopeKey(options);
       if (!scopeKey) {
         return;
       }
@@ -101,7 +110,9 @@ export function usePersistence() {
 
   function loadBootstrapState(options = {}) {
     const persisted = readState();
-    const scopeKey = options.accountId ? createScopeKey(options.accountId) : persisted.lastBootstrapScopeKey;
+    const scopeKey = options.accountId || options.devIdentityKey
+      ? createScopeKey(options)
+      : persisted.lastBootstrapScopeKey;
     if (!scopeKey) {
       if (persisted.bootstrapCache) {
         return {
@@ -126,7 +137,7 @@ export function usePersistence() {
   function clearBootstrapState(options = {}) {
     try {
       const persisted = readState();
-      const scopeKey = options.accountId ? createScopeKey(options.accountId) : null;
+      const scopeKey = options.accountId || options.devIdentityKey ? createScopeKey(options) : null;
 
       if (!scopeKey) {
         delete persisted.bootstrapCaches;
@@ -173,7 +184,7 @@ export function usePersistence() {
   }
 
   function loadProfileState(profileId, options = {}) {
-    const scopeKey = createScopeKey(options.accountId);
+    const scopeKey = createScopeKey(options);
     if (!scopeKey) {
       return null;
     }
@@ -185,7 +196,7 @@ export function usePersistence() {
 
   function clearProfileState(profileId, options = {}) {
     try {
-      const scopeKey = createScopeKey(options.accountId);
+      const scopeKey = createScopeKey(options);
       if (!scopeKey) {
         return;
       }
