@@ -44,7 +44,7 @@
       <button v-if="isCognitoMode" class="nav-btn" type="button" @click="handleLogout">Log Out</button>
     </header>
 
-    <div v-if="!showLaunchSplash && !showTopBar && isCognitoMode" class="auth-toolbar">
+    <div v-if="!showLaunchSplash && !showTopBar && isCognitoMode && store.bootstrapStatus === 'ready'" class="auth-toolbar">
       <button class="nav-btn" type="button" @click="handleLogout">Log Out</button>
     </div>
 
