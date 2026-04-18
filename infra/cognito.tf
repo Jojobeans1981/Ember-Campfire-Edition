@@ -40,9 +40,9 @@ resource "aws_cognito_user_pool_client" "spa" {
   allowed_oauth_flows_user_pool_client          = true
   allowed_oauth_flows                           = ["code"]
   allowed_oauth_scopes                          = ["openid", "email", "profile"]
-  callback_urls                                 = ["https://app.readwithember.com/auth/callback"]
+  callback_urls                                 = var.cognito_callback_urls
   generate_secret                               = false
-  logout_urls                                   = ["https://app.readwithember.com/"]
+  logout_urls                                   = var.cognito_logout_urls
   prevent_user_existence_errors                 = "ENABLED"
   refresh_token_validity                        = 30
   access_token_validity                         = 60
