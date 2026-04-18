@@ -14,11 +14,35 @@ function hasStorageMethod(name) {
   );
 }
 
+function getStorageItem(key) {
+  if (hasStorageMethod('getItem')) {
+    return globalThis.localStorage.getItem(key);
+  }
+
+  return memoryStorage.has(key) ? memoryStorage.get(key) : null;
+}
+
+function setStorageItem(key, value) {
+  if (hasStorageMethod('setItem')) {
+    globalThis.localStorage.setItem(key, value);
+    return;
+  }
+
+  memoryStorage.set(key, value);
+}
+
+function removeStorageItem(key) {
+  if (hasStorageMethod('removeItem')) {
+    globalThis.localStorage.removeItem(key);
+    return;
+  }
+
+  memoryStorage.delete(key);
+}
+
 function readState() {
   try {
-    const raw = hasStorageMethod('getItem')
-      ? globalThis.localStorage.getItem(STORAGE_KEY)
-      : (memoryStorage.has(STORAGE_KEY) ? memoryStorage.get(STORAGE_KEY) : null);
+    const raw = getStorageItem(STORAGE_KEY);
 
     if (!raw) {
       return {};
@@ -34,21 +58,11 @@ function readState() {
 
 function writeState(nextState) {
   const raw = JSON.stringify(nextState);
-  if (hasStorageMethod('setItem')) {
-    globalThis.localStorage.setItem(STORAGE_KEY, raw);
-    return;
-  }
-
-  memoryStorage.set(STORAGE_KEY, raw);
+  setStorageItem(STORAGE_KEY, raw);
 }
 
 function removeState() {
-  if (hasStorageMethod('removeItem')) {
-    globalThis.localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-
-  memoryStorage.delete(STORAGE_KEY);
+  removeStorageItem(STORAGE_KEY);
 }
 
 function createProfileCacheKey(profileId) {
@@ -226,5 +240,9 @@ export function usePersistence() {
     loadProfileState,
     clearProfileState,
     clearSave,
+    getStorageItem,
+    setStorageItem,
+    removeStorageItem,
+    hasStorageMethod,
   };
 }

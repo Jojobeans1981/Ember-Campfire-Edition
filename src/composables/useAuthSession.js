@@ -2,11 +2,13 @@ import { reactive } from 'vue';
 
 import { buildAuthorizeUrl, buildLogoutUrl, buildTokenUrl } from '../auth/cognitoUrls.js';
 import { generateCodeChallenge, generateCodeVerifier, generateNonce, generateState } from '../auth/pkce.js';
+import { usePersistence } from './usePersistence.js';
 
 const AUTH_STORAGE_KEY = 'ember-auth-session-v1';
 const CALLBACK_STORAGE_KEY = 'ember-auth-callback-v1';
 const REFRESH_SKEW_MS = 60 * 1000;
 const initialMode = detectAuthMode();
+const persistence = usePersistence();
 
 const state = reactive({
   mode: initialMode,
@@ -36,12 +38,12 @@ function detectAuthMode() {
 }
 
 function loadStoredSession(mode) {
-  if (mode === 'dev' || mode === 'unauthenticated' || typeof localStorage === 'undefined') {
+  if (mode === 'dev' || mode === 'unauthenticated' || !persistence.hasStorageMethod('getItem')) {
     return null;
   }
 
   try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    const raw = persistence.getStorageItem(AUTH_STORAGE_KEY);
     if (!raw) {
       return null;
     }
@@ -58,9 +60,9 @@ function persistSession(session) {
 
   try {
     if (session) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+      persistence.setStorageItem(AUTH_STORAGE_KEY, JSON.stringify(session));
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      persistence.removeStorageItem(AUTH_STORAGE_KEY);
     }
   } catch {
     // Ignore blocked storage. The active in-memory session still works.
