@@ -16,6 +16,7 @@ let fetchCalls = 0;
 describe('CognitoAuthProvider', () => {
   const originalFetch = globalThis.fetch;
   const originalDateNow = Date.now;
+  const originalConsoleError = console.error;
 
   beforeEach(() => {
     fetchCalls = 0;
@@ -24,6 +25,7 @@ describe('CognitoAuthProvider', () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     Date.now = originalDateNow;
+    console.error = originalConsoleError;
   });
 
   test('authenticates a valid Cognito id token', async () => {
@@ -231,6 +233,46 @@ describe('CognitoAuthProvider', () => {
     await expect(authenticate(provider, missingKidToken)).resolves.toBeNull();
 
     expect(fetchCalls).toBe(2);
+  });
+
+  test('returns null when getSigningKey JWKS fetch fails and logs the authenticate error', async () => {
+    const keyPair = await generateSigningKeyPair();
+    const provider = new CognitoAuthProvider({
+      userPoolId,
+      clientId,
+      region,
+      domain: null
+    });
+
+    const token = await createSignedToken({
+      keyPair,
+      kid: 'kid-1',
+      payload: {
+        iss: issuer,
+        sub: 'subject-1',
+        aud: clientId,
+        token_use: 'id',
+        exp: futureEpochSeconds()
+      }
+    });
+
+    const loggedErrors: unknown[][] = [];
+    console.error = ((...args: unknown[]) => {
+      loggedErrors.push(args);
+    }) as typeof console.error;
+
+    globalThis.fetch = (async () => {
+      fetchCalls += 1;
+      throw new Error('jwks network down');
+    }) as unknown as typeof fetch;
+
+    await expect(authenticate(provider, token)).resolves.toBeNull();
+    expect(fetchCalls).toBe(1);
+    expect(loggedErrors.length).toBe(1);
+    expect(String(loggedErrors[0]?.[0])).toContain('authenticate');
+    expect(String(loggedErrors[0]?.[0])).toContain('getSigningKey');
+    expect(String(loggedErrors[0]?.[0])).toContain('verifyJwtSignature');
+    expect(String(loggedErrors[0]?.[0])).toContain('jwks');
   });
 });
 

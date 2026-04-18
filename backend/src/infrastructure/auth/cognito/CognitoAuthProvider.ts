@@ -59,15 +59,23 @@ export class CognitoAuthProvider implements AuthProvider {
       return null;
     }
 
-    const jwk = await this.getSigningKey(parsedToken.header.kid);
+    try {
+      const jwk = await this.getSigningKey(parsedToken.header.kid);
 
-    if (jwk === null || !isUsableRsaSigningKey(jwk, parsedToken.header.kid)) {
-      return null;
-    }
+      if (jwk === null || !isUsableRsaSigningKey(jwk, parsedToken.header.kid)) {
+        return null;
+      }
 
-    const signatureValid = await verifyJwtSignature(token, jwk);
+      const signatureValid = await verifyJwtSignature(token, jwk);
 
-    if (!signatureValid) {
+      if (!signatureValid) {
+        return null;
+      }
+    } catch (error) {
+      console.error(
+        'CognitoAuthProvider.authenticate: jwks/getSigningKey/verifyJwtSignature failure, returning null.',
+        error
+      );
       return null;
     }
 
