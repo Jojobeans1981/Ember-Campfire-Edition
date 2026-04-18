@@ -32,12 +32,14 @@ interface JwksDocument {
 }
 
 const JWKS_TTL_MS = 60 * 60 * 1000;
+const JWKS_FORCE_REFRESH_COOLDOWN_MS = 30 * 1000;
 
 export class CognitoAuthProvider implements AuthProvider {
   private readonly issuer: string;
   private readonly jwksUrl: string;
   private jwksCache: { expiresAt: number; keys: Map<string, JwkKey> } | null = null;
   private inFlightJwksPromise: Promise<Map<string, JwkKey>> | null = null;
+  private lastRefreshAt: number | null = null;
 
   public constructor(private readonly config: CognitoAuthConfig) {
     this.issuer = `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
@@ -106,15 +108,23 @@ export class CognitoAuthProvider implements AuthProvider {
   }
 
   private async getJwks(forceRefresh: boolean): Promise<Map<string, JwkKey>> {
+    if (this.inFlightJwksPromise !== null) {
+      return this.inFlightJwksPromise;
+    }
+
     if (!forceRefresh && this.jwksCache !== null && this.jwksCache.expiresAt > Date.now()) {
       return this.jwksCache.keys;
     }
 
-    if (!forceRefresh && this.inFlightJwksPromise !== null) {
-      return this.inFlightJwksPromise;
+    if (
+      forceRefresh
+      && this.lastRefreshAt !== null
+      && (Date.now() - this.lastRefreshAt) < JWKS_FORCE_REFRESH_COOLDOWN_MS
+    ) {
+      return this.jwksCache?.keys ?? new Map<string, JwkKey>();
     }
 
-    const fetchPromise = fetch(this.jwksUrl)
+    this.inFlightJwksPromise = fetch(this.jwksUrl)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`Failed to fetch Cognito JWKS: ${response.status}`);
@@ -134,14 +144,17 @@ export class CognitoAuthProvider implements AuthProvider {
           keys
         };
 
+        if (forceRefresh) {
+          this.lastRefreshAt = Date.now();
+        }
+
         return keys;
       })
       .finally(() => {
         this.inFlightJwksPromise = null;
       });
 
-    this.inFlightJwksPromise = fetchPromise;
-    return fetchPromise;
+    return this.inFlightJwksPromise;
   }
 }
 

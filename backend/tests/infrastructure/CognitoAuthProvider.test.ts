@@ -15,6 +15,7 @@ let fetchCalls = 0;
 
 describe('CognitoAuthProvider', () => {
   const originalFetch = globalThis.fetch;
+  const originalDateNow = Date.now;
 
   beforeEach(() => {
     fetchCalls = 0;
@@ -22,6 +23,7 @@ describe('CognitoAuthProvider', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    Date.now = originalDateNow;
   });
 
   test('authenticates a valid Cognito id token', async () => {
@@ -136,6 +138,98 @@ describe('CognitoAuthProvider', () => {
       email: null,
       displayName: 'reader-two'
     });
+    expect(fetchCalls).toBe(2);
+  });
+
+  test('dedupes concurrent forced JWKS refreshes when kid is missing', async () => {
+    const firstKeyPair = await generateSigningKeyPair();
+    const secondKeyPair = await generateSigningKeyPair();
+    const provider = createProvider([createJwk('kid-1', firstKeyPair.publicJwk)]);
+
+    const primeToken = await createSignedToken({
+      keyPair: firstKeyPair,
+      kid: 'kid-1',
+      payload: {
+        iss: issuer,
+        sub: 'prime-subject',
+        aud: clientId,
+        token_use: 'id',
+        exp: futureEpochSeconds()
+      }
+    });
+    await authenticate(provider, primeToken);
+
+    globalThis.fetch = (() => {
+      fetchCalls += 1;
+      return new Promise<Response>((resolve) => {
+        setTimeout(() => {
+          resolve(new Response(JSON.stringify({ keys: [createJwk('kid-1', firstKeyPair.publicJwk)] }), { status: 200 }));
+        }, 25);
+      });
+    }) as unknown as typeof fetch;
+
+    const missingKidToken = await createSignedToken({
+      keyPair: secondKeyPair,
+      kid: 'kid-2',
+      payload: {
+        iss: issuer,
+        sub: 'subject-2',
+        aud: clientId,
+        token_use: 'id',
+        exp: futureEpochSeconds()
+      }
+    });
+
+    const firstAttempt = authenticate(provider, missingKidToken);
+    const secondAttempt = authenticate(provider, missingKidToken);
+
+    await expect(firstAttempt).resolves.toBeNull();
+    await expect(secondAttempt).resolves.toBeNull();
+
+    expect(fetchCalls).toBe(2);
+  });
+
+  test('applies forced refresh cooldown after a successful refresh', async () => {
+    const firstKeyPair = await generateSigningKeyPair();
+    const secondKeyPair = await generateSigningKeyPair();
+    const provider = createProvider([createJwk('kid-1', firstKeyPair.publicJwk)]);
+
+    const primeToken = await createSignedToken({
+      keyPair: firstKeyPair,
+      kid: 'kid-1',
+      payload: {
+        iss: issuer,
+        sub: 'prime-subject',
+        aud: clientId,
+        token_use: 'id',
+        exp: futureEpochSeconds()
+      }
+    });
+    await authenticate(provider, primeToken);
+
+    const now = Date.now();
+    Date.now = () => now;
+
+    globalThis.fetch = (async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ keys: [createJwk('kid-1', firstKeyPair.publicJwk)] }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const missingKidToken = await createSignedToken({
+      keyPair: secondKeyPair,
+      kid: 'kid-2',
+      payload: {
+        iss: issuer,
+        sub: 'subject-2',
+        aud: clientId,
+        token_use: 'id',
+        exp: futureEpochSeconds()
+      }
+    });
+
+    await expect(authenticate(provider, missingKidToken)).resolves.toBeNull();
+    await expect(authenticate(provider, missingKidToken)).resolves.toBeNull();
+
     expect(fetchCalls).toBe(2);
   });
 });
