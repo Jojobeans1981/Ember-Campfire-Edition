@@ -44,6 +44,10 @@
       <button v-if="isCognitoMode" class="nav-btn" type="button" @click="handleLogout">Log Out</button>
     </header>
 
+    <div v-if="!showLaunchSplash && !showTopBar && isCognitoMode" class="auth-toolbar">
+      <button class="nav-btn" type="button" @click="handleLogout">Log Out</button>
+    </div>
+
     <main v-if="!showLaunchSplash" class="main" :class="{ 'playful-main': showPlayfulBackdrop }">
       <p v-if="showSyncBanner" class="sync-banner">{{ syncBannerText }}</p>
 
@@ -1085,6 +1089,14 @@ body {
   background: rgba(100, 255, 218, 0.1);
 }
 
+.auth-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem 0;
+}
+
 .back-arrow {
   font-size: 1.1rem;
 }
@@ -1903,5 +1915,3 @@ body {
   font-size: 0.82rem;
 }
 </style>
-
-
