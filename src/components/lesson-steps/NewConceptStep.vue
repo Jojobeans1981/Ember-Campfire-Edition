@@ -176,6 +176,16 @@ function findTargetIndex(word, position) {
   return w.indexOf(g);
 }
 
+// Kid-scaled framing for each group so a child understands why the words
+// changed — "it was at the start, now listen in the middle."
+function positionIntro(position) {
+  const p = String(position || '').toLowerCase();
+  if (p === 'initial' || p === 'start' || p === 'beginning') return 'Listen for that sound at the start of these words.';
+  if (p === 'final' || p === 'end') return 'Listen for that sound at the end of these words.';
+  if (p === 'medial' || p === 'middle') return 'Listen for that sound in the middle of these words.';
+  return '';
+}
+
 const targetCharIndex = computed(() => findTargetIndex(currentWord.value, currentGroup.value?.position));
 
 function chipChars(word) {
@@ -340,14 +350,26 @@ watch(phase, async (next) => {
   if (next === 'sound') await demoSoundAndPrompt();
   else if (next === 'read') {
     // Bridge from the sound they just practiced to words that contain it.
-    await ember.speak("Now let's find that sound in real words.");
+    // If the first group has a position, frame it for the child ("at the
+    // start of these words") so the position change later has a contrast.
+    const firstGroupIntro = positionIntro(readGroups.value[0]?.position);
+    await ember.speak(firstGroupIntro || "Now let's find that sound in real words.");
     if (!cancelled) await autoSpeakWalking();
   }
 });
 
-watch([walkIdx, readMode], async ([, mode], [prevIdx, prevMode]) => {
+watch([walkIdx, readMode, groupIdx], async ([, mode, gIdx], [prevIdx, prevMode, prevGIdx]) => {
   if (phase.value !== 'read') return;
-  if (mode === 'walking' && (prevMode !== 'walking' || walkIdx.value !== prevIdx)) {
+  const groupChanged = prevGIdx !== undefined && gIdx !== prevGIdx;
+  if (mode === 'walking' && (prevMode !== 'walking' || walkIdx.value !== prevIdx || groupChanged)) {
+    // On a group change, speak the position intro first and await it so it
+    // plays to completion before the word — both use 'instruction' priority,
+    // and an equal-priority call preempts (see useEmber claimPlayback).
+    if (groupChanged) {
+      const intro = positionIntro(readGroups.value[gIdx]?.position);
+      if (intro) await ember.speak(intro);
+      if (cancelled) return;
+    }
     await autoSpeakWalking();
   } else if (mode === 'reviewing' && prevMode !== 'reviewing') {
     await ember.speak('Tap any word to hear it again.');

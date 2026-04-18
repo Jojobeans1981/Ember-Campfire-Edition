@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-18T15:53:54.679Z",
+  "generatedAt": "2026-04-18T16:29:09.487Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -595,6 +595,22 @@
     "7017b2aa4d79": {
       "text": "To make that sound, press your lips together and hum. The air comes out through your nose.",
       "file": "/audio/tts/7017b2aa4d79.mp3"
+    },
+    "890ca991a378": {
+      "text": "Try it with me.",
+      "file": "/audio/tts/890ca991a378.mp3"
+    },
+    "043322db9e9f": {
+      "text": "Listen for that sound at the end of these words.",
+      "file": "/audio/tts/043322db9e9f.mp3"
+    },
+    "fc74f824cc68": {
+      "text": "Listen for that sound at the start of these words.",
+      "file": "/audio/tts/fc74f824cc68.mp3"
+    },
+    "7d1711f116a1": {
+      "text": "Listen for that sound in the middle of these words.",
+      "file": "/audio/tts/7d1711f116a1.mp3"
     }
   }
 }

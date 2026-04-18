@@ -101,6 +101,7 @@ const STATIC_UI_PROMPTS = [
 
   // --- UI-cleanup pass (lesson-1 audio-only prompts) ---
   { text: "Let's put sounds together to make a word.", source: 'PhonemicAwarenessStep.vue (blend mount)' },
+  { text: 'Try it with me.', source: 'PhonemicAwarenessStep.vue (blend closing invite)' },
   { text: 'Listen to the word.', source: 'PhonemicAwarenessStep.vue (segment mount)' },
   { text: 'Listening. Say the sound.', source: 'VisualDrillStep.vue (mic prompt)' },
   { text: 'Great! You said it!', source: 'VisualDrillStep.vue / ConnectedTextStep.vue (success)' },
@@ -113,7 +114,10 @@ const STATIC_UI_PROMPTS = [
   { text: 'Listening.', source: 'NewConceptStep.vue / ConnectedTextStep.vue (listening pulse)' },
   { text: 'Nice job! You said it.', source: 'NewConceptStep.vue (success)' },
   { text: 'Try again, then tap my turn.', source: 'NewConceptStep.vue (retry)' },
-  { text: "Now let's find that sound in real words.", source: 'NewConceptStep.vue (read phase bridge)' },
+  { text: "Now let's find that sound in real words.", source: 'NewConceptStep.vue (read phase bridge, fallback)' },
+  { text: 'Listen for that sound at the start of these words.', source: 'NewConceptStep.vue (position: initial)' },
+  { text: 'Listen for that sound in the middle of these words.', source: 'NewConceptStep.vue (position: medial)' },
+  { text: 'Listen for that sound at the end of these words.', source: 'NewConceptStep.vue (position: final)' },
   { text: 'Tap any word to hear it again.', source: 'NewConceptStep.vue (review mode)' },
   { text: 'Tap each word to practice it.', source: 'NewConceptStep.vue (spell phase)' },
   { text: 'Listen closely to the sound, then try it too.', source: 'NewConceptStep.vue (script intro)' },
@@ -292,12 +296,12 @@ function collectLessonStrings(lessons) {
   }
 
   // Bare words + templated phrases spoken at runtime for each blend word.
-  //   "The word is X."        — spoken by PhonemicAwarenessStep segment phase
-  //   "This makes the word, X." — spoken after blending in the blend phase
+  //   "The word is X."  — spoken by PhonemicAwarenessStep segment phase
+  // The blend phase now says just the bare word after the "Try it with me."
+  // invite, so no wrapper-sentence entry is needed for it.
   for (const w of words) {
     entries.push({ text: w, source: 'word-list (bare)' });
     entries.push({ text: `The word is ${w}.`, source: 'word-list (The word is X.)' });
-    entries.push({ text: `This makes the word, ${w}.`, source: 'word-list (This makes the word, X.)' });
   }
 
   // teachPhoneme letter announcements — graphemes uppercased at runtime

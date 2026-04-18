@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-18T15:53:37.243Z",
+  "generatedAt": "2026-04-18T16:29:06.311Z",
   "scope": {
     "lessonIds": [
       "001",
@@ -7,8 +7,8 @@
     ],
     "lessonsScanned": 2
   },
-  "entryCount": 141,
-  "totalCharacters": 6229,
+  "entryCount": 134,
+  "totalCharacters": 6118,
   "skippedIpa": [
     {
       "text": "A says /ă/, like the start of apple.",
@@ -379,6 +379,24 @@
       ]
     },
     {
+      "text": "Listen for that sound at the end of these words.",
+      "sources": [
+        "NewConceptStep.vue (position: final)"
+      ]
+    },
+    {
+      "text": "Listen for that sound at the start of these words.",
+      "sources": [
+        "NewConceptStep.vue (position: initial)"
+      ]
+    },
+    {
+      "text": "Listen for that sound in the middle of these words.",
+      "sources": [
+        "NewConceptStep.vue (position: medial)"
+      ]
+    },
+    {
       "text": "Listen to the sound.",
       "sources": [
         "AuditoryDrillStep.vue (listen phase)"
@@ -459,7 +477,7 @@
     {
       "text": "Now let's find that sound in real words.",
       "sources": [
-        "NewConceptStep.vue (read phase bridge)"
+        "NewConceptStep.vue (read phase bridge, fallback)"
       ]
     },
     {
@@ -692,72 +710,6 @@
       ]
     },
     {
-      "text": "This makes the word, apple.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, as.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, at.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, cat.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, gum.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, him.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, mad.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, map.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, mat.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, mop.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
-      "text": "This makes the word, the.",
-      "sources": [
-        "word-list (This makes the word, X.)"
-      ]
-    },
-    {
       "text": "To make that sound, open your mouth wide and use your voice. You can stretch the sound out.",
       "sources": [
         "lesson-001 step5.articulatoryGesture"
@@ -803,6 +755,12 @@
       "text": "Try again. Tap the microphone and say the sound.",
       "sources": [
         "VisualDrillStep.vue (retry)"
+      ]
+    },
+    {
+      "text": "Try it with me.",
+      "sources": [
+        "PhonemicAwarenessStep.vue (blend closing invite)"
       ]
     },
     {

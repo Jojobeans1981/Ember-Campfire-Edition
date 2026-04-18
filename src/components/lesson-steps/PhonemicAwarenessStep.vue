@@ -100,7 +100,8 @@ function wait(ms, generation) {
 }
 
 const PHONEME_PAUSE_MS = 420;
-const BEFORE_WORD_PAUSE_MS = 500;
+const BEFORE_INVITE_PAUSE_MS = 500;
+const INVITE_TO_WORD_PAUSE_MS = 800;
 
 async function runBlendSequence() {
   const item = currentBlend.value;
@@ -127,9 +128,15 @@ async function runBlendSequence() {
         if (!ok) return;
       }
     }
-    const stillOurs = await wait(BEFORE_WORD_PAUSE_MS, generation);
-    if (!stillOurs) return;
-    await ember.speak(`This makes the word, ${item.word}.`);
+    // After all phonemes: brief silence, invite the learner to blend along,
+    // another brief silence, then say the word itself (no wrapper sentence).
+    const beforeInvite = await wait(BEFORE_INVITE_PAUSE_MS, generation);
+    if (!beforeInvite) return;
+    await ember.speak('Try it with me.');
+    if (cancelled || generation !== playbackGeneration) return;
+    const beforeWord = await wait(INVITE_TO_WORD_PAUSE_MS, generation);
+    if (!beforeWord) return;
+    await ember.speakTeacher(item.word);
   } finally {
     if (generation === playbackGeneration) {
       playingIndex.value = -1;
