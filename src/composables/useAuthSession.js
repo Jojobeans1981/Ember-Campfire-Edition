@@ -92,8 +92,14 @@ function loadCallbackState() {
 }
 
 function persistCallbackState(value) {
-  if (typeof sessionStorage !== 'undefined') {
+  if (typeof sessionStorage === 'undefined') {
+    return;
+  }
+
+  try {
     sessionStorage.setItem(CALLBACK_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // Ignore blocked storage.
   }
 }
 

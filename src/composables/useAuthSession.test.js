@@ -451,6 +451,25 @@ describe('useAuthSession', () => {
     expect(assignedUrl).toContain('nonce=nonce-123');
   });
 
+  it('startLogin still redirects when callback state persistence fails', async () => {
+    vi.doMock('../auth/pkce.js', () => ({
+      generateCodeVerifier: vi.fn(() => 'verifier-123'),
+      generateState: vi.fn(() => 'state-123'),
+      generateNonce: vi.fn(() => 'nonce-123'),
+      generateCodeChallenge: vi.fn(async () => 'challenge-123'),
+    }));
+
+    const setItemSpy = vi.spyOn(window.sessionStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    const authSession = await loadAuthSession();
+    await expect(authSession.startLogin()).resolves.toBeUndefined();
+
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+    expect(window.location.assign).toHaveBeenCalledTimes(1);
+  });
+
   it('logout clears session and redirects to cognito logout in cognito mode', async () => {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
       idToken: 'id-1',
