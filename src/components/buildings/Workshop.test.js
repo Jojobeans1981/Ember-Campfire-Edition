@@ -3,7 +3,9 @@ import { mount } from '@vue/test-utils';
 import Workshop from './Workshop.vue';
 import { store } from '../../store';
 
-const submitSkillStateUpdateMock = vi.fn(() => Promise.resolve());
+const { submitSkillStateUpdateMock } = vi.hoisted(() => ({
+  submitSkillStateUpdateMock: vi.fn(() => Promise.resolve()),
+}));
 
 vi.mock('../../composables/useProfileProgress.js', () => ({
   useProfileProgress: () => ({
