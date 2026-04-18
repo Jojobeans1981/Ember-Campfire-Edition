@@ -98,7 +98,21 @@ function createSnapshotCache(profileId = store.activeProfileId) {
 export function usePersistence() {
   function saveBootstrapState(options = {}) {
     try {
-      const scopeKey = createScopeKey(options);
+      const normalizedOptions = typeof options === 'string'
+        ? { accountId: options }
+        : (options ?? {});
+
+      const scopeKey = normalizedOptions.devIdentityKey
+        ? createScopeKey({ devIdentityKey: normalizedOptions.devIdentityKey })
+        : (() => {
+          const accountId = normalizedOptions.accountId ?? store.currentUser?.accountId;
+          if (!accountId) {
+            return null;
+          }
+
+          return createScopeKey({ accountId });
+        })();
+
       if (!scopeKey) {
         return;
       }

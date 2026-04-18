@@ -53,7 +53,7 @@ export function useAppBootstrap() {
     }
 
     return {
-      accountId: store.currentUser?.accountId ?? store.account?.id,
+      accountId: store.currentUser?.accountId ?? null,
     };
   }
 

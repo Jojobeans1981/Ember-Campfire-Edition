@@ -85,6 +85,18 @@ describe('Persistence — bootstrap state', () => {
     expect(raw.bootstrapCaches['account:account-1'].activeProfileId).toBe('profile-1');
   });
 
+  it('does not save bootstrap state when no account id is available', () => {
+    const persistence = usePersistence();
+
+    clearBootstrapState();
+    store.currentUser = null;
+    store.account = null;
+
+    persistence.saveBootstrapState();
+
+    expect(localStorage.getItem('ember-campground-save-v3')).toBeNull();
+  });
+
   it('stores synced progress under profile-scoped caches instead of top-level app state', () => {
     const persistence = usePersistence();
 
