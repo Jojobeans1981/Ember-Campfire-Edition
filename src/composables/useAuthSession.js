@@ -141,7 +141,16 @@ async function exchangeToken(params) {
 }
 
 async function refreshSession() {
-  if (state.mode !== 'cognito' || !state.session?.refreshToken) {
+  if (state.mode !== 'cognito' || !state.session) {
+    return null;
+  }
+
+  if (!state.session.refreshToken) {
+    if (state.session.idToken) {
+      clearSession();
+      return false;
+    }
+
     return null;
   }
 

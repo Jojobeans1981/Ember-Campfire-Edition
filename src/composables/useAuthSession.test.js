@@ -292,6 +292,22 @@ describe('useAuthSession', () => {
     expect(authSession.isAuthenticated()).toBe(false);
   });
 
+  it('invalidates expired cognito sessions that are missing a refresh token', async () => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+      idToken: 'id-1',
+      expiresAt: Date.now() - 1000,
+    }));
+
+    const authSession = await loadAuthSession();
+    const restored = await authSession.restoreSession();
+
+    expect(restored).toBe(false);
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+    expect(authSession.isAuthenticated()).toBe(false);
+    await expect(authSession.getBearerToken()).resolves.toBe('');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('shares one refresh request across parallel getBearerToken calls', async () => {
     const deferred = createDeferred();
     const fetchMock = vi.fn(() => deferred.promise);
