@@ -14,7 +14,7 @@ import {
   ProgressSyncService,
   XpDerivationService
 } from '../../application/services';
-import { DevAuthProvider, mapDevUsersToProvisionableIdentities } from '../auth';
+import { CognitoAuthProvider, DevAuthProvider, mapDevUsersToProvisionableIdentities } from '../auth';
 import {
   PostgresDatabase,
     SqlAccountRepository,
@@ -34,6 +34,14 @@ export interface App {
   stop(): Promise<void>;
 }
 
+const getCognitoConfig = (config: ReturnType<typeof loadConfig>) => {
+  if (config.auth.cognito === null) {
+    throw new Error('Cognito auth config is required when AUTH_PROVIDER=cognito');
+  }
+
+  return config.auth.cognito;
+};
+
 export const createApp = (): App => {
   const config = loadConfig();
   const clock = new SystemClock();
@@ -45,17 +53,21 @@ export const createApp = (): App => {
   const profileRepository = new SqlProfileRepository(database);
   const profileProgressRepository = new SqlProfileProgressRepository(database);
   const progressOperationRepository = new SqlProgressOperationRepository(database);
-  const authProvider = new DevAuthProvider({
-    env: config.env,
-    users: config.auth.devUsers
-  });
+  const authProvider = config.auth.provider === 'cognito'
+    ? new CognitoAuthProvider(getCognitoConfig(config))
+    : new DevAuthProvider({
+      env: config.env,
+      users: config.auth.devUsers
+    });
   const identityProvisioningService = new IdentityProvisioningService({
     userRepository,
     accountRepository,
     transactionManager: database.transactionManager,
     idGenerator,
     clock,
-    provisionableIdentities: mapDevUsersToProvisionableIdentities(config.auth.devUsers)
+    provisionableIdentities: config.auth.provider === 'dev'
+      ? mapDevUsersToProvisionableIdentities(config.auth.devUsers)
+      : []
   });
 
   const getHealthCheckUseCase = new GetHealthCheckUseCase(clock);

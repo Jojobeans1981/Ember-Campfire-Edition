@@ -80,12 +80,14 @@ export class IdentityProvisioningService {
         this.createIdentityKey(identity.provider, identity.subject)
       );
 
-      if (provisionableIdentity === undefined) {
+      if (provisionableIdentity === undefined && identity.provider !== 'cognito') {
         throw new AppError('Authenticated user is not provisioned', {
           code: ERROR_CODES.UNAUTHORIZED,
           status: 401
         });
       }
+
+      const resolvedProvisioning = provisionableIdentity ?? createCognitoProvisioning(identity);
 
       const now = this.dependencies.clock.now();
       const accountId = this.dependencies.idGenerator.generate();
@@ -94,8 +96,8 @@ export class IdentityProvisioningService {
       await this.dependencies.accountRepository.insert(
         {
           id: accountId,
-          name: provisionableIdentity.accountName,
-          type: provisionableIdentity.accountType,
+          name: resolvedProvisioning.accountName,
+          type: resolvedProvisioning.accountType,
           createdAt: now,
           updatedAt: now
         },
@@ -108,7 +110,7 @@ export class IdentityProvisioningService {
           accountId,
           email: identity.email,
           displayName: identity.displayName,
-          role: provisionableIdentity.role,
+          role: resolvedProvisioning.role,
           authProvider: identity.provider,
           authSubject: identity.subject,
           createdAt: now,
@@ -120,7 +122,7 @@ export class IdentityProvisioningService {
       return {
         userId,
         accountId,
-        role: provisionableIdentity.role
+        role: resolvedProvisioning.role
       };
     });
   }
@@ -129,3 +131,29 @@ export class IdentityProvisioningService {
     return `${provider}:${subject}`;
   }
 }
+
+const createCognitoProvisioning = (identity: AuthIdentity): ProvisionableIdentityConfig => ({
+  provider: 'cognito',
+  subject: identity.subject,
+  email: identity.email,
+  displayName: identity.displayName,
+  accountName: deriveAccountName(identity),
+  role: 'owner',
+  accountType: 'family'
+});
+
+const deriveAccountName = (identity: AuthIdentity): string => {
+  const displayName = identity.displayName?.trim();
+
+  if (displayName) {
+    return `${displayName} Household`;
+  }
+
+  const emailLocalPart = identity.email?.split('@')[0]?.trim();
+
+  if (emailLocalPart) {
+    return `${emailLocalPart} Household`;
+  }
+
+  return 'Ember Household';
+};

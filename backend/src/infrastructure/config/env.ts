@@ -20,7 +20,16 @@ export interface DatabaseConfig {
 }
 
 export interface AuthConfig {
+  provider: 'dev' | 'cognito';
   devUsers: DevAuthUserConfig[];
+  cognito: CognitoAuthConfig | null;
+}
+
+export interface CognitoAuthConfig {
+  userPoolId: string;
+  clientId: string;
+  region: string;
+  domain: string | null;
 }
 
 export interface CorsConfig {
@@ -58,8 +67,35 @@ export const loadConfig = (): AppConfig => {
   return { env, host, port, db, auth, cors };
 };
 
-const loadAuthConfig = (env: string): AuthConfig => ({
-  devUsers: loadDevAuthUsers(env, process.env.DEV_AUTH_USERS)
+const loadAuthConfig = (env: string): AuthConfig => {
+  const provider = loadAuthProvider();
+
+  return {
+    provider,
+    devUsers: loadDevAuthUsers(env, process.env.DEV_AUTH_USERS),
+    cognito: provider === 'cognito' ? loadCognitoAuthConfig() : null
+  };
+};
+
+const loadAuthProvider = (): 'dev' | 'cognito' => {
+  const value = process.env.AUTH_PROVIDER;
+
+  if (value === undefined || value.trim().length === 0) {
+    return 'dev';
+  }
+
+  if (value === 'dev' || value === 'cognito') {
+    return value;
+  }
+
+  throw new Error(`Invalid AUTH_PROVIDER value: ${value}`);
+};
+
+const loadCognitoAuthConfig = (): CognitoAuthConfig => ({
+  userPoolId: loadRequiredEnvString('COGNITO_USER_POOL_ID'),
+  clientId: loadRequiredEnvString('COGNITO_USER_POOL_CLIENT_ID'),
+  region: loadRequiredEnvString('COGNITO_REGION'),
+  domain: loadOptionalEnvString('COGNITO_DOMAIN')
 });
 
 const loadCorsConfig = (): CorsConfig => ({
@@ -200,6 +236,26 @@ const parseBoolean = (value: string | undefined, name: string, defaultValue: boo
 const parseRequiredString = (value: unknown, name: string): string => {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`Invalid ${name} value`);
+  }
+
+  return value.trim();
+};
+
+const loadRequiredEnvString = (name: string): string => {
+  const value = process.env[name];
+
+  if (value === undefined || value.trim().length === 0) {
+    throw new Error(`Missing required environment value: ${name}`);
+  }
+
+  return value.trim();
+};
+
+const loadOptionalEnvString = (name: string): string | null => {
+  const value = process.env[name];
+
+  if (value === undefined || value.trim().length === 0) {
+    return null;
   }
 
   return value.trim();

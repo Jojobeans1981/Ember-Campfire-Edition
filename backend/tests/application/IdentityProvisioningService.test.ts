@@ -45,6 +45,29 @@ describe('IdentityProvisioningService', () => {
     expect(account?.name).toBe('Dev Household');
   });
 
+  test('auto-provisions first-seen cognito identities and reuses the same local account', async () => {
+    const identity: AuthIdentity = {
+      provider: 'cognito',
+      subject: 'cognito-sub-123',
+      email: 'ember.parent@example.com',
+      displayName: 'Ember Parent'
+    };
+
+    const firstContext = await harness.identityProvisioningService.resolve(identity);
+    const secondContext = await harness.identityProvisioningService.resolve(identity);
+
+    expect(secondContext).toEqual(firstContext);
+
+    const user = await harness.userRepository.getById(firstContext.userId);
+    const account = await harness.accountRepository.getById(firstContext.accountId);
+
+    expect(user?.authProvider).toBe('cognito');
+    expect(user?.authSubject).toBe('cognito-sub-123');
+    expect(user?.role).toBe('owner');
+    expect(account?.name).toBe('Ember Parent Household');
+    expect(account?.type).toBe('family');
+  });
+
   test('rejects authenticated identities that are not provisionable', async () => {
     const identity: AuthIdentity = {
       provider: 'dev',
