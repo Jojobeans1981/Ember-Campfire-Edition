@@ -35,6 +35,18 @@ vi.mock('./composables/useUfliProgression.js', () => ({
   }),
 }));
 
+vi.mock('./composables/useAuthSession.js', () => ({
+  useAuthSession: () => ({
+    mode: 'dev',
+    getBearerToken: async () => 'dev:owner',
+    handleUnauthorizedResponse: async () => false,
+    initializeSession: async () => true,
+    isAuthenticated: () => true,
+    logout: vi.fn(),
+    startLogin: vi.fn(),
+  }),
+}));
+
 function createJsonResponse(status, body) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -130,18 +142,23 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('selection');
     expect(wrapper.text()).toContain('Choose a Guardian');
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
-      'http://127.0.0.1:3002/me',
-      'http://127.0.0.1:3002/account',
-      'http://127.0.0.1:3002/profiles',
-      'http://127.0.0.1:3002/profiles/profile-1/progress',
+      'http://127.0.0.1:3001/me',
+      'http://127.0.0.1:3001/account',
+      'http://127.0.0.1:3001/profiles',
+      'http://127.0.0.1:3001/profiles/profile-1/progress',
     ]);
 
     expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toMatchObject({
-      activeProfileId: 'profile-1',
-      bootstrapCache: {
-        currentUser: { id: 'user-1' },
-        account: { id: 'account-1' },
-        profiles: [{ id: 'profile-1', name: 'Ember' }],
+      lastBootstrapScopeKey: 'account:account-1',
+      bootstrapCaches: {
+        'account:account-1': {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'user-1' },
+            account: { id: 'account-1' },
+            profiles: [{ id: 'profile-1', name: 'Ember' }],
+          },
+        },
       },
     });
   });
@@ -211,7 +228,17 @@ describe('App bootstrap', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      activeProfileId: 'missing-profile',
+      lastBootstrapScopeKey: 'account:account-1',
+      bootstrapCaches: {
+        'account:account-1': {
+          activeProfileId: 'missing-profile',
+          bootstrapCache: {
+            currentUser: { id: 'user-1', accountId: 'account-1' },
+            account: { id: 'account-1' },
+            profiles: [],
+          },
+        },
+      },
     }));
 
     const wrapper = mountApp();
@@ -223,7 +250,11 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('selection');
     expect(wrapper.text()).toContain('Choose a Reader');
     expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toMatchObject({
-      activeProfileId: null,
+      bootstrapCaches: {
+        'account:account-1': {
+          activeProfileId: null,
+        },
+      },
     });
 
     await wrapper.findAll('.profile-card')[1].trigger('click');

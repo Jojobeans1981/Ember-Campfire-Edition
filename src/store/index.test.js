@@ -81,6 +81,8 @@ describe('Persistence — bootstrap state', () => {
     expect(raw.activeActivity).toBeUndefined();
     expect(raw.xp).toBeUndefined();
     expect(raw.selectedFriend).toBeUndefined();
+    expect(raw.lastBootstrapScopeKey).toBe('account:account-1');
+    expect(raw.bootstrapCaches['account:account-1'].activeProfileId).toBe('profile-1');
   });
 
   it('stores synced progress under profile-scoped caches instead of top-level app state', () => {
@@ -102,7 +104,7 @@ describe('Persistence — bootstrap state', () => {
     expect(raw.xp).toBeUndefined();
     expect(raw.ufliProgress).toBeUndefined();
     expect(raw.selectedFriend).toBeUndefined();
-    expect(raw.profileStates['profile-1'].snapshot).toEqual({
+    expect(raw.profileStates.local['profile-1'].snapshot).toEqual({
       profileId: 'profile-1',
       version: 4,
       ufliProgress: {

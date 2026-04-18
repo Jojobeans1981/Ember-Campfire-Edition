@@ -1,4 +1,5 @@
 import { useApiClient, ApiError } from './useApiClient.js';
+import { useAuthSession } from './useAuthSession.js';
 import { usePersistence } from './usePersistence.js';
 import { useProfileProgress } from './useProfileProgress.js';
 import {
@@ -24,6 +25,7 @@ function resolveActiveProfileId(persistedActiveProfileId, profiles) {
 
 export function useAppBootstrap() {
   const api = useApiClient();
+  const authSession = useAuthSession();
   const persistence = usePersistence();
   const profileProgress = useProfileProgress();
 
@@ -38,8 +40,14 @@ export function useAppBootstrap() {
     store.bootstrapStatus = 'loading';
     store.bootstrapError = null;
 
-    const persisted = persistence.loadBootstrapState();
-    if (persisted.bootstrapCache) {
+    if (!authSession.isAuthenticated()) {
+      clearBootstrapState();
+      store.bootstrapStatus = 'unauthenticated';
+      return { unauthenticated: true };
+    }
+
+    const persisted = authSession.mode === 'dev' ? persistence.loadBootstrapState() : null;
+    if (persisted?.bootstrapCache) {
       hydrateBootstrapState({
         currentUser: persisted.bootstrapCache.currentUser,
         account: persisted.bootstrapCache.account,
@@ -55,10 +63,12 @@ export function useAppBootstrap() {
         api.getProfiles(),
       ]);
 
-      const nextActiveProfileId = resolveActiveProfileId(persisted.activeProfileId, profiles);
+      const scopedPersisted = persistence.loadBootstrapState({ accountId: currentUser.accountId });
+
+      const nextActiveProfileId = resolveActiveProfileId(scopedPersisted.activeProfileId, profiles);
 
       hydrateBootstrapState({ currentUser, account, profiles, activeProfileId: nextActiveProfileId });
-      persistence.saveBootstrapState();
+      persistence.saveBootstrapState({ accountId: currentUser.accountId });
 
       if (nextActiveProfileId) {
         await profileProgress.bootstrapProfileProgress(nextActiveProfileId);

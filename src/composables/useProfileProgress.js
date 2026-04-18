@@ -6,6 +6,7 @@ import {
   replaceSkillState,
   resetSyncedProgressState,
   setPendingOperations,
+  skillState,
   store,
 } from '../store';
 
@@ -66,6 +67,10 @@ function ensureRecoveryFlow(options) {
   }
 
   throw new Error('Progress snapshot recovery is reserved for explicit repair flows.');
+}
+
+function cloneSkillStateSnapshot() {
+  return JSON.parse(JSON.stringify(skillState));
 }
 
 export function useProfileProgress() {
@@ -297,11 +302,22 @@ export function useProfileProgress() {
     return flushPendingOperations();
   }
 
-    return {
-      bootstrapProfileProgress,
-      flushPendingOperations,
-      recoverProfileProgress,
-      RECOVERY_REASON_STALE_CACHE,
-      submitOperation,
-    };
+  function submitSkillStateUpdate(mutator) {
+    const nextSkillState = cloneSkillStateSnapshot();
+    mutator(nextSkillState);
+
+    return submitOperation('replace_skill_state', {
+      skillState: nextSkillState,
+      skillStateSchemaVersion: store.skillStateSchemaVersion,
+    });
+  }
+
+  return {
+    bootstrapProfileProgress,
+    flushPendingOperations,
+    recoverProfileProgress,
+    RECOVERY_REASON_STALE_CACHE,
+    submitOperation,
+    submitSkillStateUpdate,
+  };
 }

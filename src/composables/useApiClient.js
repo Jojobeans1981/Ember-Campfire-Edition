@@ -1,3 +1,5 @@
+import { useAuthSession } from './useAuthSession.js';
+
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:3001';
 
 export class ApiError extends Error {
@@ -13,13 +15,10 @@ function getApiBaseUrl() {
   return import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
 }
 
-function getDevAuthToken() {
-  return import.meta.env.VITE_DEV_AUTH_TOKEN || '';
-}
-
-async function request(path, options = {}) {
+async function request(path, options = {}, attempt = 0) {
+  const authSession = useAuthSession();
   const headers = new Headers(options.headers ?? {});
-  const authToken = getDevAuthToken();
+  const authToken = await authSession.getBearerToken();
 
   if (authToken) {
     headers.set('authorization', `Bearer ${authToken}`);
@@ -34,6 +33,14 @@ async function request(path, options = {}) {
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
+
+  if (response.status === 401 && authSession.mode === 'cognito' && attempt === 0) {
+    const refreshed = await authSession.handleUnauthorizedResponse();
+
+    if (refreshed) {
+      return request(path, options, attempt + 1);
+    }
+  }
 
   if (!response.ok) {
     let payload = null;

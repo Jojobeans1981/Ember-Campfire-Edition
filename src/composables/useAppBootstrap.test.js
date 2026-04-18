@@ -11,6 +11,15 @@ vi.mock('./useProfileProgress.js', () => ({
   }),
 }));
 
+vi.mock('./useAuthSession.js', () => ({
+  useAuthSession: () => ({
+    mode: 'dev',
+    getBearerToken: async () => 'dev:owner',
+    handleUnauthorizedResponse: async () => false,
+    isAuthenticated: () => true,
+  }),
+}));
+
 function createJsonResponse(status, body) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -65,8 +74,8 @@ describe('useAppBootstrap', () => {
   it('reuses a persisted active profile for multi-profile households when it is still valid', async () => {
     const persistence = usePersistence();
     store.activeProfileId = 'profile-2';
-    store.currentUser = { id: 'cached-user' };
-    store.account = { id: 'cached-account' };
+    store.currentUser = { id: 'cached-user', accountId: 'account-1' };
+    store.account = { id: 'account-1' };
     store.profiles.splice(0, store.profiles.length, { id: 'profile-2', name: 'Cached Piper' });
     persistence.saveBootstrapState();
 
@@ -107,11 +116,16 @@ describe('useAppBootstrap', () => {
 
   it('clears cached bootstrap state after an unauthenticated bootstrap response', async () => {
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      activeProfileId: 'profile-1',
-      bootstrapCache: {
-        currentUser: { id: 'cached-user' },
-        account: { id: 'cached-account' },
-        profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+      lastBootstrapScopeKey: 'account:cached-account',
+      bootstrapCaches: {
+        'account:cached-account': {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'cached-user', accountId: 'cached-account' },
+            account: { id: 'cached-account' },
+            profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+          },
+        },
       },
     }));
 

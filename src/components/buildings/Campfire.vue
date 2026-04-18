@@ -21,6 +21,7 @@ import { ref } from 'vue';
 import { store } from '../../store';
 import { pushEvent } from '../../store/events';
 import { skillState } from '../../store';
+import { useProfileProgress } from '../../composables/useProfileProgress.js';
 
 const phonemes = ['m', 's', 't', 'a', 'p', 'n', 'i', 'c'];
 const currentPhoneme = ref('m');
@@ -33,6 +34,8 @@ let analyser = null;
 let microphone = null;
 let dataArray = null;
 let animationId = null;
+
+const { submitSkillStateUpdate } = useProfileProgress();
 
 const setPhoneme = (p) => {
   currentPhoneme.value = p;
@@ -170,21 +173,23 @@ const getPhonemeVariants = (phoneme) => {
 const success = () => {
   stopListening();
   campfireLit.value = true;
-  store.xp += 50;
+  void submitSkillStateUpdate((nextSkillState) => {
+    if (!nextSkillState[currentPhoneme.value]) {
+      nextSkillState[currentPhoneme.value] = {
+        conceptSlug: currentPhoneme.value,
+        strand: 'foundational',
+        taught: true,
+        recognitionStatus: 'not_introduced',
+        recallStatus: null,
+        reviewPressure: 'none',
+        lastPracticed: null,
+        lastAssessed: null,
+        currentSupportLevel: 'guided',
+      };
+    }
+  }).catch(() => undefined);
 
-  if (!skillState[currentPhoneme.value]) {
-    skillState[currentPhoneme.value] = {
-      conceptSlug: currentPhoneme.value,
-      strand: 'foundational',
-      taught: true,
-      recognitionStatus: 'not_introduced',
-      recallStatus: null,
-      reviewPressure: 'none',
-      lastPracticed: null,
-      lastAssessed: null,
-      currentSupportLevel: 'guided',
-    };
-  }
+  const supportLevel = skillState[currentPhoneme.value]?.currentSupportLevel ?? 'guided';
 
   pushEvent({
     id: crypto.randomUUID(),
@@ -199,7 +204,7 @@ const success = () => {
     response: { said: currentPhoneme.value },
     correct: true,
     confidence: 1,
-    supportLevel: skillState[currentPhoneme.value].currentSupportLevel,
+    supportLevel,
     responseLatencyMs: null,
     attemptNumber: 1,
     wasRetryAfterPrompt: false,
