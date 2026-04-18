@@ -162,6 +162,10 @@ resource "aws_ecs_task_definition" "backend" {
       ]
       environment = [
         {
+          name  = "AUTH_PROVIDER"
+          value = "cognito"
+        },
+        {
           name  = "HOST"
           value = "0.0.0.0"
         },
@@ -178,6 +182,22 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "DATABASE_URL"
           valueFrom = "${aws_secretsmanager_secret.backend_runtime.arn}:DATABASE_URL::"
+        },
+        {
+          name      = "COGNITO_USER_POOL_ID"
+          valueFrom = "${aws_secretsmanager_secret.backend_runtime.arn}:COGNITO_USER_POOL_ID::"
+        },
+        {
+          name      = "COGNITO_USER_POOL_CLIENT_ID"
+          valueFrom = "${aws_secretsmanager_secret.backend_runtime.arn}:COGNITO_USER_POOL_CLIENT_ID::"
+        },
+        {
+          name      = "COGNITO_REGION"
+          valueFrom = "${aws_secretsmanager_secret.backend_runtime.arn}:COGNITO_REGION::"
+        },
+        {
+          name      = "COGNITO_DOMAIN"
+          valueFrom = "${aws_secretsmanager_secret.backend_runtime.arn}:COGNITO_DOMAIN::"
         }
       ]
       logConfiguration = {

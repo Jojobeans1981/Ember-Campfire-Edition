@@ -35,6 +35,18 @@ vi.mock('./composables/useUfliProgression.js', () => ({
   }),
 }));
 
+vi.mock('./composables/useAuthSession.js', () => ({
+  useAuthSession: () => ({
+    mode: 'dev',
+    getBearerToken: async () => 'dev:owner',
+    handleUnauthorizedResponse: async () => false,
+    initializeSession: async () => true,
+    isAuthenticated: () => true,
+    logout: vi.fn(),
+    startLogin: vi.fn(),
+  }),
+}));
+
 function createJsonResponse(status, body) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -55,6 +67,16 @@ function createProgressSnapshot(profileId, overrides = {}) {
     updatedAt: null,
     ...overrides,
   };
+}
+
+function createDevIdentityKey(token) {
+  let hash = 0;
+  for (let index = 0; index < token.length; index += 1) {
+    hash = ((hash << 5) - hash) + token.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `token-${Math.abs(hash).toString(36)}`;
 }
 
 function mountApp() {
@@ -85,6 +107,8 @@ describe('App bootstrap', () => {
   });
 
   it('boots authenticated users, auto-selects a single profile, and waits for a guardian choice before entering the campground', async () => {
+    const devScopeKey = `dev:${createDevIdentityKey('dev:owner')}`;
+
     const fetchMock = vi.fn((input) => {
       const url = String(input);
 
@@ -130,33 +154,53 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('selection');
     expect(wrapper.text()).toContain('Choose a Guardian');
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
-      'http://127.0.0.1:3002/me',
-      'http://127.0.0.1:3002/account',
-      'http://127.0.0.1:3002/profiles',
-      'http://127.0.0.1:3002/profiles/profile-1/progress',
+      'http://127.0.0.1:3001/me',
+      'http://127.0.0.1:3001/account',
+      'http://127.0.0.1:3001/profiles',
+      'http://127.0.0.1:3001/profiles/profile-1/progress',
     ]);
 
     expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toMatchObject({
-      activeProfileId: 'profile-1',
-      bootstrapCache: {
-        currentUser: { id: 'user-1' },
-        account: { id: 'account-1' },
-        profiles: [{ id: 'profile-1', name: 'Ember' }],
+      lastBootstrapScopeKey: devScopeKey,
+      bootstrapCaches: {
+        [devScopeKey]: {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'user-1' },
+            account: { id: 'account-1' },
+            profiles: [{ id: 'profile-1', name: 'Ember' }],
+          },
+        },
       },
     });
   });
 
   it('shows the unauthenticated state when bootstrap receives 401 responses', async () => {
+    const devScopeKey = `dev:${createDevIdentityKey('dev:owner')}`;
+
     vi.stubGlobal('fetch', vi.fn(() => createJsonResponse(401, {
       error: { message: 'Unauthorized', code: 'AUTH_UNAUTHORIZED' },
     })));
 
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      activeProfileId: 'profile-1',
-      bootstrapCache: {
-        currentUser: { id: 'cached-user' },
-        account: { id: 'cached-account' },
-        profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+      lastBootstrapScopeKey: devScopeKey,
+      bootstrapCaches: {
+        [devScopeKey]: {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'cached-user', accountId: 'dev-account' },
+            account: { id: 'dev-account' },
+            profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+          },
+        },
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
       },
     }));
 
@@ -169,7 +213,18 @@ describe('App bootstrap', () => {
     expect(store.account).toBeNull();
     expect(store.activeProfileId).toBeNull();
     expect(wrapper.text()).toContain('Sign-In Needed');
-    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({});
+    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({
+      bootstrapCaches: {
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
+      },
+    });
   });
 
   it('requires explicit profile selection when multiple profiles exist and clears an invalid persisted profile id', async () => {
@@ -210,8 +265,19 @@ describe('App bootstrap', () => {
 
     vi.stubGlobal('fetch', fetchMock);
 
+    const devScopeKey = `dev:${createDevIdentityKey('dev:owner')}`;
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      activeProfileId: 'missing-profile',
+      lastBootstrapScopeKey: devScopeKey,
+      bootstrapCaches: {
+        [devScopeKey]: {
+          activeProfileId: 'missing-profile',
+          bootstrapCache: {
+            currentUser: { id: 'user-1', accountId: 'dev-account' },
+            account: { id: 'dev-account' },
+            profiles: [],
+          },
+        },
+      },
     }));
 
     const wrapper = mountApp();
@@ -223,7 +289,11 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('selection');
     expect(wrapper.text()).toContain('Choose a Reader');
     expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toMatchObject({
-      activeProfileId: null,
+      bootstrapCaches: {
+        [devScopeKey]: {
+          activeProfileId: null,
+        },
+      },
     });
 
     await wrapper.findAll('.profile-card')[1].trigger('click');

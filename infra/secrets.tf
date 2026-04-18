@@ -20,5 +20,6 @@ resource "aws_secretsmanager_secret_version" "backend_runtime" {
     COGNITO_USER_POOL_ID        = aws_cognito_user_pool.app.id
     COGNITO_USER_POOL_CLIENT_ID = aws_cognito_user_pool_client.spa.id
     COGNITO_REGION              = var.aws_region
+    COGNITO_DOMAIN              = local.cognito_domain_host
   })
 }

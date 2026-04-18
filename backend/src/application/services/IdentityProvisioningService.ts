@@ -3,7 +3,7 @@ import type { AccountRepository, UserRepository } from '../../domain/repositorie
 import type { AccountType } from '../../domain/types/AccountType';
 import type { UserRole } from '../../domain/types/UserRole';
 import type { IdGenerator } from '../../shared/ids/IdGenerator';
-import type { TransactionManager } from '../../shared/persistence';
+import type { Transaction, TransactionManager } from '../../shared/persistence';
 import type { Clock } from '../../shared/time/Clock';
 
 import type { CurrentUserContext } from '../CurrentUserContext';
@@ -20,6 +20,20 @@ export interface ProvisionableIdentityConfig {
   accountType: AccountType;
 }
 
+export interface CognitoProvisioningPolicy {
+  role: UserRole;
+  accountType: AccountType;
+}
+
+export const DEFAULT_COGNITO_PROVISIONING_POLICY: CognitoProvisioningPolicy = {
+  role: 'owner',
+  accountType: 'family'
+};
+
+export const createIdentityKey = (provider: AuthIdentity['provider'], subject: string): string => {
+  return `${provider}:${subject}`;
+};
+
 export class IdentityProvisioningService {
   private readonly provisionableIdentities: Map<string, ProvisionableIdentityConfig>;
 
@@ -30,10 +44,20 @@ export class IdentityProvisioningService {
     idGenerator: IdGenerator;
     clock: Clock;
     provisionableIdentities?: ProvisionableIdentityConfig[];
+    cognitoProvisioningPolicy?: CognitoProvisioningPolicy;
+    /**
+     * Optional controlled bootstrap path for Cognito identities when no invite/provision record exists.
+     * This must only be enabled when Cognito user creation is admin-approved (for example,
+     * allow_admin_create_user_only=true) to prevent self-signup privilege escalation.
+     */
+    canAutoProvisionCognitoIdentity?: (
+      identity: AuthIdentity,
+      transaction: Transaction
+    ) => Promise<boolean>;
   }) {
     this.provisionableIdentities = new Map(
       (dependencies.provisionableIdentities ?? []).map((identity) => [
-        this.createIdentityKey(identity.provider, identity.subject),
+        createIdentityKey(identity.provider, identity.subject),
         identity
       ])
     );
@@ -77,10 +101,12 @@ export class IdentityProvisioningService {
       }
 
       const provisionableIdentity = this.provisionableIdentities.get(
-        this.createIdentityKey(identity.provider, identity.subject)
+        createIdentityKey(identity.provider, identity.subject)
       );
 
-      if (provisionableIdentity === undefined) {
+      const resolvedProvisioning = await this.resolveProvisioning(identity, provisionableIdentity, transaction);
+
+      if (resolvedProvisioning === null) {
         throw new AppError('Authenticated user is not provisioned', {
           code: ERROR_CODES.UNAUTHORIZED,
           status: 401
@@ -94,8 +120,8 @@ export class IdentityProvisioningService {
       await this.dependencies.accountRepository.insert(
         {
           id: accountId,
-          name: provisionableIdentity.accountName,
-          type: provisionableIdentity.accountType,
+          name: resolvedProvisioning.accountName,
+          type: resolvedProvisioning.accountType,
           createdAt: now,
           updatedAt: now
         },
@@ -108,7 +134,7 @@ export class IdentityProvisioningService {
           accountId,
           email: identity.email,
           displayName: identity.displayName,
-          role: provisionableIdentity.role,
+          role: resolvedProvisioning.role,
           authProvider: identity.provider,
           authSubject: identity.subject,
           createdAt: now,
@@ -120,12 +146,58 @@ export class IdentityProvisioningService {
       return {
         userId,
         accountId,
-        role: provisionableIdentity.role
+        role: resolvedProvisioning.role
       };
     });
   }
 
-  private createIdentityKey(provider: AuthIdentity['provider'], subject: string): string {
-    return `${provider}:${subject}`;
+  private async resolveProvisioning(
+    identity: AuthIdentity,
+    provisionableIdentity: ProvisionableIdentityConfig | undefined,
+    transaction: Transaction
+  ): Promise<ProvisionableIdentityConfig | null> {
+    if (provisionableIdentity !== undefined) {
+      return provisionableIdentity;
+    }
+
+    if (identity.provider !== 'cognito') {
+      return null;
+    }
+
+    const shouldAutoProvision = await this.dependencies.canAutoProvisionCognitoIdentity?.(identity, transaction);
+    if (!shouldAutoProvision) {
+      return null;
+    }
+
+    return createCognitoProvisioning(identity, this.dependencies.cognitoProvisioningPolicy);
   }
 }
+
+const createCognitoProvisioning = (
+  identity: AuthIdentity,
+  policy: CognitoProvisioningPolicy = DEFAULT_COGNITO_PROVISIONING_POLICY
+): ProvisionableIdentityConfig => ({
+  provider: 'cognito',
+  subject: identity.subject,
+  email: identity.email,
+  displayName: identity.displayName,
+  accountName: deriveAccountName(identity),
+  role: policy.role,
+  accountType: policy.accountType
+});
+
+const deriveAccountName = (identity: AuthIdentity): string => {
+  const displayName = identity.displayName?.trim();
+
+  if (displayName) {
+    return `${displayName} Household`;
+  }
+
+  const emailLocalPart = identity.email?.split('@')[0]?.trim();
+
+  if (emailLocalPart) {
+    return `${emailLocalPart} Household`;
+  }
+
+  return 'Ember Household';
+};

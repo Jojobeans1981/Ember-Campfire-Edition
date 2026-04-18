@@ -84,3 +84,8 @@ output "cognito_user_pool_client_id" {
   description = "Cognito SPA app client ID for future auth integration."
   value       = aws_cognito_user_pool_client.spa.id
 }
+
+output "cognito_hosted_ui_domain" {
+  description = "Cognito Hosted UI domain for Ember managed login."
+  value       = local.cognito_domain_host
+}

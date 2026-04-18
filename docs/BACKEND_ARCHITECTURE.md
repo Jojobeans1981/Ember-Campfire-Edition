@@ -432,6 +432,11 @@ Responsibilities:
 - resolve normalized auth identity to a local user
 - ensure the user belongs to one account
 - create the local account and user automatically for configured dev identities in development when missing
+- for Cognito identities, require an invite/provision record keyed by `provider:subject` before creating local users
+- only allow Cognito first-user bootstrap through an explicit, controlled bootstrap path
+
+Security precondition for Cognito:
+- if Cognito first-user bootstrap is enabled, the Cognito user pool must block self-signup and require admin-approved user creation (for example `allow_admin_create_user_only = true`) or an equivalent invite/approval flow
 
 ### ProfileAccessService
 

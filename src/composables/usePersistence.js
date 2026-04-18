@@ -14,11 +14,35 @@ function hasStorageMethod(name) {
   );
 }
 
+function getStorageItem(key) {
+  if (hasStorageMethod('getItem')) {
+    return globalThis.localStorage.getItem(key);
+  }
+
+  return memoryStorage.has(key) ? memoryStorage.get(key) : null;
+}
+
+function setStorageItem(key, value) {
+  if (hasStorageMethod('setItem')) {
+    globalThis.localStorage.setItem(key, value);
+    return;
+  }
+
+  memoryStorage.set(key, value);
+}
+
+function removeStorageItem(key) {
+  if (hasStorageMethod('removeItem')) {
+    globalThis.localStorage.removeItem(key);
+    return;
+  }
+
+  memoryStorage.delete(key);
+}
+
 function readState() {
   try {
-    const raw = hasStorageMethod('getItem')
-      ? globalThis.localStorage.getItem(STORAGE_KEY)
-      : (memoryStorage.has(STORAGE_KEY) ? memoryStorage.get(STORAGE_KEY) : null);
+    const raw = getStorageItem(STORAGE_KEY);
 
     if (!raw) {
       return {};
@@ -34,25 +58,28 @@ function readState() {
 
 function writeState(nextState) {
   const raw = JSON.stringify(nextState);
-  if (hasStorageMethod('setItem')) {
-    globalThis.localStorage.setItem(STORAGE_KEY, raw);
-    return;
-  }
-
-  memoryStorage.set(STORAGE_KEY, raw);
+  setStorageItem(STORAGE_KEY, raw);
 }
 
 function removeState() {
-  if (hasStorageMethod('removeItem')) {
-    globalThis.localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-
-  memoryStorage.delete(STORAGE_KEY);
+  removeStorageItem(STORAGE_KEY);
 }
 
 function createProfileCacheKey(profileId) {
   return String(profileId ?? '');
+}
+
+function createScopeKey(options = {}) {
+  const normalizedOptions = typeof options === 'string'
+    ? { accountId: options }
+    : (options ?? {});
+
+  if (normalizedOptions.devIdentityKey) {
+    return `dev:${normalizedOptions.devIdentityKey}`;
+  }
+
+  const accountId = normalizedOptions.accountId ?? store.currentUser?.accountId ?? store.account?.id;
+  return accountId ? `account:${accountId}` : 'local';
 }
 
 function createSnapshotCache(profileId = store.activeProfileId) {
@@ -68,37 +95,139 @@ function createSnapshotCache(profileId = store.activeProfileId) {
   };
 }
 
+function readLegacyBootstrapAccountId(persisted) {
+  return persisted.bootstrapCache?.currentUser?.accountId
+    ?? persisted.bootstrapCache?.account?.id
+    ?? null;
+}
+
+function isLegacyBootstrapScopeMatch(persisted, scopeKey) {
+  const legacyAccountId = readLegacyBootstrapAccountId(persisted);
+
+  if (scopeKey.startsWith('account:')) {
+    return legacyAccountId === scopeKey.slice('account:'.length);
+  }
+
+  if (scopeKey === 'local') {
+    return legacyAccountId == null;
+  }
+
+  return false;
+}
+
 export function usePersistence() {
-  function saveBootstrapState() {
+  function saveBootstrapState(options = {}) {
     try {
+      const normalizedOptions = typeof options === 'string'
+        ? { accountId: options }
+        : (options ?? {});
+
+      const scopeKey = normalizedOptions.devIdentityKey
+        ? createScopeKey({ devIdentityKey: normalizedOptions.devIdentityKey })
+        : (() => {
+          const accountId = normalizedOptions.accountId ?? store.currentUser?.accountId;
+          if (!accountId) {
+            return null;
+          }
+
+          return createScopeKey({ accountId });
+        })();
+
+      if (!scopeKey) {
+        return;
+      }
+
       const persisted = readState();
-      persisted.activeProfileId = store.activeProfileId ?? null;
-      persisted.bootstrapCache = {
-        currentUser: store.currentUser,
-        account: store.account,
-        profiles: Array.isArray(store.profiles) ? [...store.profiles] : [],
-        savedAt: new Date().toISOString(),
+      const bootstrapCaches = persisted.bootstrapCaches ?? {};
+      bootstrapCaches[scopeKey] = {
+        activeProfileId: store.activeProfileId ?? null,
+        bootstrapCache: {
+          currentUser: store.currentUser,
+          account: store.account,
+          profiles: Array.isArray(store.profiles) ? [...store.profiles] : [],
+          savedAt: new Date().toISOString(),
+        },
       };
+      persisted.bootstrapCaches = bootstrapCaches;
+      persisted.lastBootstrapScopeKey = scopeKey;
       writeState(persisted);
     } catch (err) {
       console.warn('Failed to save bootstrap state:', err);
     }
   }
 
-  function loadBootstrapState() {
+  function loadBootstrapState(options = {}) {
     const persisted = readState();
+    const scopeKey = options.accountId || options.devIdentityKey
+      ? createScopeKey(options)
+      : persisted.lastBootstrapScopeKey;
+    if (!scopeKey) {
+      if (persisted.bootstrapCache) {
+        return {
+          activeProfileId: persisted.activeProfileId ?? null,
+          bootstrapCache: persisted.bootstrapCache ?? null,
+        };
+      }
+
+      return {
+        activeProfileId: null,
+        bootstrapCache: null,
+      };
+    }
+
+    const cachedState = persisted.bootstrapCaches?.[scopeKey] ?? null;
     return {
-      activeProfileId: persisted.activeProfileId ?? null,
-      bootstrapCache: persisted.bootstrapCache ?? null,
+      activeProfileId: cachedState?.activeProfileId ?? null,
+      bootstrapCache: cachedState?.bootstrapCache ?? null,
     };
   }
 
-  function clearBootstrapState() {
+  function getLastBootstrapScopeKey() {
+    const persisted = readState();
+    return persisted.lastBootstrapScopeKey ?? null;
+  }
+
+  function clearBootstrapScope(scopeKey) {
+    if (!scopeKey) {
+      return;
+    }
+
     try {
       const persisted = readState();
-      delete persisted.activeProfileId;
-      delete persisted.bootstrapCache;
+
+      if (persisted.bootstrapCaches) {
+        delete persisted.bootstrapCaches[scopeKey];
+      }
+
+      if (persisted.lastBootstrapScopeKey === scopeKey) {
+        delete persisted.lastBootstrapScopeKey;
+      }
+
+      if (isLegacyBootstrapScopeMatch(persisted, scopeKey)) {
+        delete persisted.activeProfileId;
+        delete persisted.bootstrapCache;
+      }
+
       writeState(persisted);
+    } catch (err) {
+      console.warn('Failed to clear scoped bootstrap state:', err);
+    }
+  }
+
+  function clearBootstrapState(options = {}) {
+    try {
+      const scopeKey = options.accountId || options.devIdentityKey ? createScopeKey(options) : null;
+
+      if (!scopeKey) {
+        const persisted = readState();
+        delete persisted.bootstrapCaches;
+        delete persisted.lastBootstrapScopeKey;
+        delete persisted.activeProfileId;
+        delete persisted.bootstrapCache;
+        writeState(persisted);
+      } else {
+        clearBootstrapScope(scopeKey);
+      }
     } catch (err) {
       console.warn('Failed to clear bootstrap state:', err);
     }
@@ -110,13 +239,20 @@ export function usePersistence() {
         return;
       }
 
+      const scopeKey = createScopeKey();
+      if (!scopeKey) {
+        return;
+      }
+
       const persisted = readState();
       const profileStates = persisted.profileStates ?? {};
-      profileStates[createProfileCacheKey(profileId)] = {
+      const scopedProfileStates = profileStates[scopeKey] ?? {};
+      scopedProfileStates[createProfileCacheKey(profileId)] = {
         snapshot: cloneJsonSafe(overrides.snapshot) ?? createSnapshotCache(profileId),
         pendingOperations: cloneJsonSafe(overrides.pendingOperations) ?? [...store.pendingOperations],
         savedAt: new Date().toISOString(),
       };
+      profileStates[scopeKey] = scopedProfileStates;
       persisted.profileStates = profileStates;
       writeState(persisted);
     } catch (err) {
@@ -124,20 +260,30 @@ export function usePersistence() {
     }
   }
 
-  function loadProfileState(profileId) {
+  function loadProfileState(profileId, options = {}) {
+    const scopeKey = createScopeKey(options);
+    if (!scopeKey) {
+      return null;
+    }
+
     const persisted = readState();
-    const profileStates = persisted.profileStates ?? {};
+    const profileStates = persisted.profileStates?.[scopeKey] ?? {};
     return profileStates[createProfileCacheKey(profileId)] ?? null;
   }
 
-  function clearProfileState(profileId) {
+  function clearProfileState(profileId, options = {}) {
     try {
-      const persisted = readState();
-      if (!persisted.profileStates) {
+      const scopeKey = createScopeKey(options);
+      if (!scopeKey) {
         return;
       }
 
-      delete persisted.profileStates[createProfileCacheKey(profileId)];
+      const persisted = readState();
+      if (!persisted.profileStates?.[scopeKey]) {
+        return;
+      }
+
+      delete persisted.profileStates[scopeKey][createProfileCacheKey(profileId)];
       writeState(persisted);
     } catch (err) {
       console.warn('Failed to clear profile state:', err);
@@ -151,10 +297,17 @@ export function usePersistence() {
   return {
     saveBootstrapState,
     loadBootstrapState,
+    getLastBootstrapScopeKey,
+    clearBootstrapScope,
     clearBootstrapState,
+    createScopeKey,
     saveProfileState,
     loadProfileState,
     clearProfileState,
     clearSave,
+    getStorageItem,
+    setStorageItem,
+    removeStorageItem,
+    hasStorageMethod,
   };
 }

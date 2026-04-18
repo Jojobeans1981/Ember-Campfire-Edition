@@ -41,7 +41,12 @@
       <div class="xp-display" :class="{ pop: xpPop }">
         <span class="spark-emoji">&#10024;</span> {{ store.xp }} Sparks
       </div>
+      <button v-if="isCognitoMode" class="nav-btn" type="button" @click="handleLogout">Log Out</button>
     </header>
+
+    <div v-if="!showLaunchSplash && !showTopBar && isCognitoMode && store.bootstrapStatus === 'ready'" class="auth-toolbar">
+      <button class="nav-btn" type="button" @click="handleLogout">Log Out</button>
+    </div>
 
     <main v-if="!showLaunchSplash" class="main" :class="{ 'playful-main': showPlayfulBackdrop }">
       <p v-if="showSyncBanner" class="sync-banner">{{ syncBannerText }}</p>
@@ -58,7 +63,10 @@
 
         <div v-else-if="store.bootstrapStatus === 'unauthenticated'" key="bootstrap-unauthenticated" class="status-card">
           <h2>Sign-In Needed</h2>
-          <p>Add a valid dev auth token so the frontend can call the backend.</p>
+          <p v-if="authMode === 'dev'">Add a valid dev auth token so the frontend can call the backend.</p>
+          <p v-else-if="authMode === 'cognito'">Sign in with your household account to load readers and saved progress.</p>
+          <p v-else>The app is missing auth configuration.</p>
+          <button v-if="authMode === 'cognito'" class="primary-btn" type="button" @click="handleSignIn">Sign In</button>
         </div>
 
         <div v-else-if="store.bootstrapStatus === 'error'" key="bootstrap-error" class="status-card">
@@ -219,8 +227,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, watchEffect, onErrorCaptured, nextTick } from 'vue';
-import { store } from './store';
+import { clearBootstrapState as clearStoreBootstrapState, store } from './store';
 import { useAppBootstrap } from './composables/useAppBootstrap.js';
+import { useAuthSession } from './composables/useAuthSession.js';
+import { usePersistence } from './composables/usePersistence.js';
 import { useProfileProgress } from './composables/useProfileProgress.js';
 import { useUfliProgression } from './composables/useUfliProgression.js';
 import { stopAllAudio, preloadEmberVoice } from './composables/useEmber.js';
@@ -233,10 +243,15 @@ import Dashboard from './components/Dashboard.vue';
 import PlayfulBackdrop from './components/PlayfulBackdrop.vue';
 
 const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
+const authSession = useAuthSession();
+const persistence = usePersistence();
 const { submitOperation } = useProfileProgress();
 const { completeUfliLesson } = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
 const ember = useEmber();
+
+const authMode = computed(() => authSession.mode);
+const isCognitoMode = computed(() => authSession.mode === 'cognito');
 
 const activeProfileName = computed(() => {
   return store.profiles.find((profile) => profile.id === store.activeProfileId)?.name ?? 'Unknown reader';
@@ -741,11 +756,28 @@ async function runBootstrap() {
   // straight from the error card to the resolved page.
   entryPageResolved.value = false;
   try {
+    await authSession.initializeSession();
     await bootstrapApp();
     syncEntryPage();
   } finally {
     entryPageResolved.value = true;
   }
+}
+
+function handleSignIn() {
+  void authSession.startLogin();
+}
+
+function handleLogout() {
+  const bootstrapScopeKey = store.currentUser?.accountId
+    ? persistence.createScopeKey({ accountId: store.currentUser.accountId })
+    : persistence.getLastBootstrapScopeKey();
+
+  clearStoreBootstrapState();
+  if (bootstrapScopeKey) {
+    persistence.clearBootstrapScope(bootstrapScopeKey);
+  }
+  authSession.logout();
 }
 
 onMounted(() => {
@@ -1059,6 +1091,14 @@ body {
 
 .nav-btn:hover {
   background: rgba(100, 255, 218, 0.1);
+}
+
+.auth-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem 0;
 }
 
 .back-arrow {
@@ -1863,7 +1903,3 @@ body {
   font-size: 0.82rem;
 }
 </style>
-
-
-
-

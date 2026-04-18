@@ -1,4 +1,5 @@
 import { useApiClient, ApiError } from './useApiClient.js';
+import { useAuthSession } from './useAuthSession.js';
 import { usePersistence } from './usePersistence.js';
 import { useProfileProgress } from './useProfileProgress.js';
 import {
@@ -22,24 +23,66 @@ function resolveActiveProfileId(persistedActiveProfileId, profiles) {
     : null;
 }
 
+function createDevIdentityKey(token) {
+  const source = String(token ?? '').trim();
+  if (!source) {
+    return null;
+  }
+
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = ((hash << 5) - hash) + source.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `token-${Math.abs(hash).toString(36)}`;
+}
+
 export function useAppBootstrap() {
   const api = useApiClient();
+  const authSession = useAuthSession();
   const persistence = usePersistence();
   const profileProgress = useProfileProgress();
 
+  async function resolveBootstrapScope() {
+    if (authSession.mode === 'dev') {
+      const token = await authSession.getBearerToken();
+      return {
+        devIdentityKey: createDevIdentityKey(token) ?? 'token-anonymous',
+      };
+    }
+
+    return {
+      accountId: store.currentUser?.accountId ?? null,
+    };
+  }
+
   async function selectProfile(profileId) {
     store.activeProfileId = profileId;
-    persistence.saveBootstrapState();
+    const scope = await resolveBootstrapScope();
+    persistence.saveBootstrapState(scope);
     await profileProgress.bootstrapProfileProgress(profileId);
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState(scope);
   }
 
   async function bootstrapApp() {
     store.bootstrapStatus = 'loading';
     store.bootstrapError = null;
 
-    const persisted = persistence.loadBootstrapState();
-    if (persisted.bootstrapCache) {
+    if (!authSession.isAuthenticated()) {
+      clearBootstrapState();
+      store.bootstrapStatus = 'unauthenticated';
+      return { unauthenticated: true };
+    }
+
+    const devScope = authSession.mode === 'dev' ? await resolveBootstrapScope() : null;
+    const bootstrapScopeKey = authSession.mode === 'dev'
+      ? persistence.createScopeKey(devScope)
+      : (store.currentUser?.accountId
+        ? persistence.createScopeKey({ accountId: store.currentUser.accountId })
+        : persistence.getLastBootstrapScopeKey());
+    const persisted = authSession.mode === 'dev' ? persistence.loadBootstrapState(devScope) : null;
+    if (persisted?.bootstrapCache) {
       hydrateBootstrapState({
         currentUser: persisted.bootstrapCache.currentUser,
         account: persisted.bootstrapCache.account,
@@ -55,10 +98,16 @@ export function useAppBootstrap() {
         api.getProfiles(),
       ]);
 
-      const nextActiveProfileId = resolveActiveProfileId(persisted.activeProfileId, profiles);
+      const persistenceScope = authSession.mode === 'dev'
+        ? devScope
+        : { accountId: currentUser.accountId };
+
+      const scopedPersisted = persistence.loadBootstrapState(persistenceScope);
+
+      const nextActiveProfileId = resolveActiveProfileId(scopedPersisted.activeProfileId, profiles);
 
       hydrateBootstrapState({ currentUser, account, profiles, activeProfileId: nextActiveProfileId });
-      persistence.saveBootstrapState();
+      persistence.saveBootstrapState(persistenceScope);
 
       if (nextActiveProfileId) {
         await profileProgress.bootstrapProfileProgress(nextActiveProfileId);
@@ -76,7 +125,9 @@ export function useAppBootstrap() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         clearBootstrapState();
-        persistence.clearBootstrapState();
+        if (bootstrapScopeKey) {
+          persistence.clearBootstrapScope(bootstrapScopeKey);
+        }
         store.bootstrapStatus = 'unauthenticated';
         return { unauthenticated: true };
       }
@@ -90,7 +141,7 @@ export function useAppBootstrap() {
   async function createProfile(name) {
     const profile = await api.createProfile(name);
     store.profiles.splice(0, store.profiles.length, profile);
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState(await resolveBootstrapScope());
     await bootstrapApp();
     return profile;
   }

@@ -3,6 +3,16 @@ import { mount } from '@vue/test-utils';
 import Workshop from './Workshop.vue';
 import { store } from '../../store';
 
+const { submitSkillStateUpdateMock } = vi.hoisted(() => ({
+  submitSkillStateUpdateMock: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock('../../composables/useProfileProgress.js', () => ({
+  useProfileProgress: () => ({
+    submitSkillStateUpdate: submitSkillStateUpdateMock,
+  }),
+}));
+
 vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
 }));
@@ -10,6 +20,7 @@ vi.mock('canvas-confetti', () => ({
 describe('Workshop Component', () => {
   beforeEach(() => {
     store.xp = 0;
+    submitSkillStateUpdateMock.mockClear();
   });
 
   it('should display the match heading', () => {
@@ -23,7 +34,7 @@ describe('Workshop Component', () => {
     expect(buttons.length).toBeGreaterThan(0);
   });
 
-  it('should award XP on correct match', async () => {
+  it('routes skill state changes through canonical progress sync on correct match', async () => {
     const wrapper = mount(Workshop);
     // Find the button matching the current target
     const targetText = wrapper.find('.target-letter').text().toLowerCase();
@@ -33,7 +44,8 @@ describe('Workshop Component', () => {
     expect(correctBtn).toBeTruthy();
 
     await correctBtn.trigger('click');
-    expect(store.xp).toBe(25);
+    expect(store.xp).toBe(0);
+    expect(submitSkillStateUpdateMock).toHaveBeenCalledTimes(1);
     expect(wrapper.text()).toContain('Correct');
   });
 });

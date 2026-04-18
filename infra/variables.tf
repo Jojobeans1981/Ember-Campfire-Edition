@@ -22,6 +22,18 @@ variable "app_domain_name" {
   default     = "app.readwithember.com"
 }
 
+variable "cognito_callback_urls" {
+  description = "Allowed Cognito callback URLs (for example VITE_COGNITO_REDIRECT_URI per environment)."
+  type        = list(string)
+  default     = ["https://app.readwithember.com/auth/callback"]
+}
+
+variable "cognito_logout_urls" {
+  description = "Allowed Cognito logout URLs (for example VITE_COGNITO_LOGOUT_URI per environment)."
+  type        = list(string)
+  default     = ["https://app.readwithember.com/"]
+}
+
 variable "baseinfra_organization" {
   description = "Terraform Cloud organization that owns the shared base infrastructure workspace."
   type        = string

@@ -78,6 +78,33 @@ resource "aws_cloudfront_function" "api_rewrite" {
   EOF
 }
 
+resource "aws_cloudfront_function" "spa_rewrite" {
+  name    = "${local.name_prefix}-spa-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite SPA routes to /index.html while preserving API and asset paths."
+  publish = true
+  code    = <<-EOF
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri || "/";
+
+      if (uri.indexOf("/api") === 0) {
+        return request;
+      }
+
+      var lastSlashIndex = uri.lastIndexOf("/");
+      var lastSegment = lastSlashIndex >= 0 ? uri.substring(lastSlashIndex + 1) : uri;
+      var hasFileExtension = lastSegment.indexOf(".") !== -1;
+
+      if (!hasFileExtension) {
+        request.uri = "/index.html";
+      }
+
+      return request;
+    }
+  EOF
+}
+
 resource "aws_cloudfront_distribution" "app" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -117,6 +144,11 @@ resource "aws_cloudfront_distribution" "app" {
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     compress               = true
     cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_rewrite.arn
+    }
   }
 
   ordered_cache_behavior {

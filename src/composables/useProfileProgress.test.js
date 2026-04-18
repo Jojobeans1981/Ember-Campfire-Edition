@@ -4,6 +4,15 @@ import { clearBootstrapState, replaceSkillState, skillState, store } from '../st
 import { usePersistence } from './usePersistence.js';
 import { useProfileProgress } from './useProfileProgress.js';
 
+vi.mock('./useAuthSession.js', () => ({
+  useAuthSession: () => ({
+    mode: 'dev',
+    getBearerToken: async () => 'dev:owner',
+    handleUnauthorizedResponse: async () => false,
+    isAuthenticated: () => true,
+  }),
+}));
+
 function createJsonResponse(status, body) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -178,6 +187,64 @@ describe('useProfileProgress', () => {
     expect(store.pendingOperations).toEqual([]);
     expect(store.syncStatus).toBe('idle');
     expect(store.ufliProgress['001'].lessonComplete).toBe(true);
+  });
+
+  it('routes skill state edits through replace_skill_state operations', async () => {
+    replaceSkillState({ decoding: { streak: 2, currentSupportLevel: 'guided' } }, 3);
+
+    const fetchMock = vi.fn((input, options = {}) => {
+      const url = String(input);
+
+      if (url.endsWith('/profiles/profile-1/progress-operations')) {
+        const body = JSON.parse(options.body ?? '{}');
+
+        expect(body.operations).toHaveLength(1);
+        expect(body.operations[0]).toMatchObject({
+          type: 'replace_skill_state',
+          payload: {
+            skillStateSchemaVersion: 3,
+            skillState: {
+              decoding: {
+                streak: 4,
+                currentSupportLevel: 'guided',
+              },
+            },
+          },
+        });
+
+        return createJsonResponse(200, {
+          profileId: 'profile-1',
+          startingVersion: 0,
+          endingVersion: 1,
+          applied: [{ clientOperationId: 'op-1', appliedVersion: 1 }],
+          rejected: [],
+          snapshot: createSnapshot('profile-1', {
+            version: 1,
+            xp: 0,
+            skillState: {
+              decoding: {
+                streak: 4,
+                currentSupportLevel: 'guided',
+              },
+            },
+            skillStateSchemaVersion: 3,
+          }),
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { submitSkillStateUpdate } = useProfileProgress();
+    await submitSkillStateUpdate((nextSkillState) => {
+      nextSkillState.decoding.streak = 4;
+    });
+
+    expect(skillState.decoding).toEqual({ streak: 4, currentSupportLevel: 'guided' });
+    expect(store.skillStateSchemaVersion).toBe(3);
+    expect(store.pendingOperations).toEqual([]);
   });
 
   it('never uses the snapshot endpoint during normal progression sync', async () => {
@@ -410,6 +477,8 @@ describe('useProfileProgress', () => {
     const submitPromise = submitOperation('complete_lesson', { lessonId: '001' });
     const secondFlushPromise = flushPendingOperations();
 
+    await Promise.resolve();
+    await Promise.resolve();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(secondFlushPromise).toBeInstanceOf(Promise);
 
@@ -483,6 +552,7 @@ describe('useProfileProgress', () => {
       selectedFriend: { id: 'fox', name: 'Fox', file: 'fox.png' },
     });
 
+    await Promise.resolve();
     await Promise.resolve();
     expect(fetchMock).toHaveBeenCalledTimes(1);
 

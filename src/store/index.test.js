@@ -81,6 +81,67 @@ describe('Persistence — bootstrap state', () => {
     expect(raw.activeActivity).toBeUndefined();
     expect(raw.xp).toBeUndefined();
     expect(raw.selectedFriend).toBeUndefined();
+    expect(raw.lastBootstrapScopeKey).toBe('account:account-1');
+    expect(raw.bootstrapCaches['account:account-1'].activeProfileId).toBe('profile-1');
+  });
+
+  it('does not save bootstrap state when no account id is available', () => {
+    const persistence = usePersistence();
+
+    clearBootstrapState();
+    store.currentUser = null;
+    store.account = null;
+
+    persistence.saveBootstrapState();
+
+    expect(localStorage.getItem('ember-campground-save-v3')).toBeNull();
+  });
+
+  it('clears only a targeted bootstrap scope including matching legacy fields', () => {
+    const persistence = usePersistence();
+
+    localStorage.setItem('ember-campground-save-v3', JSON.stringify({
+      lastBootstrapScopeKey: 'account:account-1',
+      bootstrapCaches: {
+        'account:account-1': {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'user-1', accountId: 'account-1' },
+            account: { id: 'account-1' },
+            profiles: [{ id: 'profile-1', name: 'Ember' }],
+          },
+        },
+        'account:account-2': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'user-2', accountId: 'account-2' },
+            account: { id: 'account-2' },
+            profiles: [{ id: 'profile-2', name: 'Piper' }],
+          },
+        },
+      },
+      activeProfileId: 'profile-1',
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'account-1' },
+        account: { id: 'account-1' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+    }));
+
+    persistence.clearBootstrapScope('account:account-1');
+
+    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({
+      bootstrapCaches: {
+        'account:account-2': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'user-2', accountId: 'account-2' },
+            account: { id: 'account-2' },
+            profiles: [{ id: 'profile-2', name: 'Piper' }],
+          },
+        },
+      },
+    });
   });
 
   it('stores synced progress under profile-scoped caches instead of top-level app state', () => {
@@ -102,7 +163,7 @@ describe('Persistence — bootstrap state', () => {
     expect(raw.xp).toBeUndefined();
     expect(raw.ufliProgress).toBeUndefined();
     expect(raw.selectedFriend).toBeUndefined();
-    expect(raw.profileStates['profile-1'].snapshot).toEqual({
+    expect(raw.profileStates.local['profile-1'].snapshot).toEqual({
       profileId: 'profile-1',
       version: 4,
       ufliProgress: {

@@ -37,7 +37,12 @@ resource "aws_cognito_user_pool_client" "spa" {
   name         = "${local.name_prefix}-spa"
   user_pool_id = aws_cognito_user_pool.app.id
 
+  allowed_oauth_flows_user_pool_client          = true
+  allowed_oauth_flows                           = ["code"]
+  allowed_oauth_scopes                          = ["openid", "email", "profile"]
+  callback_urls                                 = var.cognito_callback_urls
   generate_secret                               = false
+  logout_urls                                   = var.cognito_logout_urls
   prevent_user_existence_errors                 = "ENABLED"
   refresh_token_validity                        = 30
   access_token_validity                         = 60
@@ -59,4 +64,9 @@ resource "aws_cognito_user_pool_client" "spa" {
   }
 
   supported_identity_providers = ["COGNITO"]
+}
+
+resource "aws_cognito_user_pool_domain" "app" {
+  domain       = local.cognito_domain_prefix
+  user_pool_id = aws_cognito_user_pool.app.id
 }

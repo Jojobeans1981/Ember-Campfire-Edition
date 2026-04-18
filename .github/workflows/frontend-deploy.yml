@@ -22,6 +22,10 @@ env:
   AWS_REGION: us-east-2
   APP_DOMAIN: app.readwithember.com
   APP_BUCKET: app.readwithember.com
+  APP_REDIRECT_URI: https://app.readwithember.com/auth/callback
+  APP_LOGOUT_URI: https://app.readwithember.com/
+  PROJECT_NAME: ember
+  DEPLOY_ENV: production
 
 jobs:
   deploy:
@@ -62,12 +66,62 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Resolve Cognito build configuration
+        id: cognito
+        run: |
+          set -euo pipefail
+
+          user_pool_name="$PROJECT_NAME-app"
+          client_name="$PROJECT_NAME-spa"
+          domain_prefix="${PROJECT_NAME}-${DEPLOY_ENV}-auth"
+
+          user_pool_id=$(aws cognito-idp list-user-pools \
+            --max-results 60 \
+            --query "UserPools[?Name=='$user_pool_name'].Id | [0]" \
+            --output text)
+
+          if [ "$user_pool_id" = "None" ] || [ -z "$user_pool_id" ]; then
+            echo "Cognito user pool '$user_pool_name' does not exist yet. Apply Terraform infrastructure first." >&2
+            exit 1
+          fi
+
+          client_id=$(aws cognito-idp list-user-pool-clients \
+            --user-pool-id "$user_pool_id" \
+            --max-results 60 \
+            --query "UserPoolClients[?ClientName=='$client_name'].ClientId | [0]" \
+            --output text)
+
+          if [ "$client_id" = "None" ] || [ -z "$client_id" ]; then
+            echo "Cognito app client '$client_name' was not found in pool '$user_pool_id'." >&2
+            exit 1
+          fi
+
+          domain_description=$(aws cognito-idp describe-user-pool-domain --domain "$domain_prefix")
+          domain=$(printf '%s' "$domain_description" | jq -r '.DomainDescription.Domain')
+
+          if [ -z "$domain" ] || [ "$domain" = "null" ]; then
+            echo "Cognito Hosted UI domain '$domain_prefix' does not exist yet. Apply Terraform infrastructure first." >&2
+            exit 1
+          fi
+
+          domain_host="${domain}.auth.${AWS_REGION}.amazoncognito.com"
+
+          echo "user_pool_id=$user_pool_id" >> "$GITHUB_OUTPUT"
+          echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
+          echo "domain=$domain_host" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: npm install
 
       - name: Build frontend
         env:
           VITE_API_BASE_URL: /api
+          VITE_COGNITO_REGION: ${{ env.AWS_REGION }}
+          VITE_COGNITO_USER_POOL_ID: ${{ steps.cognito.outputs.user_pool_id }}
+          VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ steps.cognito.outputs.client_id }}
+          VITE_COGNITO_DOMAIN: ${{ steps.cognito.outputs.domain }}
+          VITE_COGNITO_REDIRECT_URI: ${{ env.APP_REDIRECT_URI }}
+          VITE_COGNITO_LOGOUT_URI: ${{ env.APP_LOGOUT_URI }}
         run: npm run build
 
       - name: Upload static assets

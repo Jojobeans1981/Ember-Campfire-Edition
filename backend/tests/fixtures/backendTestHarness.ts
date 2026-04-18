@@ -14,7 +14,7 @@ import {
   ProgressSyncService,
   XpDerivationService
 } from '../../src/application/services';
-import { DevAuthProvider, mapDevUsersToProvisionableIdentities } from '../../src/infrastructure/auth';
+import { CognitoAuthProvider, DevAuthProvider, mapDevUsersToProvisionableIdentities } from '../../src/infrastructure/auth';
 import { loadConfig } from '../../src/infrastructure/config/env';
 import {
     PostgresDatabase,
@@ -46,17 +46,21 @@ export const createTestHarness = async () => {
   const idGenerator = {
     generate: () => crypto.randomUUID()
   };
-  const authProvider = new DevAuthProvider({
-    env: config.env,
-    users: config.auth.devUsers
-  });
+  const authProvider = config.auth.provider === 'cognito'
+    ? new CognitoAuthProvider(getCognitoConfig(config))
+    : new DevAuthProvider({
+      env: config.env,
+      users: config.auth.devUsers
+    });
   const identityProvisioningService = new IdentityProvisioningService({
     userRepository,
     accountRepository,
     transactionManager: database.transactionManager,
     idGenerator,
     clock,
-    provisionableIdentities: mapDevUsersToProvisionableIdentities(config.auth.devUsers)
+    provisionableIdentities: config.auth.provider === 'dev'
+      ? mapDevUsersToProvisionableIdentities(config.auth.devUsers)
+      : []
   });
 
   await database.connect();
@@ -148,3 +152,11 @@ export const createTestHarness = async () => {
 };
 
 export type BackendTestHarness = Awaited<ReturnType<typeof createTestHarness>>;
+
+const getCognitoConfig = (config: ReturnType<typeof loadConfig>) => {
+  if (config.auth.cognito === null) {
+    throw new Error('Cognito auth config is required when AUTH_PROVIDER=cognito');
+  }
+
+  return config.auth.cognito;
+};

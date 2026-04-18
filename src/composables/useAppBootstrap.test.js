@@ -11,12 +11,31 @@ vi.mock('./useProfileProgress.js', () => ({
   }),
 }));
 
+vi.mock('./useAuthSession.js', () => ({
+  useAuthSession: () => ({
+    mode: 'dev',
+    getBearerToken: async () => 'dev:owner',
+    handleUnauthorizedResponse: async () => false,
+    isAuthenticated: () => true,
+  }),
+}));
+
 function createJsonResponse(status, body) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
     status,
     json: async () => body,
   });
+}
+
+function createDevIdentityKey(token) {
+  let hash = 0;
+  for (let index = 0; index < token.length; index += 1) {
+    hash = ((hash << 5) - hash) + token.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `token-${Math.abs(hash).toString(36)}`;
 }
 
 describe('useAppBootstrap', () => {
@@ -65,10 +84,10 @@ describe('useAppBootstrap', () => {
   it('reuses a persisted active profile for multi-profile households when it is still valid', async () => {
     const persistence = usePersistence();
     store.activeProfileId = 'profile-2';
-    store.currentUser = { id: 'cached-user' };
-    store.account = { id: 'cached-account' };
+    store.currentUser = { id: 'cached-user', accountId: 'account-1' };
+    store.account = { id: 'account-1' };
     store.profiles.splice(0, store.profiles.length, { id: 'profile-2', name: 'Cached Piper' });
-    persistence.saveBootstrapState();
+    persistence.saveBootstrapState({ devIdentityKey: createDevIdentityKey('dev:owner') });
 
     const fetchMock = vi.fn((input) => {
       const url = String(input);
@@ -105,14 +124,35 @@ describe('useAppBootstrap', () => {
     expect(bootstrapProfileProgressMock).toHaveBeenCalledWith('profile-2');
   });
 
-  it('clears cached bootstrap state after an unauthenticated bootstrap response', async () => {
+  it('clears only the failed bootstrap scope after an unauthenticated response', async () => {
+    const devScopeKey = `dev:${createDevIdentityKey('dev:owner')}`;
+
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      activeProfileId: 'profile-1',
-      bootstrapCache: {
-        currentUser: { id: 'cached-user' },
-        account: { id: 'cached-account' },
-        profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+      lastBootstrapScopeKey: devScopeKey,
+      bootstrapCaches: {
+        [devScopeKey]: {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'cached-user', accountId: 'dev-account' },
+            account: { id: 'dev-account' },
+            profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
+          },
+        },
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
       },
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'legacy-account' },
+        account: { id: 'legacy-account' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+      activeProfileId: 'legacy-profile',
     }));
 
     vi.stubGlobal('fetch', vi.fn(() => createJsonResponse(401, {
@@ -126,6 +166,23 @@ describe('useAppBootstrap', () => {
     expect(store.bootstrapStatus).toBe('unauthenticated');
     expect(store.currentUser).toBeNull();
     expect(store.activeProfileId).toBeNull();
-    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({});
+    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({
+      bootstrapCaches: {
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
+      },
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'legacy-account' },
+        account: { id: 'legacy-account' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+      activeProfileId: 'legacy-profile',
+    });
   });
 });

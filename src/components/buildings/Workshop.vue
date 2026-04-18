@@ -15,32 +15,36 @@
 
 <script setup>
 import { ref } from 'vue';
-import { store } from '../../store';
 import { pushEvent } from '../../store/events';
 import { skillState } from '../../store';
+import { useProfileProgress } from '../../composables/useProfileProgress.js';
 
 const currentTarget = ref('m');
 const availableRunes = ['m', 's', 't', 'a', 'p', 'n', 'i', 'c'];
 const forged = ref(false);
 
+const { submitSkillStateUpdate } = useProfileProgress();
+
 const checkMatch = (rune) => {
   if (rune === currentTarget.value) {
     forged.value = true;
-    store.xp += 25;
+    void submitSkillStateUpdate((nextSkillState) => {
+      if (!nextSkillState[currentTarget.value]) {
+        nextSkillState[currentTarget.value] = {
+          conceptSlug: currentTarget.value,
+          strand: 'foundational',
+          taught: false,
+          recognitionStatus: 'not_introduced',
+          recallStatus: null,
+          reviewPressure: 'none',
+          lastPracticed: null,
+          lastAssessed: null,
+          currentSupportLevel: 'guided',
+        };
+      }
+    }).catch(() => undefined);
 
-    if (!skillState[currentTarget.value]) {
-      skillState[currentTarget.value] = {
-        conceptSlug: currentTarget.value,
-        strand: 'foundational',
-        taught: false,
-        recognitionStatus: 'not_introduced',
-        recallStatus: null,
-        reviewPressure: 'none',
-        lastPracticed: null,
-        lastAssessed: null,
-        currentSupportLevel: 'guided',
-      };
-    }
+    const supportLevel = skillState[currentTarget.value]?.currentSupportLevel ?? 'guided';
 
     pushEvent({
       id: crypto.randomUUID(),
@@ -55,7 +59,7 @@ const checkMatch = (rune) => {
       response: { selected: currentTarget.value },
       correct: true,
       confidence: 1,
-      supportLevel: skillState[currentTarget.value].currentSupportLevel,
+      supportLevel,
       responseLatencyMs: null,
       attemptNumber: 1,
       wasRetryAfterPrompt: false,
