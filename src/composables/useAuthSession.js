@@ -197,8 +197,23 @@ function normalizeTokenSession(payload, fallbackRefreshToken = null) {
   };
 }
 
+function resolveCognitoCallbackPath() {
+  const configuredRedirectUri = String(import.meta.env.VITE_COGNITO_REDIRECT_URI ?? '').trim();
+
+  if (!configuredRedirectUri) {
+    return '/auth/callback';
+  }
+
+  try {
+    const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    return new URL(configuredRedirectUri, baseOrigin).pathname || '/auth/callback';
+  } catch {
+    return '/auth/callback';
+  }
+}
+
 async function handleCallback() {
-  if (state.mode !== 'cognito' || window.location.pathname !== '/auth/callback') {
+  if (state.mode !== 'cognito' || window.location.pathname !== resolveCognitoCallbackPath()) {
     return false;
   }
 

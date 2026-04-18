@@ -132,6 +132,21 @@ describe('useAuthSession', () => {
     expect(replaceState).not.toHaveBeenCalled();
   });
 
+  it('handles callback on the configured cognito redirect path', async () => {
+    vi.stubEnv('VITE_COGNITO_REDIRECT_URI', 'https://app.readwithember.com/custom/cognito/callback');
+    mockLocation({
+      href: 'https://app.readwithember.com/custom/cognito/callback?error=access_denied&error_description=Login%20cancelled',
+      pathname: '/custom/cognito/callback',
+    });
+
+    const authSession = await loadAuthSession();
+    const handled = await authSession.handleCallback();
+
+    expect(handled).toBe(true);
+    expect(authSession.error).toBe('Login cancelled');
+    expect(replaceState).toHaveBeenCalledWith({}, document.title, '/');
+  });
+
   it('rejects callback when stored state is missing', async () => {
     mockLocation({
       href: 'https://app.readwithember.com/auth/callback?code=abc&state=expected',
