@@ -235,6 +235,7 @@ import { ref, computed, onMounted, onUnmounted, watch, watchEffect, onErrorCaptu
 import { clearBootstrapState as clearStoreBootstrapState, store } from './store';
 import { useAppBootstrap } from './composables/useAppBootstrap.js';
 import { useAuthSession } from './composables/useAuthSession.js';
+import { usePersistence } from './composables/usePersistence.js';
 import { useProfileProgress } from './composables/useProfileProgress.js';
 import { useUfliProgression } from './composables/useUfliProgression.js';
 import { stopAllAudio, preloadEmberVoice } from './composables/useEmber.js';
@@ -248,6 +249,7 @@ import PlayfulBackdrop from './components/PlayfulBackdrop.vue';
 
 const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
 const authSession = useAuthSession();
+const persistence = usePersistence();
 const { submitOperation } = useProfileProgress();
 const { completeUfliLesson } = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
@@ -773,6 +775,7 @@ function handleSignIn() {
 
 function handleLogout() {
   clearStoreBootstrapState();
+  persistence.clearBootstrapState();
   authSession.logout();
 }
 
