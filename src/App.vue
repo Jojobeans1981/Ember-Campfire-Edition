@@ -109,10 +109,7 @@
         <div v-else-if="store.currentPage === 'selection'" key="selection" class="selection">
           <div class="logo-area">
             <img src="/branding/ember-logo.svg" alt="Ember logo" class="hero-logo" />
-            <h1 class="app-title">Ember Campground</h1>
-            <p class="app-subtitle">Learn to Read, One Spark at a Time</p>
           </div>
-          <h2>Choose a Guardian</h2>
           <p class="selection-note">Profile: {{ activeProfileName }}</p>
           <div class="character-grid">
             <div
@@ -212,9 +209,7 @@
             :alt="store.selectedFriend.name"
             class="adventure-guardian"
           />
-          <p class="adventure-kicker">Story Time</p>
           <h2 class="adventure-title">{{ store.selectedFriend.name }} and the Spark Trail</h2>
-          <p class="adventure-copy">{{ selectedStory }}</p>
           <button class="adventure-btn" @click="beginAdventure">Ignite the Adventure</button>
         </div>
       </div>
@@ -1727,27 +1722,11 @@ body {
   box-shadow: 0 8px 18px rgba(38, 13, 0, 0.28);
 }
 
-.adventure-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #3d1d00;
-}
-
 .adventure-title {
   margin: 0;
   font-size: 1.45rem;
   color: #2d1200;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.adventure-copy {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.35;
-  color: #32160b;
 }
 
 .adventure-btn {

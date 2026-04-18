@@ -3,12 +3,6 @@
     <header class="map-hero">
       <p class="hero-kicker">Campground Trail Map</p>
       <h2 class="map-title">{{ friendName }}'s Reading Adventure</h2>
-      <p class="map-subtitle">{{ missionLine }}</p>
-      <div class="map-charms" aria-hidden="true">
-        <span class="map-charm charm-lantern"></span>
-        <span class="map-charm charm-moon"></span>
-        <span class="map-charm charm-tent"></span>
-      </div>
     </header>
 
     <section v-if="viewMode === 'map'" class="storybook-map">
@@ -180,7 +174,6 @@ const recentlyRevealedZoneIds = ref([]);
 const friendName = computed(() => store.selectedFriend?.name || 'Your Guardian');
 const selectedFriendImage = computed(() => store.selectedFriend?.file ? `/assets/friends/${store.selectedFriend.file}` : '');
 const guardianZoneId = computed(() => currentZoneId.value || visibleZones.value[0]?.id || '');
-const missionLine = computed(() => `${friendName.value} needs your sounds to light the campfire path. Follow the campground trail to the fire.`);
 
 let revealSparkleSeed = 0;
 let revealTimers = [];
@@ -296,96 +289,6 @@ function selectLesson(lessonId) {
   color: #ffe8be;
   font-size: clamp(1.45rem, 3.5vw, 2.1rem);
   text-shadow: 0 0 18px rgba(255, 176, 96, 0.2);
-}
-
-.map-subtitle {
-  margin: 0.45rem auto 0;
-  max-width: 580px;
-  color: #d9e7f5;
-}
-
-.map-charms {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 0.8rem;
-  margin-top: 0.65rem;
-}
-
-.map-charm {
-  position: relative;
-  display: inline-block;
-  animation: charmFloat 2.8s ease-in-out infinite;
-}
-
-.map-charm.charm-moon {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.96) 0%, rgba(240, 249, 255, 0.92) 56%, rgba(191, 224, 255, 0.86) 100%);
-  box-shadow: 0 0 14px rgba(153, 225, 255, 0.34);
-}
-
-.map-charm.charm-moon::after {
-  content: '';
-  position: absolute;
-  right: -0.02rem;
-  top: 0.1rem;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 999px;
-  background: rgba(14, 24, 38, 0.98);
-}
-
-.map-charm.charm-lantern {
-  width: 0.95rem;
-  height: 1.3rem;
-  border-radius: 0.45rem 0.45rem 0.3rem 0.3rem;
-  background: linear-gradient(180deg, #fff2a6 0%, #ffbf57 70%, #9d5923 100%);
-  border: 2px solid #96521f;
-  box-shadow: 0 0 12px rgba(255, 198, 84, 0.38);
-}
-
-.map-charm.charm-lantern::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  width: 0.44rem;
-  height: 0.25rem;
-  transform: translateX(-50%);
-  border: 2px solid #96521f;
-  border-bottom: 0;
-  border-radius: 0.4rem 0.4rem 0 0;
-}
-
-.map-charm.charm-tent {
-  width: 1.45rem;
-  height: 1.15rem;
-}
-
-.map-charm.charm-tent::before,
-.map-charm.charm-tent::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-}
-
-.map-charm.charm-tent::before {
-  left: 0;
-  width: 0;
-  height: 0;
-  border-left: 0.72rem solid transparent;
-  border-right: 0.72rem solid transparent;
-  border-bottom: 1.05rem solid #53bdfd;
-}
-
-.map-charm.charm-tent::after {
-  left: 0.6rem;
-  width: 0.22rem;
-  height: 0.48rem;
-  background: rgba(255, 247, 216, 0.9);
-  border-radius: 0.2rem 0.2rem 0 0;
 }
 
 .storybook-map {
@@ -606,16 +509,6 @@ function selectLesson(lessonId) {
   }
 }
 
-@keyframes charmFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-4px);
-  }
-}
 
 @keyframes boardSparkFloat {
   0%,
