@@ -242,7 +242,7 @@ const verifyJwtSignature = async (token: string, jwk: Required<Pick<JwkKey, 'e' 
       ['verify']
     );
 
-    return crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, key, signature, verificationData);
+    return await crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, key, signature, verificationData);
   } catch {
     return false;
   }
