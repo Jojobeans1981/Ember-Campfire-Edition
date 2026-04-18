@@ -97,6 +97,53 @@ describe('Persistence — bootstrap state', () => {
     expect(localStorage.getItem('ember-campground-save-v3')).toBeNull();
   });
 
+  it('clears only a targeted bootstrap scope including matching legacy fields', () => {
+    const persistence = usePersistence();
+
+    localStorage.setItem('ember-campground-save-v3', JSON.stringify({
+      lastBootstrapScopeKey: 'account:account-1',
+      bootstrapCaches: {
+        'account:account-1': {
+          activeProfileId: 'profile-1',
+          bootstrapCache: {
+            currentUser: { id: 'user-1', accountId: 'account-1' },
+            account: { id: 'account-1' },
+            profiles: [{ id: 'profile-1', name: 'Ember' }],
+          },
+        },
+        'account:account-2': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'user-2', accountId: 'account-2' },
+            account: { id: 'account-2' },
+            profiles: [{ id: 'profile-2', name: 'Piper' }],
+          },
+        },
+      },
+      activeProfileId: 'profile-1',
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'account-1' },
+        account: { id: 'account-1' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+    }));
+
+    persistence.clearBootstrapScope('account:account-1');
+
+    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({
+      bootstrapCaches: {
+        'account:account-2': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'user-2', accountId: 'account-2' },
+            account: { id: 'account-2' },
+            profiles: [{ id: 'profile-2', name: 'Piper' }],
+          },
+        },
+      },
+    });
+  });
+
   it('stores synced progress under profile-scoped caches instead of top-level app state', () => {
     const persistence = usePersistence();
 

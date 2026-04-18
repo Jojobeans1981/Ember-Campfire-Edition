@@ -774,8 +774,14 @@ function handleSignIn() {
 }
 
 function handleLogout() {
+  const bootstrapScopeKey = store.currentUser?.accountId
+    ? persistence.createScopeKey({ accountId: store.currentUser.accountId })
+    : persistence.getLastBootstrapScopeKey();
+
   clearStoreBootstrapState();
-  persistence.clearBootstrapState();
+  if (bootstrapScopeKey) {
+    persistence.clearBootstrapScope(bootstrapScopeKey);
+  }
   authSession.logout();
 }
 

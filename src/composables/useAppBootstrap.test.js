@@ -124,19 +124,35 @@ describe('useAppBootstrap', () => {
     expect(bootstrapProfileProgressMock).toHaveBeenCalledWith('profile-2');
   });
 
-  it('clears cached bootstrap state after an unauthenticated bootstrap response', async () => {
+  it('clears only the failed bootstrap scope after an unauthenticated response', async () => {
+    const devScopeKey = `dev:${createDevIdentityKey('dev:owner')}`;
+
     localStorage.setItem('ember-campground-save-v3', JSON.stringify({
-      lastBootstrapScopeKey: 'account:cached-account',
+      lastBootstrapScopeKey: devScopeKey,
       bootstrapCaches: {
-        'account:cached-account': {
+        [devScopeKey]: {
           activeProfileId: 'profile-1',
           bootstrapCache: {
-            currentUser: { id: 'cached-user', accountId: 'cached-account' },
-            account: { id: 'cached-account' },
+            currentUser: { id: 'cached-user', accountId: 'dev-account' },
+            account: { id: 'dev-account' },
             profiles: [{ id: 'profile-1', name: 'Cached Ember' }],
           },
         },
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
       },
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'legacy-account' },
+        account: { id: 'legacy-account' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+      activeProfileId: 'legacy-profile',
     }));
 
     vi.stubGlobal('fetch', vi.fn(() => createJsonResponse(401, {
@@ -150,6 +166,23 @@ describe('useAppBootstrap', () => {
     expect(store.bootstrapStatus).toBe('unauthenticated');
     expect(store.currentUser).toBeNull();
     expect(store.activeProfileId).toBeNull();
-    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({});
+    expect(JSON.parse(localStorage.getItem('ember-campground-save-v3'))).toEqual({
+      bootstrapCaches: {
+        'account:other-account': {
+          activeProfileId: 'profile-2',
+          bootstrapCache: {
+            currentUser: { id: 'other-user', accountId: 'other-account' },
+            account: { id: 'other-account' },
+            profiles: [{ id: 'profile-2', name: 'Other Ember' }],
+          },
+        },
+      },
+      bootstrapCache: {
+        currentUser: { id: 'legacy-user', accountId: 'legacy-account' },
+        account: { id: 'legacy-account' },
+        profiles: [{ id: 'legacy-profile', name: 'Legacy Ember' }],
+      },
+      activeProfileId: 'legacy-profile',
+    });
   });
 });

@@ -76,6 +76,11 @@ export function useAppBootstrap() {
     }
 
     const devScope = authSession.mode === 'dev' ? await resolveBootstrapScope() : null;
+    const bootstrapScopeKey = authSession.mode === 'dev'
+      ? persistence.createScopeKey(devScope)
+      : (store.currentUser?.accountId
+        ? persistence.createScopeKey({ accountId: store.currentUser.accountId })
+        : persistence.getLastBootstrapScopeKey());
     const persisted = authSession.mode === 'dev' ? persistence.loadBootstrapState(devScope) : null;
     if (persisted?.bootstrapCache) {
       hydrateBootstrapState({
@@ -120,7 +125,9 @@ export function useAppBootstrap() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         clearBootstrapState();
-        persistence.clearBootstrapState();
+        if (bootstrapScopeKey) {
+          persistence.clearBootstrapScope(bootstrapScopeKey);
+        }
         store.bootstrapStatus = 'unauthenticated';
         return { unauthenticated: true };
       }

@@ -95,6 +95,26 @@ function createSnapshotCache(profileId = store.activeProfileId) {
   };
 }
 
+function readLegacyBootstrapAccountId(persisted) {
+  return persisted.bootstrapCache?.currentUser?.accountId
+    ?? persisted.bootstrapCache?.account?.id
+    ?? null;
+}
+
+function isLegacyBootstrapScopeMatch(persisted, scopeKey) {
+  const legacyAccountId = readLegacyBootstrapAccountId(persisted);
+
+  if (scopeKey.startsWith('account:')) {
+    return legacyAccountId === scopeKey.slice('account:'.length);
+  }
+
+  if (scopeKey === 'local') {
+    return legacyAccountId == null;
+  }
+
+  return false;
+}
+
 export function usePersistence() {
   function saveBootstrapState(options = {}) {
     try {
@@ -162,23 +182,52 @@ export function usePersistence() {
     };
   }
 
-  function clearBootstrapState(options = {}) {
+  function getLastBootstrapScopeKey() {
+    const persisted = readState();
+    return persisted.lastBootstrapScopeKey ?? null;
+  }
+
+  function clearBootstrapScope(scopeKey) {
+    if (!scopeKey) {
+      return;
+    }
+
     try {
       const persisted = readState();
+
+      if (persisted.bootstrapCaches) {
+        delete persisted.bootstrapCaches[scopeKey];
+      }
+
+      if (persisted.lastBootstrapScopeKey === scopeKey) {
+        delete persisted.lastBootstrapScopeKey;
+      }
+
+      if (isLegacyBootstrapScopeMatch(persisted, scopeKey)) {
+        delete persisted.activeProfileId;
+        delete persisted.bootstrapCache;
+      }
+
+      writeState(persisted);
+    } catch (err) {
+      console.warn('Failed to clear scoped bootstrap state:', err);
+    }
+  }
+
+  function clearBootstrapState(options = {}) {
+    try {
       const scopeKey = options.accountId || options.devIdentityKey ? createScopeKey(options) : null;
 
       if (!scopeKey) {
+        const persisted = readState();
         delete persisted.bootstrapCaches;
         delete persisted.lastBootstrapScopeKey;
         delete persisted.activeProfileId;
         delete persisted.bootstrapCache;
-      } else if (persisted.bootstrapCaches) {
-        delete persisted.bootstrapCaches[scopeKey];
-        if (persisted.lastBootstrapScopeKey === scopeKey) {
-          delete persisted.lastBootstrapScopeKey;
-        }
+        writeState(persisted);
+      } else {
+        clearBootstrapScope(scopeKey);
       }
-      writeState(persisted);
     } catch (err) {
       console.warn('Failed to clear bootstrap state:', err);
     }
@@ -248,6 +297,8 @@ export function usePersistence() {
   return {
     saveBootstrapState,
     loadBootstrapState,
+    getLastBootstrapScopeKey,
+    clearBootstrapScope,
     clearBootstrapState,
     createScopeKey,
     saveProfileState,
