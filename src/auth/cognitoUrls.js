@@ -1,5 +1,10 @@
 function toBaseUrl(domain) {
-  return `https://${domain}`;
+  const normalizedDomain = String(domain ?? '').trim();
+  const withProtocol = /^https?:\/\//i.test(normalizedDomain)
+    ? normalizedDomain
+    : `https://${normalizedDomain}`;
+
+  return withProtocol.replace(/\/+$/, '');
 }
 
 export function buildAuthorizeUrl({ domain, clientId, redirectUri, codeChallenge, state, nonce }) {
