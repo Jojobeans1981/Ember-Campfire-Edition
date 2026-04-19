@@ -8,11 +8,6 @@ on:
       - 'infra/**'
       - '.github/workflows/terraform-deploy.yml'
   workflow_dispatch:
-    inputs:
-      apply:
-        description: 'Create an apply run instead of a speculative plan'
-        required: false
-        default: 'false'
 
 permissions:
   contents: read
@@ -35,25 +30,13 @@ jobs:
       - name: Create Terraform Cloud run
         env:
           TF_API_KEY: ${{ secrets.TF_API_KEY }}
-          EVENT_NAME: ${{ github.event_name }}
-          APPLY_INPUT: ${{ github.event.inputs.apply || 'false' }}
           BACKEND_IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
 
           short_sha="${BACKEND_IMAGE_TAG::7}"
-          speculative=true
-          auto_apply=false
-
-          if [ "$EVENT_NAME" = "push" ]; then
-            speculative=false
-            auto_apply=true
-          fi
-
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" = "true" ]; then
-            speculative=false
-            auto_apply=true
-          fi
+          speculative=false
+          auto_apply=true
 
           workspace_response=$(curl -sS \
             --header "Authorization: Bearer $TF_API_KEY" \
@@ -66,44 +49,40 @@ jobs:
             exit 1
           fi
 
-          if [ "$speculative" = "false" ]; then
-            vars_response=$(curl -sS \
+          vars_response=$(curl -sS \
+            --header "Authorization: Bearer $TF_API_KEY" \
+            --header "Content-Type: application/vnd.api+json" \
+            "https://app.terraform.io/api/v2/workspaces/$workspace_id/vars")
+
+          backend_var_id=$(printf '%s' "$vars_response" | jq -r '.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform") | .id' | head -n 1)
+          backend_var_payload=$(jq -n \
+            --arg key "backend_image_tag" \
+            --arg value "$short_sha" \
+            '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+
+          if [ -n "$backend_var_id" ]; then
+            curl -sS \
+              --request PATCH \
               --header "Authorization: Bearer $TF_API_KEY" \
               --header "Content-Type: application/vnd.api+json" \
-              "https://app.terraform.io/api/v2/workspaces/$workspace_id/vars")
-
-            backend_var_id=$(printf '%s' "$vars_response" | jq -r '.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform") | .id' | head -n 1)
+              --data "$backend_var_payload" \
+              "https://app.terraform.io/api/v2/vars/$backend_var_id" >/dev/null
+          else
             backend_var_payload=$(jq -n \
               --arg key "backend_image_tag" \
               --arg value "$short_sha" \
-              '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+              --arg workspace_id "$workspace_id" \
+              '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false},relationships:{workspace:{data:{type:"workspaces",id:$workspace_id}}}}}')
 
-            if [ -n "$backend_var_id" ]; then
-              curl -sS \
-                --request PATCH \
-                --header "Authorization: Bearer $TF_API_KEY" \
-                --header "Content-Type: application/vnd.api+json" \
-                --data "$backend_var_payload" \
-                "https://app.terraform.io/api/v2/vars/$backend_var_id" >/dev/null
-            else
-              backend_var_payload=$(jq -n \
-                --arg key "backend_image_tag" \
-                --arg value "$short_sha" \
-                --arg workspace_id "$workspace_id" \
-                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false},relationships:{workspace:{data:{type:"workspaces",id:$workspace_id}}}}}')
-
-              curl -sS \
-                --request POST \
-                --header "Authorization: Bearer $TF_API_KEY" \
-                --header "Content-Type: application/vnd.api+json" \
-                --data "$backend_var_payload" \
-                "https://app.terraform.io/api/v2/vars" >/dev/null
-            fi
+            curl -sS \
+              --request POST \
+              --header "Authorization: Bearer $TF_API_KEY" \
+              --header "Content-Type: application/vnd.api+json" \
+              --data "$backend_var_payload" \
+              "https://app.terraform.io/api/v2/vars" >/dev/null
           fi
 
-          configuration_payload=$(jq -n \
-            --arg speculative "$speculative" \
-            '{data:{type:"configuration-versions",attributes:{"auto-queue-runs":false}}}')
+          configuration_payload=$(jq -n '{data:{type:"configuration-versions",attributes:{"auto-queue-runs":false}}}')
 
           configuration_response=$(curl -sS \
             --request POST \
