@@ -72,6 +72,7 @@ output "app_cloudflare_dns_record" {
 
 output "alb_origin_cloudflare_dns_record" {
   description = "Manual Cloudflare DNS record needed to point the ALB origin hostname at the shared ALB DNS name."
+  sensitive   = true
   value = {
     name    = local.alb_origin_domain_name
     type    = "CNAME"
