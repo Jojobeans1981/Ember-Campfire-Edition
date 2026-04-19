@@ -3,21 +3,29 @@
     <div v-if="phase === 'blend'" class="blend-stage">
       <div
         class="word-boxes"
-        :aria-label="`Blend ${currentBlendLetters.length} sounds`"
+        :aria-label="`Blend ${currentBlendGraphemes.length} sounds`"
       >
         <span
-          v-for="(letter, i) in currentBlendLetters"
+          v-for="(letter, i) in currentBlendGraphemes"
           :key="i"
           class="word-box"
           :class="{ revealed: i <= revealedIndex, active: i === playingIndex }"
         >{{ i <= revealedIndex ? letter : '' }}</span>
       </div>
     </div>
-    <FocusStage
-      v-else
-      :tokens="segmentTokens"
-      emphasis="word"
-    />
+    <div v-else class="segment-stage">
+      <div
+        class="word-boxes"
+        :aria-label="`Say ${currentSegmentGraphemes.length} sounds`"
+      >
+        <span
+          v-for="(letter, i) in currentSegmentGraphemes"
+          :key="i"
+          class="word-box"
+          :class="{ revealed: i <= revealedIndex, active: i === playingIndex }"
+        >{{ i <= revealedIndex ? letter : '' }}</span>
+      </div>
+    </div>
 
     <div class="controls">
       <button
@@ -47,7 +55,6 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { ArrowRight, Check, RotateCcw } from 'lucide-vue-next';
 import { useEmber } from '../../composables/useEmber.js';
-import FocusStage from './FocusStage.vue';
 
 const props = defineProps({ step: { type: Object, required: true } });
 const emit = defineEmits(['step-complete']);
@@ -72,21 +79,19 @@ const currentBlend = computed(() => blendItems.value[cursor.value]);
 const currentSegment = computed(() => segmentItems.value[cursor.value - blendItems.value.length]);
 const isLast = computed(() => cursor.value >= totalItems.value - 1);
 
-// Split the blend word into per-phoneme slots. For current lessons (1–10)
-// the JSON is always 1 phoneme per letter; if a future lesson uses
-// multi-char graphemes we'd need a phoneme→grapheme alignment, but for
-// now splitting the word into letters lines up with the phonemes array.
-const currentBlendLetters = computed(() => {
-  const word = currentBlend.value?.word ?? '';
-  return Array.from(word);
-});
-
-const segmentTokens = computed(() => {
-  if (currentSegment.value) {
-    return [{ text: currentSegment.value.word, kind: 'word', state: 'active' }];
+// Split the current item into per-phoneme slots. Prefer an authored
+// `graphemes` array so digraphs like "ck" in "tack" stay atomic; fall
+// back to a letter-split when authoring doesn't include graphemes.
+function slotsFor(item) {
+  if (!item) return [];
+  if (Array.isArray(item.graphemes) && item.graphemes.length > 0) {
+    return item.graphemes.slice();
   }
-  return [];
-});
+  return Array.from(item.word ?? '');
+}
+
+const currentBlendGraphemes = computed(() => slotsFor(currentBlend.value));
+const currentSegmentGraphemes = computed(() => slotsFor(currentSegment.value));
 
 function wait(ms, generation) {
   return new Promise((resolve) => {
@@ -114,13 +119,13 @@ async function runBlendSequence() {
 
   try {
     const phonemes = item.phonemes ?? [];
-    const letters = currentBlendLetters.value;
+    const letters = currentBlendGraphemes.value;
     for (let i = 0; i < phonemes.length; i += 1) {
       if (cancelled || generation !== playbackGeneration) return;
       playingIndex.value = i;
       await ember.playPhoneme(phonemes[i]);
       if (cancelled || generation !== playbackGeneration) return;
-      // Reveal the letter that matches this phoneme.
+      // Reveal the grapheme that matches this phoneme.
       if (i < letters.length) revealedIndex.value = i;
       playingIndex.value = -1;
       if (i < phonemes.length - 1) {
@@ -151,10 +156,37 @@ async function runSegmentPlayback() {
   playbackGeneration += 1;
   const generation = playbackGeneration;
   audioBusy.value = true;
+  revealedIndex.value = -1;
+  playingIndex.value = -1;
+
   try {
-    await ember.speak(`The word is ${item.word}.`);
+    // Mirror the blend sequence visually: reveal each grapheme tile as
+    // we play its phoneme, then say the whole word. Keeps lesson 4's
+    // second half (at, tap, tack) in the same cadence as the first half
+    // (mat, sat, map) instead of stacking a spoken-word layer on top.
+    const phonemes = item.phonemes ?? [];
+    const letters = currentSegmentGraphemes.value;
+    const steps = Math.min(phonemes.length, letters.length);
+    for (let i = 0; i < steps; i += 1) {
+      if (cancelled || generation !== playbackGeneration) return;
+      playingIndex.value = i;
+      await ember.playPhoneme(phonemes[i]);
+      if (cancelled || generation !== playbackGeneration) return;
+      revealedIndex.value = i;
+      playingIndex.value = -1;
+      if (i < steps - 1) {
+        const ok = await wait(PHONEME_PAUSE_MS, generation);
+        if (!ok) return;
+      }
+    }
+    const beforeInvite = await wait(BEFORE_INVITE_PAUSE_MS, generation);
+    if (!beforeInvite) return;
+    await ember.speakTeacher(item.word);
   } finally {
-    if (generation === playbackGeneration) audioBusy.value = false;
+    if (generation === playbackGeneration) {
+      playingIndex.value = -1;
+      audioBusy.value = false;
+    }
   }
 }
 
@@ -176,12 +208,9 @@ function next() {
 
 watch(cursor, async (nextCursor, prev) => {
   if (nextCursor === prev) return;
-  const isEntryIntoSegment = nextCursor >= blendItems.value.length && prev < blendItems.value.length;
-  if (isEntryIntoSegment) {
-    await ember.speak('Listen to the word.');
-    if (cancelled) return;
-    await runSegmentPlayback();
-  } else if (nextCursor < blendItems.value.length) {
+  revealedIndex.value = -1;
+  playingIndex.value = -1;
+  if (nextCursor < blendItems.value.length) {
     await runBlendSequence();
   } else {
     await runSegmentPlayback();
@@ -219,7 +248,8 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 
-.blend-stage {
+.blend-stage,
+.segment-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -227,6 +257,7 @@ onBeforeUnmount(() => {
   padding: clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px);
   min-height: clamp(160px, 26vh, 260px);
   justify-content: center;
+  width: 100%;
 }
 
 .word-boxes {

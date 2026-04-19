@@ -5,6 +5,7 @@ import PhonemicAwarenessStep from './PhonemicAwarenessStep.vue';
 vi.mock('../../composables/useEmber.js', () => ({
   useEmber: () => ({
     speak: vi.fn().mockResolvedValue(undefined),
+    speakTeacher: vi.fn().mockResolvedValue(undefined),
     playPhoneme: vi.fn().mockResolvedValue(undefined),
     stopSpeaking: vi.fn(),
   }),
@@ -25,17 +26,25 @@ describe('PhonemicAwarenessStep', () => {
     expect(wrapper.exists()).toBe(true);
     const boxes = wrapper.findAll('.word-box');
     expect(boxes).toHaveLength(2); // "am" → two boxes
-    // FocusStage is only rendered during the segment phase.
-    expect(wrapper.findComponent({ name: 'FocusStage' }).exists()).toBe(false);
   });
 
   it('emits step-complete after working through blend and segment items', async () => {
-    const wrapper = mount(PhonemicAwarenessStep, { props: { step: fixtureStep } });
-    const nextBtn = wrapper.find('button[aria-label="Next"]');
-    await nextBtn.trigger('click');
-    await flushPromises();
-    await wrapper.find('button[aria-label="Done"]').trigger('click');
-    expect(wrapper.emitted('step-complete')).toBeTruthy();
+    vi.useFakeTimers();
+    try {
+      const wrapper = mount(PhonemicAwarenessStep, { props: { step: fixtureStep } });
+      await wrapper.find('button[aria-label="Next"]').trigger('click');
+      // Drain the segment phase: both the real setTimeout-based pauses
+      // between reveal slots and the microtasks queued by the mocked
+      // playPhoneme / speak calls between them.
+      for (let i = 0; i < 10; i += 1) {
+        await vi.advanceTimersByTimeAsync(500);
+        await flushPromises();
+      }
+      await wrapper.find('button[aria-label="Done"]').trigger('click');
+      expect(wrapper.emitted('step-complete')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('has no step title heading', () => {
