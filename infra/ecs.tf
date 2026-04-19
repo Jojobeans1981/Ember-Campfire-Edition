@@ -183,6 +183,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "CORS_ALLOWED_ORIGINS"
           value = "https://${var.app_domain_name}"
+        },
+        {
+          name  = "COGNITO_AUTO_PROVISION"
+          value = "true"
         }
       ]
       secrets = [

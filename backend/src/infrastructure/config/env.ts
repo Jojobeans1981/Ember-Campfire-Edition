@@ -23,6 +23,7 @@ export interface AuthConfig {
   provider: 'dev' | 'cognito';
   devUsers: DevAuthUserConfig[];
   cognito: CognitoAuthConfig | null;
+  cognitoAutoProvision: boolean;
 }
 
 export interface CognitoAuthConfig {
@@ -73,7 +74,10 @@ const loadAuthConfig = (env: string): AuthConfig => {
   return {
     provider,
     devUsers: loadDevAuthUsers(env, process.env.DEV_AUTH_USERS),
-    cognito: provider === 'cognito' ? loadCognitoAuthConfig() : null
+    cognito: provider === 'cognito' ? loadCognitoAuthConfig() : null,
+    cognitoAutoProvision: provider === 'cognito'
+      ? parseBoolean(process.env.COGNITO_AUTO_PROVISION, 'COGNITO_AUTO_PROVISION', true)
+      : false
   };
 };
 

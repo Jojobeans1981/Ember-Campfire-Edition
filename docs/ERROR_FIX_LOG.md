@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-19 — [GAME] Cognito sign-in looped because backend returned 401 for unprovisioned users
+
+**Error:** Cognito Hosted UI flow completed (`/oauth2/token` returned `200`) but app bootstrap calls (`/api/me`, `/api/account`, `/api/profiles`) returned `401`, so the UI fell back to "Sign-In Needed".
+**Context:** Production auth validation after CloudFront/ALB routing fixes.
+**Root Cause:** Backend validated Cognito id tokens but `IdentityProvisioningService` rejected first-time Cognito users as unprovisioned because auto-provisioning was not enabled in app bootstrap wiring.
+**Fix:** Added explicit Cognito auto-provision configuration in backend (`COGNITO_AUTO_PROVISION`, default true for Cognito mode), wired `canAutoProvisionCognitoIdentity` in app bootstrap, and set `COGNITO_AUTO_PROVISION=true` in ECS task environment.
+**Prevention:** Keep Cognito provisioning policy explicit in runtime config and align frontend sign-in UX with backend provisioning behavior.
+
 ### 2026-04-19 — [BUILD] Auth/API failed with `ERR_CERT_COMMON_NAME_INVALID` after ALB redirect
 
 **Error:** Browser auth and API requests failed with `net::ERR_CERT_COMMON_NAME_INVALID` after `/api/*` requests were redirected to the ALB hostname.

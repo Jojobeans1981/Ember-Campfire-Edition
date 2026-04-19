@@ -67,7 +67,10 @@ export const createApp = (): App => {
     clock,
     provisionableIdentities: config.auth.provider === 'dev'
       ? mapDevUsersToProvisionableIdentities(config.auth.devUsers)
-      : []
+      : [],
+    canAutoProvisionCognitoIdentity: config.auth.provider === 'cognito' && config.auth.cognitoAutoProvision
+      ? async () => true
+      : undefined
   });
 
   const getHealthCheckUseCase = new GetHealthCheckUseCase(clock);
