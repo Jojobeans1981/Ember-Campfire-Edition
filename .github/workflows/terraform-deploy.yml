@@ -93,23 +93,47 @@ jobs:
             printf '%s' "$latest_tag"
           }
 
-          if [ "$EVENT_NAME" = "workflow_run" ]; then
-            if [ -z "${WORKFLOW_RUN_HEAD_SHA:-}" ]; then
-              echo "workflow_run.head_sha is required when triggered by Backend Image workflow." >&2
-              exit 1
+          image_tag_exists() {
+            local candidate_tag="$1"
+            aws ecr describe-images \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$candidate_tag" >/dev/null 2>&1
+          }
+
+          resolve_image_tag() {
+            local candidates=()
+            local workflow_tag=""
+            local latest_tag
+
+            if [ "$EVENT_NAME" = "workflow_run" ]; then
+              if [ -z "${WORKFLOW_RUN_HEAD_SHA:-}" ]; then
+                echo "workflow_run.head_sha is required when triggered by Backend Image workflow." >&2
+                exit 1
+              fi
+
+              workflow_tag="${WORKFLOW_RUN_HEAD_SHA::7}"
+              candidates+=("$workflow_tag")
             fi
 
-            image_tag="${WORKFLOW_RUN_HEAD_SHA::7}"
-          elif [ -n "${DISPATCH_BACKEND_IMAGE_TAG:-}" ] && [ "${DISPATCH_BACKEND_IMAGE_TAG}" != "null" ]; then
-            image_tag="$DISPATCH_BACKEND_IMAGE_TAG"
-          else
-            image_tag=$(resolve_latest_ecr_tag)
-          fi
+            if [ -n "${DISPATCH_BACKEND_IMAGE_TAG:-}" ] && [ "${DISPATCH_BACKEND_IMAGE_TAG}" != "null" ]; then
+              candidates+=("$DISPATCH_BACKEND_IMAGE_TAG")
+            fi
 
-          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$image_tag" >/dev/null 2>&1; then
-            echo "Image tag '$image_tag' does not exist in ECR repository '$ECR_REPOSITORY'." >&2
+            latest_tag=$(resolve_latest_ecr_tag)
+            candidates+=("$latest_tag")
+
+            for candidate in "${candidates[@]}"; do
+              if image_tag_exists "$candidate"; then
+                printf '%s' "$candidate"
+                return 0
+              fi
+            done
+
+            echo "No valid ECR image tag found from candidates: ${candidates[*]}" >&2
             exit 1
-          fi
+          }
+
+          image_tag=$(resolve_image_tag)
 
           workspace_response=$(curl -sS \
             --header "Authorization: Bearer $TF_API_KEY" \

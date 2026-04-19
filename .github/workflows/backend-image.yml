@@ -61,7 +61,32 @@ jobs:
           docker push "$image_uri"
           docker push "$latest_image_uri"
 
+      - name: Verify pushed image tags in ECR
+        id: verify
+        run: |
+          set -euo pipefail
+          image_tag="${{ steps.repo.outputs.image_tag }}"
+
+          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$image_tag" >/dev/null 2>&1; then
+            echo "Image tag '$image_tag' was not found in ECR after push." >&2
+            exit 1
+          fi
+
+          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="latest" >/dev/null 2>&1; then
+            echo "Image tag 'latest' was not found in ECR after push." >&2
+            exit 1
+          fi
+
+          image_digest=$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$image_tag" --query 'imageDetails[0].imageDigest' --output text)
+          if [ -z "$image_digest" ] || [ "$image_digest" = "None" ]; then
+            echo "Unable to resolve image digest for '$image_tag'." >&2
+            exit 1
+          fi
+
+          echo "image_digest=$image_digest" >> "$GITHUB_OUTPUT"
+
       - name: Summarize image tag
         run: |
           echo "Pushed ${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Pushed ${{ steps.repo.outputs.repository_uri }}:latest" >> "$GITHUB_STEP_SUMMARY"
+          echo "Digest ${{ steps.verify.outputs.image_digest }}" >> "$GITHUB_STEP_SUMMARY"
