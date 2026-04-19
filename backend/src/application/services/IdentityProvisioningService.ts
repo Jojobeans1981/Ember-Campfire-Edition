@@ -1,4 +1,5 @@
 import type { AuthIdentity } from '../../domain/models/AuthIdentity';
+import type { User } from '../../domain/models/User';
 import type { AccountRepository, UserRepository } from '../../domain/repositories';
 import type { AccountType } from '../../domain/types/AccountType';
 import type { UserRole } from '../../domain/types/UserRole';
@@ -72,32 +73,7 @@ export class IdentityProvisioningService {
       );
 
       if (existingUser !== null) {
-        const account = await this.dependencies.accountRepository.getById(existingUser.accountId, transaction);
-
-        if (account === null) {
-          throw new AppError('Authenticated user account was not found', {
-            code: ERROR_CODES.CONFLICT,
-            status: 409
-          });
-        }
-
-        if (existingUser.email !== identity.email || existingUser.displayName !== identity.displayName) {
-          await this.dependencies.userRepository.update(
-            {
-              ...existingUser,
-              email: identity.email,
-              displayName: identity.displayName,
-              updatedAt: this.dependencies.clock.now()
-            },
-            transaction
-          );
-        }
-
-        return {
-          userId: existingUser.id,
-          accountId: existingUser.accountId,
-          role: existingUser.role
-        };
+        return this.resolveExistingUserContext(existingUser, identity, transaction);
       }
 
       const provisionableIdentity = this.provisionableIdentities.get(
@@ -128,20 +104,38 @@ export class IdentityProvisioningService {
         transaction
       );
 
-      await this.dependencies.userRepository.insert(
-        {
-          id: userId,
-          accountId,
-          email: identity.email,
-          displayName: identity.displayName,
-          role: resolvedProvisioning.role,
-          authProvider: identity.provider,
-          authSubject: identity.subject,
-          createdAt: now,
-          updatedAt: now
-        },
-        transaction
-      );
+      try {
+        await this.dependencies.userRepository.insert(
+          {
+            id: userId,
+            accountId,
+            email: identity.email,
+            displayName: identity.displayName,
+            role: resolvedProvisioning.role,
+            authProvider: identity.provider,
+            authSubject: identity.subject,
+            createdAt: now,
+            updatedAt: now
+          },
+          transaction
+        );
+      } catch (error) {
+        if (!isUniqueViolation(error)) {
+          throw error;
+        }
+
+        const racedUser = await this.dependencies.userRepository.getByAuthIdentity(
+          identity.provider,
+          identity.subject,
+          transaction
+        );
+
+        if (racedUser === null) {
+          throw error;
+        }
+
+        return this.resolveExistingUserContext(racedUser, identity, transaction);
+      }
 
       return {
         userId,
@@ -149,6 +143,39 @@ export class IdentityProvisioningService {
         role: resolvedProvisioning.role
       };
     });
+  }
+
+  private async resolveExistingUserContext(
+    existingUser: User,
+    identity: AuthIdentity,
+    transaction: Transaction
+  ): Promise<CurrentUserContext> {
+    const account = await this.dependencies.accountRepository.getById(existingUser.accountId, transaction);
+
+    if (account === null) {
+      throw new AppError('Authenticated user account was not found', {
+        code: ERROR_CODES.CONFLICT,
+        status: 409
+      });
+    }
+
+    if (existingUser.email !== identity.email || existingUser.displayName !== identity.displayName) {
+      await this.dependencies.userRepository.update(
+        {
+          ...existingUser,
+          email: identity.email,
+          displayName: identity.displayName,
+          updatedAt: this.dependencies.clock.now()
+        },
+        transaction
+      );
+    }
+
+    return {
+      userId: existingUser.id,
+      accountId: existingUser.accountId,
+      role: existingUser.role
+    };
   }
 
   private async resolveProvisioning(
@@ -171,6 +198,10 @@ export class IdentityProvisioningService {
 
     return createCognitoProvisioning(identity, this.dependencies.cognitoProvisioningPolicy);
   }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
 }
 
 const createCognitoProvisioning = (

@@ -92,8 +92,8 @@ export function useAppBootstrap() {
     }
 
     try {
-      const [currentUser, account, profiles] = await Promise.all([
-        api.getMe(),
+      const currentUser = await api.getMe();
+      const [account, profiles] = await Promise.all([
         api.getAccount(),
         api.getProfiles(),
       ]);

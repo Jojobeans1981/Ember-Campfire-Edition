@@ -76,6 +76,11 @@ describe('useAppBootstrap', () => {
       requiresProfileSelection: false,
       requiresProfileCreation: true,
     });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      'http://127.0.0.1:3001/me',
+      'http://127.0.0.1:3001/account',
+      'http://127.0.0.1:3001/profiles',
+    ]);
     expect(store.bootstrapStatus).toBe('ready');
     expect(store.activeProfileId).toBeNull();
     expect(bootstrapProfileProgressMock).not.toHaveBeenCalled();
