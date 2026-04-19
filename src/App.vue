@@ -406,6 +406,7 @@ watch(() => store.bootstrapStatus, (status) => {
 
       launchSplashTimer = window.setTimeout(() => {
         showLaunchSplash.value = false;
+        markLaunchSplashSeen();
       }, remaining);
     }
   }
