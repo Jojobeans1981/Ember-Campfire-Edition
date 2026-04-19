@@ -31,7 +31,7 @@
 
     <!-- Top bar -->
     <header v-if="!showLaunchSplash && showTopBar" class="top-bar">
-      <button class="nav-btn" @click="goBack">
+      <button v-if="canGoBack" class="nav-btn" @click="goBack">
         <span class="back-arrow">&#8592;</span> Back
       </button>
       <div v-if="store.selectedFriend" class="guardian-pill">
@@ -135,6 +135,19 @@
 
         <CampgroundMap v-else-if="store.currentPage === 'campground'" key="campground" />
         <LessonPlayer v-else-if="store.currentPage === 'lesson'" key="lesson" :unitId="store.activeLessonId" @complete="onLessonComplete" />
+        <ActivityPlayer
+          v-else-if="store.currentPage === 'activity'"
+          key="activity"
+          :lesson-id="store.activeLessonId"
+          :activity-type="store.activeActivity"
+          @complete="onActivityComplete"
+        />
+        <StoryReader
+          v-else-if="store.currentPage === 'story'"
+          key="story"
+          :unit-id="store.activeLessonId"
+          @complete="onConnectedTextComplete"
+        />
         <Dashboard v-else-if="store.currentPage === 'dashboard'" key="dashboard" />
 
         <div v-else key="page-fallback" class="selection">
@@ -239,6 +252,8 @@ import { useSpeechRecognition } from './composables/useSpeechRecognition.js';
 import { celebrateComplete } from './composables/useCelebration.js';
 import CampgroundMap from './components/CampgroundMap.vue';
 import LessonPlayer from './components/LessonPlayer.vue';
+import ActivityPlayer from './components/ActivityPlayer.vue';
+import StoryReader from './components/StoryReader.vue';
 import Dashboard from './components/Dashboard.vue';
 import PlayfulBackdrop from './components/PlayfulBackdrop.vue';
 
@@ -246,7 +261,11 @@ const { bootstrapApp, createProfile, selectProfile } = useAppBootstrap();
 const authSession = useAuthSession();
 const persistence = usePersistence();
 const { submitOperation } = useProfileProgress();
-const { completeUfliLesson } = useUfliProgression();
+const {
+  completeUfliLesson,
+  completeUfliActivity,
+  completeUfliConnectedText,
+} = useUfliProgression();
 const { cancelListening } = useSpeechRecognition();
 const ember = useEmber();
 
@@ -265,6 +284,10 @@ const showTopBar = computed(() => {
   return store.bootstrapStatus === 'ready'
     && Boolean(store.activeProfileId)
     && store.currentPage !== 'selection';
+});
+
+const canGoBack = computed(() => {
+  return ['lesson', 'activity', 'story', 'dashboard'].includes(store.currentPage);
 });
 
 const showPlayfulBackdrop = computed(() => {
@@ -932,12 +955,37 @@ function beginAdventure() {
 
 function goBack() {
   killAudio();
-  const page = store.currentPage;
-  if (page === 'lesson' || page === 'dashboard') {
+  if (canGoBack.value) {
     store.currentPage = 'campground';
-  } else {
-    store.currentPage = store.selectedFriend ? 'campground' : 'selection';
+    return;
   }
+
+  store.currentPage = store.selectedFriend ? 'campground' : 'selection';
+}
+
+async function onActivityComplete() {
+  killAudio();
+  const activityType = store.activeActivity;
+  const lessonId = store.activeLessonId;
+  store.currentPage = 'campground';
+
+  if (!lessonId || !activityType) {
+    return;
+  }
+
+  await completeUfliActivity(lessonId, activityType).catch(() => null);
+}
+
+async function onConnectedTextComplete() {
+  killAudio();
+  const lessonId = store.activeLessonId;
+  store.currentPage = 'campground';
+
+  if (!lessonId) {
+    return;
+  }
+
+  await completeUfliConnectedText(lessonId).catch(() => null);
 }
 
 async function onLessonComplete() {

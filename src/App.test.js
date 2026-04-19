@@ -366,7 +366,7 @@ describe('App bootstrap', () => {
     expect(wrapper.findAll('.char-card')).toHaveLength(4);
   });
 
-  it('skips guardian reselection when a companion is already saved', async () => {
+  it('skips guardian reselection and back returns from learning pages to campground', async () => {
     const selectedFriend = { id: 'fox', name: 'Fox', file: 'fox_1984443.png' };
     const fetchMock = vi.fn((input) => {
       const url = String(input);
@@ -409,11 +409,19 @@ describe('App bootstrap', () => {
     expect(store.currentPage).toBe('campground');
     expect(store.selectedFriend).toEqual(selectedFriend);
     expect(wrapper.text()).toContain('Campground Map');
+    expect(wrapper.find('.top-bar .nav-btn').exists()).toBe(false);
 
-    await wrapper.get('.top-bar .nav-btn').trigger('click');
-    await flushPromises();
+    for (const page of ['lesson', 'activity', 'story', 'dashboard']) {
+      store.activeLessonId = '001';
+      store.activeActivity = 'speech';
+      store.currentPage = page;
+      await flushPromises();
+      expect(wrapper.find('.top-bar .nav-btn').exists()).toBe(true);
+      await wrapper.get('.top-bar .nav-btn').trigger('click');
+      await flushPromises();
+      expect(store.currentPage).toBe('campground');
+    }
 
-    expect(store.currentPage).toBe('campground');
     expect(wrapper.text()).not.toContain('Choose a Guardian');
   });
 });
