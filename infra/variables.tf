@@ -84,9 +84,9 @@ variable "backend_memory" {
 }
 
 variable "backend_desired_count" {
-  description = "Desired backend task count. Starts at zero until a real image is ready."
+  description = "Desired backend task count for the ECS service."
   type        = number
-  default     = 0
+  default     = 1
 }
 
 variable "alb_api_listener_rule_priority" {

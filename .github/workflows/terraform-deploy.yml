@@ -8,21 +8,47 @@ on:
       - 'infra/**'
       - '.github/workflows/terraform-deploy.yml'
   workflow_dispatch:
+    inputs:
+      backend_image_tag:
+        description: 'Optional ECR image tag to deploy (for example: ab12cd3 or latest).'
+        required: false
+        type: string
+      backend_desired_count:
+        description: 'Optional ECS desired count override (defaults to 1).'
+        required: false
+        type: string
+  workflow_run:
+    workflows:
+      - Backend Image
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   TFC_ORGANIZATION: DNSG4
   TFC_WORKSPACE: ember-infra
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: ember-backend
 
 jobs:
   terraform-cloud-run:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.GH_AWS_DEPLOYER_ROLE }}
 
       - name: Package Terraform configuration
         run: tar -C infra -czf infra.tar.gz .
@@ -30,13 +56,54 @@ jobs:
       - name: Create Terraform Cloud run
         env:
           TF_API_KEY: ${{ secrets.TF_API_KEY }}
-          BACKEND_IMAGE_TAG: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_BACKEND_IMAGE_TAG: ${{ github.event.inputs.backend_image_tag }}
+          DISPATCH_BACKEND_DESIRED_COUNT: ${{ github.event.inputs.backend_desired_count }}
         run: |
           set -euo pipefail
 
-          short_sha="${BACKEND_IMAGE_TAG::7}"
           speculative=false
           auto_apply=true
+          desired_count="${DISPATCH_BACKEND_DESIRED_COUNT:-1}"
+
+          if ! [[ "$desired_count" =~ ^[0-9]+$ ]]; then
+            echo "backend_desired_count must be a non-negative integer, got '$desired_count'." >&2
+            exit 1
+          fi
+
+          resolve_latest_ecr_tag() {
+            local latest_tag
+            latest_tag=$(aws ecr describe-images \
+              --repository-name "$ECR_REPOSITORY" \
+              --query 'reverse(sort_by(imageDetails,& imagePushedAt))[?imageTags!=null][0].imageTags[0]' \
+              --output text)
+
+            if [ -z "$latest_tag" ] || [ "$latest_tag" = "None" ]; then
+              echo "Unable to resolve a tagged image from ECR repository '$ECR_REPOSITORY'." >&2
+              exit 1
+            fi
+
+            printf '%s' "$latest_tag"
+          }
+
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            if [ -z "${WORKFLOW_RUN_HEAD_SHA:-}" ]; then
+              echo "workflow_run.head_sha is required when triggered by Backend Image workflow." >&2
+              exit 1
+            fi
+
+            image_tag="${WORKFLOW_RUN_HEAD_SHA::7}"
+          elif [ -n "${DISPATCH_BACKEND_IMAGE_TAG:-}" ]; then
+            image_tag="$DISPATCH_BACKEND_IMAGE_TAG"
+          else
+            image_tag=$(resolve_latest_ecr_tag)
+          fi
+
+          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$image_tag" >/dev/null 2>&1; then
+            echo "Image tag '$image_tag' does not exist in ECR repository '$ECR_REPOSITORY'." >&2
+            exit 1
+          fi
 
           workspace_response=$(curl -sS \
             --header "Authorization: Bearer $TF_API_KEY" \
@@ -54,10 +121,10 @@ jobs:
             --header "Content-Type: application/vnd.api+json" \
             "https://app.terraform.io/api/v2/workspaces/$workspace_id/vars")
 
-          backend_var_id=$(printf '%s' "$vars_response" | jq -r '.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform") | .id' | head -n 1)
+          backend_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform")][0].id // empty')
           backend_var_payload=$(jq -n \
             --arg key "backend_image_tag" \
-            --arg value "$short_sha" \
+            --arg value "$image_tag" \
             '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
 
           if [ -n "$backend_var_id" ]; then
@@ -70,7 +137,7 @@ jobs:
           else
             backend_var_payload=$(jq -n \
               --arg key "backend_image_tag" \
-              --arg value "$short_sha" \
+              --arg value "$image_tag" \
               --arg workspace_id "$workspace_id" \
               '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false},relationships:{workspace:{data:{type:"workspaces",id:$workspace_id}}}}}')
 
@@ -79,6 +146,34 @@ jobs:
               --header "Authorization: Bearer $TF_API_KEY" \
               --header "Content-Type: application/vnd.api+json" \
               --data "$backend_var_payload" \
+              "https://app.terraform.io/api/v2/vars" >/dev/null
+          fi
+
+          desired_count_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select(.attributes.key == "backend_desired_count" and .attributes.category == "terraform")][0].id // empty')
+          desired_count_var_payload=$(jq -n \
+            --arg key "backend_desired_count" \
+            --arg value "$desired_count" \
+            '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+
+          if [ -n "$desired_count_var_id" ]; then
+            curl -sS \
+              --request PATCH \
+              --header "Authorization: Bearer $TF_API_KEY" \
+              --header "Content-Type: application/vnd.api+json" \
+              --data "$desired_count_var_payload" \
+              "https://app.terraform.io/api/v2/vars/$desired_count_var_id" >/dev/null
+          else
+            desired_count_var_payload=$(jq -n \
+              --arg key "backend_desired_count" \
+              --arg value "$desired_count" \
+              --arg workspace_id "$workspace_id" \
+              '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false},relationships:{workspace:{data:{type:"workspaces",id:$workspace_id}}}}}')
+
+            curl -sS \
+              --request POST \
+              --header "Authorization: Bearer $TF_API_KEY" \
+              --header "Content-Type: application/vnd.api+json" \
+              --data "$desired_count_var_payload" \
               "https://app.terraform.io/api/v2/vars" >/dev/null
           fi
 
@@ -107,7 +202,6 @@ jobs:
             --arg configuration_version_id "$configuration_version_id" \
             --argjson speculative "$speculative" \
             --argjson auto_apply "$auto_apply" \
-            --arg image_tag "$short_sha" \
             '{
               data: {
                 type: "runs",
@@ -150,4 +244,8 @@ jobs:
             exit 1
           fi
 
-          echo "Queued Terraform Cloud run: $run_url" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "Queued Terraform Cloud run: $run_url"
+            echo "Using backend_image_tag=$image_tag"
+            echo "Using backend_desired_count=$desired_count"
+          } >> "$GITHUB_STEP_SUMMARY"

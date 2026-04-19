@@ -55,9 +55,13 @@ jobs:
         run: |
           set -euo pipefail
           image_uri="${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}"
+          latest_image_uri="${{ steps.repo.outputs.repository_uri }}:latest"
           docker build -t "$image_uri" -f backend/Dockerfile backend
+          docker tag "$image_uri" "$latest_image_uri"
           docker push "$image_uri"
+          docker push "$latest_image_uri"
 
       - name: Summarize image tag
         run: |
           echo "Pushed ${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pushed ${{ steps.repo.outputs.repository_uri }}:latest" >> "$GITHUB_STEP_SUMMARY"
