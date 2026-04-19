@@ -26,6 +26,8 @@ env:
   APP_LOGOUT_URI: https://app.readwithember.com/
   PROJECT_NAME: ember
   DEPLOY_ENV: production
+  TFC_ORGANIZATION: DNSG4
+  TFC_WORKSPACE: ember-infra
 
 jobs:
   deploy:
@@ -68,43 +70,91 @@ jobs:
 
       - name: Resolve Cognito build configuration
         id: cognito
+        env:
+          TF_API_KEY: ${{ secrets.TF_API_KEY }}
         run: |
           set -euo pipefail
 
-          user_pool_name="$PROJECT_NAME-app"
-          client_name="$PROJECT_NAME-spa"
-          domain_prefix="${PROJECT_NAME}-${DEPLOY_ENV}-auth"
-
-          user_pool_id=$(aws cognito-idp list-user-pools \
-            --max-results 60 \
-            --query "UserPools[?Name=='$user_pool_name'].Id | [0]" \
-            --output text)
-
-          if [ "$user_pool_id" = "None" ] || [ -z "$user_pool_id" ]; then
-            echo "Cognito user pool '$user_pool_name' does not exist yet. Apply Terraform infrastructure first." >&2
+          if [ -z "${TF_API_KEY:-}" ]; then
+            echo "TF_API_KEY is not configured. Cannot read canonical Cognito outputs from Terraform Cloud." >&2
             exit 1
           fi
 
-          client_id=$(aws cognito-idp list-user-pool-clients \
-            --user-pool-id "$user_pool_id" \
-            --max-results 60 \
-            --query "UserPoolClients[?ClientName=='$client_name'].ClientId | [0]" \
-            --output text)
+          workspace_response=$(curl -sS \
+            --header "Authorization: Bearer $TF_API_KEY" \
+            --header "Content-Type: application/vnd.api+json" \
+            "https://app.terraform.io/api/v2/organizations/$TFC_ORGANIZATION/workspaces/$TFC_WORKSPACE")
 
-          if [ "$client_id" = "None" ] || [ -z "$client_id" ]; then
-            echo "Cognito app client '$client_name' was not found in pool '$user_pool_id'." >&2
+          workspace_id=$(printf '%s' "$workspace_response" | jq -r '.data.id')
+          if [ -z "$workspace_id" ] || [ "$workspace_id" = "null" ]; then
+            echo "Unable to resolve Terraform Cloud workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE'." >&2
             exit 1
           fi
 
-          domain_description=$(aws cognito-idp describe-user-pool-domain --domain "$domain_prefix")
-          domain=$(printf '%s' "$domain_description" | jq -r '.DomainDescription.Domain')
+          outputs_response=""
+          max_attempts=6
+          attempt=1
+          while [ "$attempt" -le "$max_attempts" ]; do
+            response_body=$(mktemp)
+            http_status=$(curl -sS \
+              --write-out "%{http_code}" \
+              --output "$response_body" \
+              --header "Authorization: Bearer $TF_API_KEY" \
+              --header "Content-Type: application/vnd.api+json" \
+              "https://app.terraform.io/api/v2/workspaces/$workspace_id/current-state-version-outputs")
 
-          if [ -z "$domain" ] || [ "$domain" = "null" ]; then
-            echo "Cognito Hosted UI domain '$domain_prefix' does not exist yet. Apply Terraform infrastructure first." >&2
+            if [ "$http_status" = "200" ]; then
+              outputs_response=$(cat "$response_body")
+              rm -f "$response_body"
+              break
+            fi
+
+            if [ "$http_status" = "503" ]; then
+              if [ "$attempt" -lt "$max_attempts" ]; then
+                echo "Terraform Cloud outputs are still processing (attempt $attempt/$max_attempts). Retrying in 10s..."
+                rm -f "$response_body"
+                attempt=$((attempt + 1))
+                sleep 10
+                continue
+              fi
+
+              echo "Failed while reading Terraform Cloud outputs for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE': outputs are still processing after $max_attempts attempts." >&2
+              echo "Terraform Cloud response body:" >&2
+              cat "$response_body" >&2
+              rm -f "$response_body"
+              exit 1
+            fi
+
+            echo "Failed while reading Terraform Cloud outputs for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE' (HTTP $http_status)." >&2
+            echo "Terraform Cloud response body:" >&2
+            cat "$response_body" >&2
+            rm -f "$response_body"
+            exit 1
+          done
+
+          if [ -z "$outputs_response" ]; then
+            echo "Failed while reading Terraform Cloud outputs for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE': empty outputs response." >&2
             exit 1
           fi
 
-          domain_host="${domain}.auth.${AWS_REGION}.amazoncognito.com"
+          user_pool_id=$(printf '%s' "$outputs_response" | jq -r '.data[] | select(.attributes.name == "cognito_user_pool_id") | .attributes.value' | head -n 1)
+          client_id=$(printf '%s' "$outputs_response" | jq -r '.data[] | select(.attributes.name == "cognito_user_pool_client_id") | .attributes.value' | head -n 1)
+          domain_host=$(printf '%s' "$outputs_response" | jq -r '.data[] | select(.attributes.name == "cognito_hosted_ui_domain") | .attributes.value' | head -n 1)
+
+          if [ -z "$user_pool_id" ] || [ "$user_pool_id" = "null" ]; then
+            echo "Terraform Cloud output 'cognito_user_pool_id' is missing for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE'." >&2
+            exit 1
+          fi
+
+          if [ -z "$client_id" ] || [ "$client_id" = "null" ]; then
+            echo "Terraform Cloud output 'cognito_user_pool_client_id' is missing for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE'." >&2
+            exit 1
+          fi
+
+          if [ -z "$domain_host" ] || [ "$domain_host" = "null" ]; then
+            echo "Terraform Cloud output 'cognito_hosted_ui_domain' is missing for workspace '$TFC_ORGANIZATION/$TFC_WORKSPACE'." >&2
+            exit 1
+          fi
 
           echo "user_pool_id=$user_pool_id" >> "$GITHUB_OUTPUT"
           echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
