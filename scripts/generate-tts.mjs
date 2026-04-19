@@ -21,6 +21,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import 'dotenv/config';
+import { normalizeFile } from './normalize-tts.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -224,12 +225,16 @@ async function main() {
         stability: args.stability,
       });
       await fs.writeFile(item.file, buf);
+      // Bring the clip up to ~-16 LUFS so it matches the phoneme recordings
+      // in public/audio/phonemes/. ElevenLabs lands ~-26 to -28 LUFS by default.
+      await normalizeFile(item.file);
       manifest.entries[item.hash] = {
         text: item.text,
         file: `${PUBLIC_AUDIO_PREFIX}/${item.hash}.mp3`,
       };
       generated++;
-      process.stdout.write(`ok (${buf.length} bytes)\n`);
+      const finalSize = (await fs.stat(item.file)).size;
+      process.stdout.write(`ok (${finalSize} bytes)\n`);
 
       // Persist incrementally so a mid-run crash doesn't lose progress.
       manifest.voiceId = voiceId;
