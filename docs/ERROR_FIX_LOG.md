@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-19 — [BUILD] Production API returned 502 due to missing ECR tag and RDS SSL mismatch
+
+**Error:** `https://app.readwithember.com/api/health` returned CloudFront `502`, ECS events repeated `CannotPullContainerError ... ember-backend:f710aac not found`, and a startup task that did run logged `PostgresError: no pg_hba.conf entry ... no encryption`.
+**Context:** Production deployment verification for backend on ECS/Fargate after wiring image and Terraform automation.
+**Root Cause:** Two issues combined: (1) backend-image workflow tried to overwrite `latest` in an immutable ECR repo, causing workflow failure and drift between pushed images and Terraform deploy selection; (2) runtime secret `DATABASE_URL` did not require SSL even though RDS enforces SSL (`rds.force_ssl=1`).
+**Fix:** Updated backend-image workflow to push only immutable SHA tags and verify the pushed digest; updated Terraform deploy workflow to resolve only real SHA tags from ECR before writing TF vars; updated infra secret generation to set `DATABASE_URL` with `?sslmode=require`.
+**Prevention:** Keep deploy automation constrained to verifiable immutable image tags and make DB SSL requirements explicit in generated runtime secrets.
+
 ### 2026-04-16 — [BUILD] Frontend Docker build failed because `package-lock.json` is out of sync for `happy-dom`
 
 **Error:** `npm ci` failed in the frontend Docker image build with `Invalid: lock file's happy-dom@20.8.9 does not satisfy happy-dom@20.9.0`.

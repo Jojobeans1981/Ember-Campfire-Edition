@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       backend_image_tag:
-        description: 'Optional ECR image tag to deploy (for example: ab12cd3 or latest).'
+        description: 'Optional ECR image tag to deploy (7-char commit SHA tag).'
         required: false
         type: string
       backend_desired_count:
@@ -78,15 +78,14 @@ jobs:
             exit 1
           fi
 
-          resolve_latest_ecr_tag() {
+          resolve_latest_sha_tag() {
             local latest_tag
             latest_tag=$(aws ecr describe-images \
               --repository-name "$ECR_REPOSITORY" \
-              --query 'reverse(sort_by(imageDetails,& imagePushedAt))[?imageTags!=null][0].imageTags[0]' \
-              --output text)
+              --output json | jq -r '[.imageDetails | sort_by(.imagePushedAt) | reverse[] | (.imageTags // [])[] | select(test("^[0-9a-f]{7}$"))][0] // empty')
 
-            if [ -z "$latest_tag" ] || [ "$latest_tag" = "None" ]; then
-              echo "Unable to resolve a tagged image from ECR repository '$ECR_REPOSITORY'." >&2
+            if [ -z "$latest_tag" ]; then
+              echo "Unable to resolve a SHA image tag from ECR repository '$ECR_REPOSITORY'." >&2
               exit 1
             fi
 
@@ -103,7 +102,7 @@ jobs:
           resolve_image_tag() {
             local candidates=()
             local workflow_tag=""
-            local latest_tag
+            local latest_sha_tag
 
             if [ "$EVENT_NAME" = "workflow_run" ]; then
               if [ -z "${WORKFLOW_RUN_HEAD_SHA:-}" ]; then
@@ -119,8 +118,8 @@ jobs:
               candidates+=("$DISPATCH_BACKEND_IMAGE_TAG")
             fi
 
-            latest_tag=$(resolve_latest_ecr_tag)
-            candidates+=("$latest_tag")
+            latest_sha_tag=$(resolve_latest_sha_tag)
+            candidates+=("$latest_sha_tag")
 
             for candidate in "${candidates[@]}"; do
               if image_tag_exists "$candidate"; then

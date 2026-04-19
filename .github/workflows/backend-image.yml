@@ -55,11 +55,8 @@ jobs:
         run: |
           set -euo pipefail
           image_uri="${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}"
-          latest_image_uri="${{ steps.repo.outputs.repository_uri }}:latest"
           docker build -t "$image_uri" -f backend/Dockerfile backend
-          docker tag "$image_uri" "$latest_image_uri"
           docker push "$image_uri"
-          docker push "$latest_image_uri"
 
       - name: Verify pushed image tags in ECR
         id: verify
@@ -69,11 +66,6 @@ jobs:
 
           if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$image_tag" >/dev/null 2>&1; then
             echo "Image tag '$image_tag' was not found in ECR after push." >&2
-            exit 1
-          fi
-
-          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="latest" >/dev/null 2>&1; then
-            echo "Image tag 'latest' was not found in ECR after push." >&2
             exit 1
           fi
 
@@ -88,5 +80,4 @@ jobs:
       - name: Summarize image tag
         run: |
           echo "Pushed ${{ steps.repo.outputs.repository_uri }}:${{ steps.repo.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Pushed ${{ steps.repo.outputs.repository_uri }}:latest" >> "$GITHUB_STEP_SUMMARY"
           echo "Digest ${{ steps.verify.outputs.image_digest }}" >> "$GITHUB_STEP_SUMMARY"
