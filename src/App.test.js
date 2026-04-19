@@ -3,6 +3,8 @@ import { flushPromises, mount } from '@vue/test-utils';
 import App from './App.vue';
 import { clearBootstrapState, store } from './store';
 
+const SPLASH_SEEN_KEY = 'ember-splash-seen';
+
 vi.mock('./composables/useEmber.js', () => ({
   stopAllAudio: vi.fn(),
   preloadEmberVoice: vi.fn(),
@@ -102,7 +104,7 @@ describe('App bootstrap', () => {
     store.activeActivity = null;
     localStorage.clear();
     sessionStorage.clear();
-    sessionStorage.setItem('ember-splash-seen', '1');
+    localStorage.setItem(SPLASH_SEEN_KEY, '1');
     vi.restoreAllMocks();
   });
 
@@ -152,7 +154,7 @@ describe('App bootstrap', () => {
     expect(store.account).toMatchObject({ id: 'account-1' });
     expect(store.activeProfileId).toBe('profile-1');
     expect(store.currentPage).toBe('selection');
-    expect(wrapper.text()).toContain('Choose a Guardian');
+    expect(wrapper.findAll('.char-card')).toHaveLength(4);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'http://127.0.0.1:3001/me',
       'http://127.0.0.1:3001/account',
@@ -303,7 +305,7 @@ describe('App bootstrap', () => {
     expect(store.activeProfileId).toBe('profile-2');
     expect(store.xp).toBe(100);
     expect(store.currentPage).toBe('selection');
-    expect(wrapper.text()).toContain('Choose a Guardian');
+    expect(wrapper.findAll('.char-card')).toHaveLength(4);
   });
 
   it('shows profile creation when no profiles exist and returns to guardian selection after creating one', async () => {
@@ -361,6 +363,57 @@ describe('App bootstrap', () => {
     expect(store.bootstrapStatus).toBe('ready');
     expect(store.activeProfileId).toBe('profile-1');
     expect(store.currentPage).toBe('selection');
-    expect(wrapper.text()).toContain('Choose a Guardian');
+    expect(wrapper.findAll('.char-card')).toHaveLength(4);
+  });
+
+  it('skips guardian reselection when a companion is already saved', async () => {
+    const selectedFriend = { id: 'fox', name: 'Fox', file: 'fox_1984443.png' };
+    const fetchMock = vi.fn((input) => {
+      const url = String(input);
+
+      if (url.endsWith('/me')) {
+        return createJsonResponse(200, {
+          id: 'user-1',
+          accountId: 'account-1',
+          email: 'owner@dev.local',
+          displayName: 'Dev Owner',
+          role: 'owner',
+        });
+      }
+
+      if (url.endsWith('/account')) {
+        return createJsonResponse(200, {
+          id: 'account-1',
+          name: 'Dev Household',
+          type: 'family',
+        });
+      }
+
+      if (url.endsWith('/profiles')) {
+        return createJsonResponse(200, [{ id: 'profile-1', name: 'Ember' }]);
+      }
+
+      if (url.endsWith('/profiles/profile-1/progress')) {
+        return createJsonResponse(200, createProgressSnapshot('profile-1', { selectedFriend }));
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const wrapper = mountApp();
+    await flushPromises();
+    await flushPromises();
+
+    expect(store.currentPage).toBe('campground');
+    expect(store.selectedFriend).toEqual(selectedFriend);
+    expect(wrapper.text()).toContain('Campground Map');
+
+    await wrapper.get('.top-bar .nav-btn').trigger('click');
+    await flushPromises();
+
+    expect(store.currentPage).toBe('campground');
+    expect(wrapper.text()).not.toContain('Choose a Guardian');
   });
 });

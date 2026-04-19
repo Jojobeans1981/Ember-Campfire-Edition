@@ -325,9 +325,36 @@ const syncBannerText = computed(() => {
 const xpPop = ref(false);
 const showCelebration = ref(false);
 const SPLASH_SEEN_KEY = 'ember-splash-seen';
-const showLaunchSplash = ref(
-  typeof sessionStorage !== 'undefined' ? !sessionStorage.getItem(SPLASH_SEEN_KEY) : true,
-);
+
+function hasLocalStorage() {
+  return typeof localStorage !== 'undefined';
+}
+
+function hasSeenLaunchSplash() {
+  if (!hasLocalStorage()) {
+    return false;
+  }
+
+  try {
+    return localStorage.getItem(SPLASH_SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markLaunchSplashSeen() {
+  if (!hasLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(SPLASH_SEEN_KEY, '1');
+  } catch {
+    // localStorage may be blocked (private mode, etc.); splash just shows next refresh
+  }
+}
+
+const showLaunchSplash = ref(!hasSeenLaunchSplash());
 const showAdventureIntro = ref(false);
 const friendSelectionFxId = ref('');
 const hadRuntimeError = ref(false);
@@ -745,10 +772,7 @@ function syncEntryPage() {
     return;
   }
 
-  // Always return to guardian selection on boot so the demo flow
-  // consistently starts from the chooser instead of restoring
-  // directly into the map from a previous session.
-  store.currentPage = 'selection';
+  store.currentPage = store.selectedFriend ? 'campground' : 'selection';
 }
 
 async function runBootstrap() {
@@ -797,11 +821,7 @@ onMounted(() => {
     splashStartTime = Date.now();
     launchSplashTimer = window.setTimeout(() => {
       showLaunchSplash.value = false;
-      try {
-        sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
-      } catch {
-        // sessionStorage may be blocked (private mode, etc.); splash just shows next refresh
-      }
+      markLaunchSplashSeen();
     }, 10000);
   }
 
@@ -845,11 +865,7 @@ onErrorCaptured((error, instance, info) => {
   hadRuntimeError.value = true;
   showAdventureIntro.value = false;
   showLaunchSplash.value = false;
-  try {
-    sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
-  } catch {
-    // sessionStorage may be blocked; splash just shows next refresh
-  }
+  markLaunchSplashSeen();
   if (!store.activeLessonId) {
     store.activeLessonId = '001';
   }
@@ -919,7 +935,7 @@ function goBack() {
   if (page === 'lesson' || page === 'dashboard') {
     store.currentPage = 'campground';
   } else {
-    store.currentPage = 'selection';
+    store.currentPage = store.selectedFriend ? 'campground' : 'selection';
   }
 }
 
