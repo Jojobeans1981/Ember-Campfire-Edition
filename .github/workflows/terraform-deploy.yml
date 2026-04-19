@@ -65,7 +65,13 @@ jobs:
 
           speculative=false
           auto_apply=true
-          desired_count="${DISPATCH_BACKEND_DESIRED_COUNT:-1}"
+          dispatch_desired_count="${DISPATCH_BACKEND_DESIRED_COUNT:-}"
+
+          if [ -z "$dispatch_desired_count" ] || [ "$dispatch_desired_count" = "null" ]; then
+            desired_count="1"
+          else
+            desired_count="$dispatch_desired_count"
+          fi
 
           if ! [[ "$desired_count" =~ ^[0-9]+$ ]]; then
             echo "backend_desired_count must be a non-negative integer, got '$desired_count'." >&2
@@ -94,7 +100,7 @@ jobs:
             fi
 
             image_tag="${WORKFLOW_RUN_HEAD_SHA::7}"
-          elif [ -n "${DISPATCH_BACKEND_IMAGE_TAG:-}" ]; then
+          elif [ -n "${DISPATCH_BACKEND_IMAGE_TAG:-}" ] && [ "${DISPATCH_BACKEND_IMAGE_TAG}" != "null" ]; then
             image_tag="$DISPATCH_BACKEND_IMAGE_TAG"
           else
             image_tag=$(resolve_latest_ecr_tag)
@@ -121,13 +127,22 @@ jobs:
             --header "Content-Type: application/vnd.api+json" \
             "https://app.terraform.io/api/v2/workspaces/$workspace_id/vars")
 
-          backend_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select(.attributes.key == "backend_image_tag" and .attributes.category == "terraform")][0].id // empty')
-          backend_var_payload=$(jq -n \
-            --arg key "backend_image_tag" \
-            --arg value "$image_tag" \
-            '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+          backend_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select((.attributes.category == "terraform" and .attributes.key == "backend_image_tag") or (.attributes.category == "env" and .attributes.key == "TF_VAR_backend_image_tag"))][0].id // empty')
+          backend_var_category=$(printf '%s' "$vars_response" | jq -r '[.data[] | select((.attributes.category == "terraform" and .attributes.key == "backend_image_tag") or (.attributes.category == "env" and .attributes.key == "TF_VAR_backend_image_tag"))][0].attributes.category // empty')
 
           if [ -n "$backend_var_id" ]; then
+            if [ "$backend_var_category" = "env" ]; then
+              backend_var_payload=$(jq -n \
+                --arg key "TF_VAR_backend_image_tag" \
+                --arg value "$image_tag" \
+                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"env",sensitive:false}}}')
+            else
+              backend_var_payload=$(jq -n \
+                --arg key "backend_image_tag" \
+                --arg value "$image_tag" \
+                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+            fi
+
             curl -sS \
               --request PATCH \
               --header "Authorization: Bearer $TF_API_KEY" \
@@ -149,13 +164,22 @@ jobs:
               "https://app.terraform.io/api/v2/vars" >/dev/null
           fi
 
-          desired_count_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select(.attributes.key == "backend_desired_count" and .attributes.category == "terraform")][0].id // empty')
-          desired_count_var_payload=$(jq -n \
-            --arg key "backend_desired_count" \
-            --arg value "$desired_count" \
-            '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+          desired_count_var_id=$(printf '%s' "$vars_response" | jq -r '[.data[] | select((.attributes.category == "terraform" and .attributes.key == "backend_desired_count") or (.attributes.category == "env" and .attributes.key == "TF_VAR_backend_desired_count"))][0].id // empty')
+          desired_count_var_category=$(printf '%s' "$vars_response" | jq -r '[.data[] | select((.attributes.category == "terraform" and .attributes.key == "backend_desired_count") or (.attributes.category == "env" and .attributes.key == "TF_VAR_backend_desired_count"))][0].attributes.category // empty')
 
           if [ -n "$desired_count_var_id" ]; then
+            if [ "$desired_count_var_category" = "env" ]; then
+              desired_count_var_payload=$(jq -n \
+                --arg key "TF_VAR_backend_desired_count" \
+                --arg value "$desired_count" \
+                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"env",sensitive:false}}}')
+            else
+              desired_count_var_payload=$(jq -n \
+                --arg key "backend_desired_count" \
+                --arg value "$desired_count" \
+                '{data:{type:"vars",attributes:{key:$key,value:$value,category:"terraform",hcl:false,sensitive:false}}}')
+            fi
+
             curl -sS \
               --request PATCH \
               --header "Authorization: Bearer $TF_API_KEY" \
