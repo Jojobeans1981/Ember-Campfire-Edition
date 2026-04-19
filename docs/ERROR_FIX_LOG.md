@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-19 — [BUILD] CloudFront API origin returned 502 due to ALB certificate hostname mismatch
+
+**Error:** `https://app.readwithember.com/api/health` returned CloudFront `502` while ECS and ALB target health were green.
+**Context:** Production AWS investigation after backend task/image/runtime issues were mitigated.
+**Root Cause:** CloudFront API origin was configured with `origin_protocol_policy = "https-only"` to an ALB DNS hostname, but the ALB certificate subject (`*.ds-gauntlet.link`) did not match the ALB host (`*.elb.amazonaws.com`). CloudFront TLS validation to the origin failed before request forwarding.
+**Fix:** Switched CloudFront backend origin protocol policy to `http-only` in Terraform (`infra/frontend.tf`) so CloudFront reaches ALB over HTTP while keeping viewer traffic HTTPS.
+**Prevention:** For CloudFront custom origins, only use HTTPS-to-origin when the origin certificate matches the origin domain; otherwise use HTTP-to-origin or a matching cert/domain pair.
+
 ### 2026-04-19 — [BUILD] Production API returned 502 due to missing ECR tag and RDS SSL mismatch
 
 **Error:** `https://app.readwithember.com/api/health` returned CloudFront `502`, ECS events repeated `CannotPullContainerError ... ember-backend:f710aac not found`, and a startup task that did run logged `PostgresError: no pg_hba.conf entry ... no encryption`.
