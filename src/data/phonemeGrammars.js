@@ -102,6 +102,7 @@ export function normalizePhonemeKey(phoneme) {
     'ă': 'a', 'ĕ': 'e', 'ĭ': 'i', 'ŏ': 'o', 'ŭ': 'u',
     'ā': 'long_a', 'ē': 'long_e', 'ī': 'long_i', 'ō': 'long_o', 'ū': 'long_u',
     'a_e': 'long_a', 'e_e': 'long_e', 'i_e': 'long_i', 'o_e': 'long_o', 'u_e': 'long_u',
+    'æ': 'a', 'ɪ': 'i', 'ɛ': 'e', 'ɑ': 'o', 'ʌ': 'u',
     'ɹ': 'r', 'ŋ': 'ng', 'ə': 'u', 'ɔ': 'o',
     'sh': 'sh', 'ch': 'ch', 'th': 'th', 'wh': 'wh', 'ng': 'ng',
     'ck': 'ck', 'ph': 'ph', 'ar': 'ar', 'or': 'or', 'er': 'er',

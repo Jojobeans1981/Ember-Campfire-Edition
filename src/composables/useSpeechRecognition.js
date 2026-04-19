@@ -545,9 +545,10 @@ export function useSpeechRecognition() {
         const enoughSustain = volumeHandle.getSustainedFrames() >= Math.max(12, Math.floor(sustainTarget * 0.7));
         const noTranscript = !transcript.value || transcript.value === '[unk]';
         // Browser recognition often stays "available" for an isolated /m/
-        // while still failing to produce a usable transcript. Let a strong
-        // nasal audio profile rescue that case instead of marking it wrong.
-        const targetAllowsTranscriptBypass = normalizedTarget === 'm';
+        // or /ă/ while still failing to produce a usable transcript — it
+        // returns a confident but unrelated word. Let a matching audio
+        // profile rescue those cases instead of marking them wrong.
+        const targetAllowsTranscriptBypass = normalizedTarget === 'm' || normalizedTarget === 'a';
         const recognizerHasNotMatched = !voskMatched && !browserMatched;
         return enoughSpeech
           && enoughSustain

@@ -44,7 +44,7 @@
       {
         "grapheme": "a",
         "phonemes": [
-          "æ"
+          "a"
         ]
       }
     ]
@@ -52,7 +52,7 @@
   "step3": {
     "items": [
       {
-        "phoneme": "æ",
+        "phoneme": "a",
         "graphemes": [
           "a"
         ]

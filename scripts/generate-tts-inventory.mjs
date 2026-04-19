@@ -35,7 +35,7 @@ const outPath = path.join(repoRoot, 'scripts/tts-inventory.json');
 // (UI prompts, friend lines, adventure intros, campground greetings) are
 // always included in full since they fire everywhere. Widen this array
 // as more lessons come online.
-const SCOPE_LESSON_IDS = ['001', '002'];
+const SCOPE_LESSON_IDS = ['001', '002', '003', '004', '005'];
 
 const FRIEND_NAMES = ['Fox', 'Lion', 'Panda', 'Kangaroo'];
 
@@ -304,8 +304,10 @@ function collectLessonStrings(lessons) {
     entries.push({ text: `The word is ${w}.`, source: 'word-list (The word is X.)' });
   }
 
-  // teachPhoneme letter announcements — graphemes uppercased at runtime
+  // teachPhoneme letter announcements — graphemes uppercased at runtime.
+  // Skip empty graphemes (review/blending lessons like 005 have grapheme="").
   for (const g of graphemes) {
+    if (!g) continue;
     const L = String(g).toUpperCase();
     entries.push({ text: `This is the letter ${L}.`, source: 'teachPhoneme (grapheme)' });
     entries.push({ text: `Can you say ${L}?`, source: 'teachPhoneme (grapheme)' });

@@ -1,14 +1,17 @@
 {
-  "generatedAt": "2026-04-18T16:29:06.311Z",
+  "generatedAt": "2026-04-19T19:10:16.789Z",
   "scope": {
     "lessonIds": [
       "001",
-      "002"
+      "002",
+      "003",
+      "004",
+      "005"
     ],
-    "lessonsScanned": 2
+    "lessonsScanned": 5
   },
-  "entryCount": 134,
-  "totalCharacters": 6118,
+  "entryCount": 183,
+  "totalCharacters": 8149,
   "skippedIpa": [
     {
       "text": "A says /ă/, like the start of apple.",
@@ -28,6 +31,12 @@
       "text": "A says, like the start of apple.",
       "sources": [
         "lesson-001 step5.introductionScript (IPA-stripped)"
+      ]
+    },
+    {
+      "text": "and",
+      "sources": [
+        "word-list (bare)"
       ]
     },
     {
@@ -86,6 +95,18 @@
     },
     {
       "text": "Can you say M?",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "Can you say S?",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "Can you say T?",
       "sources": [
         "teachPhoneme (grapheme)"
       ]
@@ -187,6 +208,25 @@
       ]
     },
     {
+      "text": "I",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "I sat at the mat.",
+      "sources": [
+        "lesson-005 step8.readSentences"
+      ]
+    },
+    {
+      "text": "I sat.",
+      "sources": [
+        "lesson-005 step8.readSentences",
+        "lesson-005 step8.spellSentences"
+      ]
+    },
+    {
       "text": "In this section, listen carefully to sounds and words, then blend what you hear.",
       "sources": [
         "PhonemicAwarenessStep.vue:91"
@@ -218,6 +258,18 @@
     },
     {
       "text": "It was the letter M.",
+      "sources": [
+        "auditory/visual drill wrong"
+      ]
+    },
+    {
+      "text": "It was the letter S.",
+      "sources": [
+        "auditory/visual drill wrong"
+      ]
+    },
+    {
+      "text": "It was the letter T.",
       "sources": [
         "auditory/visual drill wrong"
       ]
@@ -328,6 +380,114 @@
       "text": "Lesson 2. m Tap Lesson to learn sounds, then play the activity cards.",
       "sources": [
         "lessonHub.2.noStatus"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.Complete!"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.Locked"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.Practicing"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.Ready to Learn"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.Story Time!"
+      ]
+    },
+    {
+      "text": "Lesson 3. s Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.3.noStatus"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.Complete!"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.Locked"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.Practicing"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.Ready to Learn"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.Story Time!"
+      ]
+    },
+    {
+      "text": "Lesson 4. t Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.4.noStatus"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.Complete!"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.Locked"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.Practicing"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.Ready to Learn"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.Story Time!"
+      ]
+    },
+    {
+      "text": "Lesson 5. VC & CVC Words Tap Lesson to learn sounds, then play the activity cards.",
+      "sources": [
+        "lessonHub.5.noStatus"
       ]
     },
     {
@@ -523,6 +683,12 @@
       ]
     },
     {
+      "text": "pat",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
       "text": "Read sentences.",
       "sources": [
         "LessonPlayer.vue (step8 transition)"
@@ -541,6 +707,24 @@
       ]
     },
     {
+      "text": "s",
+      "sources": [
+        "lesson-003 step5.introductionScript"
+      ]
+    },
+    {
+      "text": "sap",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "sat",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
       "text": "Say it. Tap hear and say, listen to the sound, then say it clearly into the microphone.",
       "sources": [
         "SpeechPractice.vue:132"
@@ -556,6 +740,30 @@
       "text": "See the letter.",
       "sources": [
         "LessonPlayer.vue (step2 transition)"
+      ]
+    },
+    {
+      "text": "sip",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "t",
+      "sources": [
+        "lesson-004 step5.introductionScript"
+      ]
+    },
+    {
+      "text": "tack",
+      "sources": [
+        "word-list (bare)"
+      ]
+    },
+    {
+      "text": "tap",
+      "sources": [
+        "word-list (bare)"
       ]
     },
     {
@@ -625,6 +833,18 @@
       ]
     },
     {
+      "text": "The mat.",
+      "sources": [
+        "lesson-005 step8.spellSentences"
+      ]
+    },
+    {
+      "text": "The word is and.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
       "text": "The word is apple.",
       "sources": [
         "word-list (The word is X.)"
@@ -661,6 +881,12 @@
       ]
     },
     {
+      "text": "The word is I.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
       "text": "The word is mad.",
       "sources": [
         "word-list (The word is X.)"
@@ -685,7 +911,49 @@
       ]
     },
     {
+      "text": "The word is pat.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is sap.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is sat.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is sip.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is tack.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is tap.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
       "text": "The word is the.",
+      "sources": [
+        "word-list (The word is X.)"
+      ]
+    },
+    {
+      "text": "The word is top.",
       "sources": [
         "word-list (The word is X.)"
       ]
@@ -710,6 +978,18 @@
       ]
     },
     {
+      "text": "This is the letter S.",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
+      "text": "This is the letter T.",
+      "sources": [
+        "teachPhoneme (grapheme)"
+      ]
+    },
+    {
       "text": "To make that sound, open your mouth wide and use your voice. You can stretch the sound out.",
       "sources": [
         "lesson-001 step5.articulatoryGesture"
@@ -719,6 +999,24 @@
       "text": "To make that sound, press your lips together and hum. The air comes out through your nose.",
       "sources": [
         "lesson-002 step5.articulatoryGesture"
+      ]
+    },
+    {
+      "text": "To make that sound, put your tongue behind your top front teeth and blow air out, like a hissing snake.",
+      "sources": [
+        "lesson-003 step5.articulatoryGesture"
+      ]
+    },
+    {
+      "text": "To make that sound, tap your tongue behind your top front teeth with a quick puff of air. It's a short, quiet sound.",
+      "sources": [
+        "lesson-004 step5.articulatoryGesture"
+      ]
+    },
+    {
+      "text": "top",
+      "sources": [
+        "word-list (bare)"
       ]
     },
     {

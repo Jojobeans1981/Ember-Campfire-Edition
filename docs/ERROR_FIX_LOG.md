@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-19 — [SPEECH] Lesson 3 /ă/ recognition always failed in VisualDrillStep
+
+**Error:** In lesson 3's visual drill (review letters a, m, s), the /ă/ sound for the letter `a` always matched as "missed" regardless of what the child said. Lessons 1 and 2 worked fine.
+**Context:** First usable review lesson after introducing UFLI lessons 002 onward.
+**Root Cause:** `lesson-003.json` step2/step3 items used raw IPA `"æ"` for the short-a phoneme, where lesson 1 used UFLI notation `"/ă/"`. `normalizePhonemeKey('æ')` didn't resolve — `æ` has no entry in `directMap` and NFD decomposition does not split it into `a`+combining-mark — so every downstream lookup (`PHONEME_GRAMMARS`, `PHONEME_TRANSCRIPT_VARIANTS`, `EARLY_PHONEME_FALLBACKS`) missed. Lesson 2 looked the same but its single-item step2 was skipped by `isUfliLessonStepRenderable` (requires ≥2 items), so the bug hid until lesson 3.
+**Fix:** (1) Normalized `"æ"`/`"ɪ"` in step2/step3 of lessons 002–005 (and 010) to bare letters `"a"`/`"i"`. (2) Extended `directMap` in [src/data/phonemeGrammars.js](src/data/phonemeGrammars.js) with IPA vowel variants (`æ`→`a`, `ɪ`→`i`, `ɛ`→`e`, `ɑ`→`o`, `ʌ`→`u`) as a safety net. (3) Added `'a'` to the transcript-bypass set in [src/composables/useSpeechRecognition.js](src/composables/useSpeechRecognition.js:550) so the audio-profile fallback can rescue an `a` target when the browser recognizer returns a confident-but-wrong transcript, matching the existing `'m'` bypass.
+**Prevention:** The safety-net `directMap` now covers lowercase IPA vowels, so future lesson authoring in either `/ă/` or `æ` form lands on the same grammar key. If a new phoneme appears in lesson JSON, verify `normalizePhonemeKey` returns a key that exists in `PHONEME_GRAMMARS`.
+
 ### 2026-04-19 — [GAME] Cognito sign-in looped because backend returned 401 for unprovisioned users
 
 **Error:** Cognito Hosted UI flow completed (`/oauth2/token` returned `200`) but app bootstrap calls (`/api/me`, `/api/account`, `/api/profiles`) returned `401`, so the UI fell back to "Sign-In Needed".

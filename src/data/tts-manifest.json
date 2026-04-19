@@ -2,7 +2,7 @@
   "version": 1,
   "voiceId": "JQsDyUXTx396FAC3C7GS",
   "modelId": "eleven_multilingual_v2",
-  "generatedAt": "2026-04-18T16:29:09.487Z",
+  "generatedAt": "2026-04-19T19:41:38.970Z",
   "entries": {
     "86f7e437faa5": {
       "text": "a",
@@ -611,6 +611,214 @@
     "7d1711f116a1": {
       "text": "Listen for that sound in the middle of these words.",
       "file": "/audio/tts/7d1711f116a1.mp3"
+    },
+    "cffa50a32cb1": {
+      "text": "and",
+      "file": "/audio/tts/cffa50a32cb1.mp3"
+    },
+    "f358793de1cd": {
+      "text": "Can you say ?",
+      "file": "/audio/tts/f358793de1cd.mp3"
+    },
+    "447004d5c833": {
+      "text": "Can you say S?",
+      "file": "/audio/tts/447004d5c833.mp3"
+    },
+    "8a2f4ddcab09": {
+      "text": "Can you say T?",
+      "file": "/audio/tts/8a2f4ddcab09.mp3"
+    },
+    "ca73ab65568c": {
+      "text": "I",
+      "file": "/audio/tts/ca73ab65568c.mp3"
+    },
+    "996c6be2cdc1": {
+      "text": "I sat at the mat.",
+      "file": "/audio/tts/996c6be2cdc1.mp3"
+    },
+    "fb4434b5c79b": {
+      "text": "I sat.",
+      "file": "/audio/tts/fb4434b5c79b.mp3"
+    },
+    "964ec5e2febf": {
+      "text": "It was the letter .",
+      "file": "/audio/tts/964ec5e2febf.mp3"
+    },
+    "8914dfb27d04": {
+      "text": "It was the letter S.",
+      "file": "/audio/tts/8914dfb27d04.mp3"
+    },
+    "7d8069dc07bc": {
+      "text": "It was the letter T.",
+      "file": "/audio/tts/7d8069dc07bc.mp3"
+    },
+    "19a77cdb6068": {
+      "text": "Lesson 3. s Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/19a77cdb6068.mp3"
+    },
+    "c5fcbda548ec": {
+      "text": "Lesson 3. s Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/c5fcbda548ec.mp3"
+    },
+    "20f83f028eeb": {
+      "text": "Lesson 3. s Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/20f83f028eeb.mp3"
+    },
+    "11a81cc68969": {
+      "text": "Lesson 3. s Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/11a81cc68969.mp3"
+    },
+    "97864d02cefa": {
+      "text": "Lesson 3. s Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/97864d02cefa.mp3"
+    },
+    "8b5b795c920f": {
+      "text": "Lesson 3. s Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/8b5b795c920f.mp3"
+    },
+    "6056c3fda885": {
+      "text": "Lesson 4. t Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/6056c3fda885.mp3"
+    },
+    "77b7b086f547": {
+      "text": "Lesson 4. t Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/77b7b086f547.mp3"
+    },
+    "f1902ef05148": {
+      "text": "Lesson 4. t Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/f1902ef05148.mp3"
+    },
+    "39d607cb003b": {
+      "text": "Lesson 4. t Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/39d607cb003b.mp3"
+    },
+    "1fd1944f78fc": {
+      "text": "Lesson 4. t Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/1fd1944f78fc.mp3"
+    },
+    "8b745b574782": {
+      "text": "Lesson 4. t Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/8b745b574782.mp3"
+    },
+    "2575cef9ceef": {
+      "text": "Lesson 5. VC & CVC Words Complete!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/2575cef9ceef.mp3"
+    },
+    "b65985c981f1": {
+      "text": "Lesson 5. VC & CVC Words Locked. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/b65985c981f1.mp3"
+    },
+    "072922e98e0f": {
+      "text": "Lesson 5. VC & CVC Words Practicing. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/072922e98e0f.mp3"
+    },
+    "20c196f1e2b8": {
+      "text": "Lesson 5. VC & CVC Words Ready to Learn. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/20c196f1e2b8.mp3"
+    },
+    "fab9707569af": {
+      "text": "Lesson 5. VC & CVC Words Story Time!. Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/fab9707569af.mp3"
+    },
+    "e29219e7ba02": {
+      "text": "Lesson 5. VC & CVC Words Tap Lesson to learn sounds, then play the activity cards.",
+      "file": "/audio/tts/e29219e7ba02.mp3"
+    },
+    "7ffe1ba40f25": {
+      "text": "pat",
+      "file": "/audio/tts/7ffe1ba40f25.mp3"
+    },
+    "a0f1490a20d0": {
+      "text": "s",
+      "file": "/audio/tts/a0f1490a20d0.mp3"
+    },
+    "f4603bd4ae9e": {
+      "text": "sap",
+      "file": "/audio/tts/f4603bd4ae9e.mp3"
+    },
+    "c55de0f5998e": {
+      "text": "sat",
+      "file": "/audio/tts/c55de0f5998e.mp3"
+    },
+    "bff8797c8e35": {
+      "text": "sip",
+      "file": "/audio/tts/bff8797c8e35.mp3"
+    },
+    "8efd86fb78a5": {
+      "text": "t",
+      "file": "/audio/tts/8efd86fb78a5.mp3"
+    },
+    "5de37ce0dbdb": {
+      "text": "tack",
+      "file": "/audio/tts/5de37ce0dbdb.mp3"
+    },
+    "25f30d353d67": {
+      "text": "tap",
+      "file": "/audio/tts/25f30d353d67.mp3"
+    },
+    "54d7614b8cde": {
+      "text": "The mat.",
+      "file": "/audio/tts/54d7614b8cde.mp3"
+    },
+    "38598bbafe0f": {
+      "text": "The word is and.",
+      "file": "/audio/tts/38598bbafe0f.mp3"
+    },
+    "bdb3aaf975db": {
+      "text": "The word is I.",
+      "file": "/audio/tts/bdb3aaf975db.mp3"
+    },
+    "ace6771177e6": {
+      "text": "The word is pat.",
+      "file": "/audio/tts/ace6771177e6.mp3"
+    },
+    "c6790f16dab0": {
+      "text": "The word is sap.",
+      "file": "/audio/tts/c6790f16dab0.mp3"
+    },
+    "af5f7e7b6c8d": {
+      "text": "The word is sat.",
+      "file": "/audio/tts/af5f7e7b6c8d.mp3"
+    },
+    "fc9c948e4178": {
+      "text": "The word is sip.",
+      "file": "/audio/tts/fc9c948e4178.mp3"
+    },
+    "f21c73deb3bd": {
+      "text": "The word is tack.",
+      "file": "/audio/tts/f21c73deb3bd.mp3"
+    },
+    "6ad0e7671521": {
+      "text": "The word is tap.",
+      "file": "/audio/tts/6ad0e7671521.mp3"
+    },
+    "2de587ec864b": {
+      "text": "The word is top.",
+      "file": "/audio/tts/2de587ec864b.mp3"
+    },
+    "3ca3c4e9d62a": {
+      "text": "This is the letter .",
+      "file": "/audio/tts/3ca3c4e9d62a.mp3"
+    },
+    "54654562b3a3": {
+      "text": "This is the letter S.",
+      "file": "/audio/tts/54654562b3a3.mp3"
+    },
+    "9936e05f9832": {
+      "text": "This is the letter T.",
+      "file": "/audio/tts/9936e05f9832.mp3"
+    },
+    "d18a3d5ad9dd": {
+      "text": "To make that sound, put your tongue behind your top front teeth and blow air out, like a hissing snake.",
+      "file": "/audio/tts/d18a3d5ad9dd.mp3"
+    },
+    "0852bd379eb0": {
+      "text": "To make that sound, tap your tongue behind your top front teeth with a quick puff of air. It's a short, quiet sound.",
+      "file": "/audio/tts/0852bd379eb0.mp3"
+    },
+    "af2c7b4ca07a": {
+      "text": "top",
+      "file": "/audio/tts/af2c7b4ca07a.mp3"
     }
   }
 }
