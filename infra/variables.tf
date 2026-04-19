@@ -22,6 +22,12 @@ variable "app_domain_name" {
   default     = "app.readwithember.com"
 }
 
+variable "alb_origin_domain_name" {
+  description = "Custom hostname CloudFront uses for HTTPS traffic to the shared ALB origin."
+  type        = string
+  default     = "alb.readwithember.com"
+}
+
 variable "cognito_callback_urls" {
   description = "Allowed Cognito callback URLs (for example VITE_COGNITO_REDIRECT_URI per environment)."
   type        = list(string)

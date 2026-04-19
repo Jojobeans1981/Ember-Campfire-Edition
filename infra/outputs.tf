@@ -70,6 +70,33 @@ output "app_cloudflare_dns_record" {
   }
 }
 
+output "alb_origin_cloudflare_dns_record" {
+  description = "Manual Cloudflare DNS record needed to point the ALB origin hostname at the shared ALB DNS name."
+  value = {
+    name    = local.alb_origin_domain_name
+    type    = "CNAME"
+    content = data.tfe_outputs.baseinfra.values.alb_dns_name
+    proxied = false
+  }
+}
+
+output "alb_origin_certificate_arn" {
+  description = "ACM certificate ARN for the ALB origin hostname in the backend region."
+  value       = aws_acm_certificate.alb_origin.arn
+}
+
+output "alb_origin_certificate_validation_records" {
+  description = "Create these DNS records in Cloudflare when manage_cloudflare_dns is false for ALB origin cert validation."
+  value = [
+    for option in aws_acm_certificate.alb_origin.domain_validation_options : {
+      domain_name  = option.domain_name
+      record_name  = option.resource_record_name
+      record_type  = option.resource_record_type
+      record_value = option.resource_record_value
+    }
+  ]
+}
+
 output "backend_database_endpoint" {
   description = "RDS endpoint hostname for Ember backend PostgreSQL."
   value       = aws_db_instance.backend.address

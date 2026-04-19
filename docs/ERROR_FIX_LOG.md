@@ -18,6 +18,14 @@ Categories: `[BUILD]`, `[VITE]`, `[VUE]`, `[VITEST]`, `[AUDIO]`, `[SPEECH]`, `[S
 
 ## Log
 
+### 2026-04-19 — [BUILD] Auth/API failed with `ERR_CERT_COMMON_NAME_INVALID` after ALB redirect
+
+**Error:** Browser auth and API requests failed with `net::ERR_CERT_COMMON_NAME_INVALID` after `/api/*` requests were redirected to the ALB hostname.
+**Context:** Production investigation after moving CloudFront API origin traffic to ALB HTTP to work around origin TLS validation failure.
+**Root Cause:** ALB HTTP listener redirects to HTTPS; because the backend forward rule is on the HTTPS listener and CloudFront was hitting HTTP origin, responses exposed the ALB hostname (`*.elb.amazonaws.com`) while ALB served a non-matching certificate (`*.ds-gauntlet.link`).
+**Fix:** Implemented dedicated ALB origin hostname and certificate wiring in Terraform: added `alb.readwithember.com` DNS record, created/validated a regional ACM cert for that hostname, attached it to the shared ALB HTTPS listener, and updated CloudFront backend origin to `https-only` against the custom ALB hostname.
+**Prevention:** Keep HTTP listener redirect-only and ensure CloudFront HTTPS origins always use a hostname that matches a certificate installed on the origin listener.
+
 ### 2026-04-19 — [BUILD] CloudFront API origin returned 502 due to ALB certificate hostname mismatch
 
 **Error:** `https://app.readwithember.com/api/health` returned CloudFront `502` while ECS and ALB target health were green.

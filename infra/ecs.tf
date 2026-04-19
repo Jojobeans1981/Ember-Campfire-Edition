@@ -139,6 +139,13 @@ resource "aws_lb_listener_rule" "backend_api" {
   })
 }
 
+resource "aws_lb_listener_certificate" "alb_origin" {
+  listener_arn    = data.tfe_outputs.baseinfra.values.alb_listener_https_arn
+  certificate_arn = aws_acm_certificate.alb_origin.arn
+
+  depends_on = [aws_acm_certificate_validation.alb_origin]
+}
+
 resource "aws_ecs_task_definition" "backend" {
   family                   = local.backend_service_name
   requires_compatibilities = ["FARGATE"]
